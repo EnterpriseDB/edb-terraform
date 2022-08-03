@@ -1,0 +1,11 @@
+provider "aws" {
+}
+
+{% for region in regions.keys() %}
+{%   set region_ = region | replace('-', '_') %}
+provider "aws" {
+  region = "{{ region }}"
+  alias = "{{ region_ }}"
+}
+
+{% endfor %}
