@@ -31,7 +31,7 @@ resource "aws_db_subnet_group" "aurora" {
 }
 
 resource "aws_rds_cluster" "aurora_cluster" {
-  cluster_identifier     = var.cluster_name
+  cluster_identifier     = lower(var.cluster_name)
   engine                 = var.aurora.spec.engine
   engine_version         = var.aurora.spec.engine_version
   engine_mode            = "provisioned"

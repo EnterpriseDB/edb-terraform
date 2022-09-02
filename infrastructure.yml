@@ -97,7 +97,8 @@ aurora:
   mydb2:
     region: us-east-1
     azs:
-      - us-east-1a
+      - us-east-1b
+      - us-east-1c
     count: 1
     engine: aurora-postgresql
     engine_version: 13
