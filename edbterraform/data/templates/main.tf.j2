@@ -16,6 +16,12 @@ locals {
       spec = database_spec
     }...
   }
+  region_auroras = {
+    for name, aurora_spec in var.aurora: aurora_spec.region => {
+      name = name
+      spec = aurora_spec
+    }...
+  }
 }
 
 {% for region in regions.keys() %}
@@ -134,6 +140,25 @@ module "database_{{ region_ }}" {
   }
 }
 
+module "aurora_{{ region_ }}" {
+  source = "./modules/aurora"
+
+  for_each = { for rm in lookup(local.region_auroras, "{{ region }}", []) : rm.name => rm }
+
+  vpc_id                   = module.vpc_{{ region_ }}.vpc_id
+  aurora                   = each.value
+  cluster_name             = var.cluster_name
+  custom_security_group_id = module.security_{{ region_ }}.aws_security_group_id
+  created_by               = var.created_by
+
+  depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
+
+  providers = {
+    aws = aws.{{ region_ }}
+  }
+}
+
+
 {% endfor %}
 {% for (requester, accepter) in peers %}
 {% set requester_ = requester|replace('-', '_') %}
@@ -228,6 +253,21 @@ servers:
       address: ${module.database_{{ region_ }}[key].database_ips.address}
       port: ${module.database_{{ region_ }}[key].database_ips.port}
       dbname: "${module.database_{{ region_ }}[key].database_ips.dbname}"
+%{endfor~}
+{% endfor %}
+{% if aurora_regions | length > 0 %}
+  aurora:
+{% endif %}
+{% for region in aurora_regions %}
+{% set region_ = region | replace('-', '_') %}
+%{for key in keys(module.aurora_{{ region_ }}) ~}
+    ${key}:
+      region: ${module.aurora_{{ region_ }}[key].aurora_ips.region}
+      username: "${module.aurora_{{ region_ }}[key].aurora_ips.username}"
+      password: "${module.aurora_{{ region_ }}[key].aurora_ips.password}"
+      address: ${module.aurora_{{ region_ }}[key].aurora_ips.address}
+      port: ${module.aurora_{{ region_ }}[key].aurora_ips.port}
+      dbname: "${module.aurora_{{ region_ }}[key].aurora_ips.dbname}"
 %{endfor~}
 {% endfor %}
     EOT

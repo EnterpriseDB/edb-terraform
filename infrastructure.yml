@@ -93,3 +93,23 @@ databases:
         value: 1.25
       - name: work_mem
         value: 16000
+aurora:
+  mydb2:
+    region: us-east-1
+    azs:
+      - us-east-1a
+    count: 1
+    engine: aurora-postgresql
+    engine_version: 13
+    dbname: "test"
+    username: "postgres"
+    password: "12Password!"
+    port: 5432
+    instance_type: db.t3.medium
+    settings:
+      - name: max_connections
+        value: 300
+      - name: random_page_cost
+        value: 1.25
+      - name: work_mem
+        value: 16000
