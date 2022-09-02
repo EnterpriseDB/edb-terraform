@@ -146,17 +146,17 @@ def object_regions(object_type, vars):
 
     regions = []
 
-    if object not in vars:
+    if object_type not in vars:
         return regions
 
-    for _, value in vars[object].items():
+    for _, value in vars[object_type].items():
         region = value.get('region')
 
         if not region:
             continue
 
         if region not in regions:
-            regions.append(region])
+            regions.append(region)
 
     return regions
 
@@ -192,18 +192,32 @@ def new_project_main():
 
     # Load infrastructure variable from the YAML file that was passed
     vars = load_infra_file(env.infra_file)
-    # Generate a new SSH key pair
-    (ssh_priv_key, ssh_pub_key) = generate_ssh_key_pair(env.project_path)
-    # Inject SSH variables
-    vars['ssh_priv_key'] = str(ssh_priv_key.resolve())
-    vars['ssh_pub_key'] = str(ssh_pub_key.resolve())
+
+    if 'ssh_user' in vars:
+        # Generate a new SSH key pair
+        (ssh_priv_key, ssh_pub_key) = generate_ssh_key_pair(env.project_path)
+        # Inject SSH variables
+        vars['ssh_priv_key'] = str(ssh_priv_key.resolve())
+        vars['ssh_pub_key'] = str(ssh_pub_key.resolve())
+    else:
+        # When ssh_user is not set in the infrastructure file, then initialize
+        # the terraform vars related to SSH setup to None. They must be passed
+        # to terraform even in this case.
+        vars['ssh_user'] = None
+        vars['ssh_priv_key'] = None
+        vars['ssh_pub_key'] = None
 
     # Set default empty values if they are not set, this is required by
     # the terraform part.
     if 'machines' not in vars:
         vars['machines'] = dict()
-    if 'databases' not in infra_vars:
+    if 'databases' not in vars:
         vars['databases'] = dict()
+    if 'aurora' not in vars:
+        vars['aurora'] = dict()
+    if 'operating_system' not in vars:
+        vars['operating_system'] = None
+
 
     # Transform infrastructure configuration to terraform variables
     to_terraform_vars(env.project_path, 'terraform_vars.json', vars)
@@ -214,6 +228,7 @@ def new_project_main():
     template_vars['peers'] = regions_to_peers(vars['regions'])
     template_vars['machine_regions'] = object_regions('machines', vars)
     template_vars['database_regions'] = object_regions('databases', vars)
+    template_vars['aurora_regions'] = object_regions('aurora', vars)
 
     # Generate the main.tf and providers.tf files.
     tpl('main.tf.j2', env.project_path / 'main.tf', template_vars)

@@ -1,5 +1,6 @@
 variable "regions" {}
 variable "machines" {}
+variable "aurora" {}
 variable "databases" {}
 variable "cluster_name" {}
 variable "ssh_pub_key" {}
