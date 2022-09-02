@@ -192,6 +192,8 @@ def new_project_main():
 
     # Load infrastructure variable from the YAML file that was passed
     vars = load_infra_file(env.infra_file)
+    # Variables used in the template files
+    template_vars = {}
 
     if 'ssh_user' in vars:
         # Generate a new SSH key pair
@@ -211,19 +213,40 @@ def new_project_main():
     # the terraform part.
     if 'machines' not in vars:
         vars['machines'] = dict()
+        template_vars['has_machine'] = False
+    else:
+        template_vars['has_machine'] = True
+
     if 'databases' not in vars:
         vars['databases'] = dict()
+        template_vars['has_database'] = False
+    else:
+        template_vars['has_database'] = True
+
     if 'aurora' not in vars:
         vars['aurora'] = dict()
+        template_vars['has_aurora'] = False
+    else:
+        template_vars['has_aurora'] = True
+
     if 'operating_system' not in vars:
         vars['operating_system'] = None
 
+    if 'regions' not in vars:
+        vars['regions'] = dict()
+        template_vars['has_network'] = False
+    else:
+        template_vars['has_network'] = True
+
+    if len(vars['regions'].keys()) > 1:
+        template_vars['has_region_peering'] = True
+    else:
+        template_vars['has_region_peering'] = False
 
     # Transform infrastructure configuration to terraform variables
     to_terraform_vars(env.project_path, 'terraform_vars.json', vars)
 
     # Build template variables
-    template_vars = {}
     template_vars['regions'] = vars['regions'].copy()
     template_vars['peers'] = regions_to_peers(vars['regions'])
     template_vars['machine_regions'] = object_regions('machines', vars)
@@ -231,5 +254,5 @@ def new_project_main():
     template_vars['aurora_regions'] = object_regions('aurora', vars)
 
     # Generate the main.tf and providers.tf files.
-    tpl('main.tf.j2', env.project_path / 'main.tf', template_vars)
+    tpl('main.tf', env.project_path / 'main.tf', template_vars)
     tpl('providers.tf.j2', env.project_path / 'providers.tf', template_vars)
