@@ -12,17 +12,19 @@ describing the target cloud infrastructure.
 | AWS      | multi-region VPC peering |:white_check_mark:|
 | AWS      | Security (ports)         |:white_check_mark:|
 | AWS      | RDS                      |:white_check_mark:|
-| AWS      | RDS Aurora               | work in progress |
+| AWS      | RDS Aurora               |:white_check_mark:|
 | GCloud   | -                        |       :x:        |
 | Azure    | -                        |       :x:        |
 
 ## Infrastructure file
 
-Following is and example of an infrastructure file describing the target cloud
-infrastructure.
+Following are examples of infrastructure files describing the target cloud
+infrastructure on AWS.
+
+### EC2 machines
 
 ```yaml
-cluster_name: Demo-Infra
+cluster_name: ec2-machines-demo
 ssh_user: rocky
 operating_system:
   name: Rocky-8-ec2-8.6-20220515.0.x86_64
@@ -88,6 +90,21 @@ machines:
         type: io2
         iops: 50000
         encrypted: false
+```
+
+### PostgreSQL RDS Database
+
+```yaml
+cluster_name: rds-database-demo
+regions:
+  us-east-1:
+    cidr_block: 10.0.0.0/16
+    azs:
+      us-east-1a: 10.0.0.0/24
+    service_ports:
+      - port: 5432
+        protocol: tcp
+        description: "PostgreSQL"
 databases:
   mydb1:
     region: us-east-1
@@ -116,6 +133,42 @@ databases:
         value: 16000
 ```
 
+### PostgreSQL Aurora Database
+
+```yaml
+cluster_name: aurora-demo
+regions:
+  us-east-1:
+    cidr_block: 10.0.0.0/16
+    azs:
+      us-east-1a: 10.0.1.0/24
+      us-east-1b: 10.0.2.0/24
+    service_ports:
+      - port: 5432
+        protocol: tcp
+        description: "PostgreSQL"
+aurora:
+  mydb2:
+    region: us-east-1
+    azs:
+      - us-east-1a
+      - us-east-1b
+    count: 1
+    engine: aurora-postgresql
+    engine_version: 13
+    dbname: "test"
+    username: "postgres"
+    password: "12Password!"
+    port: 5432
+    instance_type: db.t3.medium
+    settings:
+      - name: max_connections
+        value: 300
+      - name: random_page_cost
+        value: 1.25
+      - name: work_mem
+        value: 16000
+```
 
 ## Prerequisites and installation
 
