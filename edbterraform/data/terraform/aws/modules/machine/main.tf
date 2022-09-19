@@ -92,18 +92,6 @@ locals {
   ]
 }
 
-locals {
-  linux_nvme_device_names = [
-    "/dev/nvme1n1",
-    "/dev/nvme2n1",
-    "/dev/nvme3n1",
-    "/dev/nvme4n1",
-    "/dev/nvme5n1",
-    "/dev/nvme6n1",
-    "/dev/nvme7n1"
-  ]
-}
-
 resource "aws_volume_attachment" "attached_volume" {
   for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
 
@@ -148,7 +136,7 @@ resource "null_resource" "setup_volume" {
   provisioner "remote-exec" {
     inline = [
       "chmod a+x /tmp/setup_volume.sh",
-      "/tmp/setup_volume.sh ${element(local.linux_nvme_device_names, tonumber(each.key))} ${each.value.mount_point} >> /tmp/mount.log 2>&1"
+      "/tmp/setup_volume.sh ${element(local.linux_ebs_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
     ]
 
     connection {
