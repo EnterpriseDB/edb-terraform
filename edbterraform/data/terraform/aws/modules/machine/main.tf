@@ -24,7 +24,7 @@ data "aws_ami" "default" {
 
   filter {
     name   = "name"
-    values = ["${var.operating_system.name}-*"]
+    values = ["${var.operating_system.name}*"]
   }
 
   filter {
