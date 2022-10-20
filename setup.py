@@ -54,10 +54,10 @@ setup(
     data_files=[],
     package_data={
         'edbterraform': [
-            'data/terraform/aws/variables.tf',
-            'data/terraform/aws/modules/*/*.tf',
-            'data/terraform/aws/modules/*/*.sh',
-            'data/templates/*',
+            'data/terraform/*/variables.tf',
+            'data/terraform/*/modules/*/*.tf',
+            'data/terraform/*/modules/*/*.sh',
+            'data/templates/*/*',
         ]
     }
 )
