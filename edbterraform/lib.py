@@ -15,14 +15,16 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 
 
-def tpl(template_name, dest, vars={}):
+def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
     # variables.
 
     try:
         # Templates are located in __file__/data/templates
         current_dir = Path(__file__).parent.resolve()
-        templates_dir = PurePath.joinpath(current_dir, 'data', 'templates')
+        templates_dir = PurePath.joinpath(
+            current_dir, 'data', 'templates', csp
+        )
 
         # Jinja2 rendering
         file_loader = FileSystemLoader(str(templates_dir))
@@ -96,7 +98,7 @@ def create_project_dir(dir, csp):
         sys.exit("ERROR: cannot create project directory %s (%s)" % (dir, e))
 
 
-def load_infra_file(file_path):
+def load_infra_file(file_path, csp):
     # Load the infrastructure file, expected format is YAML.
 
     if not os.path.exists(file_path):
@@ -104,12 +106,22 @@ def load_infra_file(file_path):
 
     try:
         with open(file_path) as f:
-            return yaml.load(f.read(), Loader=yaml.CLoader)
+            vars = yaml.load(f.read(), Loader=yaml.CLoader)
+            if csp not in vars:
+                sys.exit(
+                    "ERROR: key '%s' not present in the infrastructure file."
+                    % csp
+                )
+            # Returns CSP variables and cluster_name
+            new_vars = vars[csp].copy()
+            new_vars['cluster_name'] = vars['cluster_name']
+
+            return new_vars
     except Exception as e:
         sys.exit("ERROR: could not read file %s (%s)" % (file_path, e))
 
 
-def to_terraform_vars(dir, filename, vars):
+def save_terraform_vars(dir, filename, vars):
     # Saves terraform variables as a JSON file.
 
     dest = dir / filename
@@ -161,6 +173,44 @@ def object_regions(object_type, vars):
     return regions
 
 
+def aws_build_vars(infra_vars, ssh_priv_key, ssh_pub_key):
+    # Based on the infra variables, returns a tuple composed of (terraform
+    # variables as a dist, template variables as a dict)
+
+    # Variables used in the template files
+    template_vars = {}
+    # Starting with making a copy of infra_vars as our terraform_vars dict
+    terraform_vars = infra_vars.copy()
+
+    # Add additional terraform variables
+    terraform_vars.update(dict(
+        ssh_user=infra_vars.get('ssh_user', None),
+        ssh_priv_key=ssh_priv_key,
+        ssh_pub_key=ssh_pub_key,
+        machines=infra_vars.get('machines', dict()),
+        databases=infra_vars.get('databases', dict()),
+        regions=infra_vars.get('regions', dict()),
+        aurora=infra_vars.get('aurora', dict()),
+        operating_system=infra_vars.get('operating_system', None),
+    ))
+
+    # Build template variables
+    template_vars.update(dict(
+        has_region_peering=(len(terraform_vars['regions'].keys()) > 1),
+        has_machines=('machines' in infra_vars),
+        has_databases=('databases' in infra_vars),
+        has_regions=('regions' in infra_vars),
+        has_aurora=('aurora' in infra_vars),
+        regions=terraform_vars['regions'].copy(),
+        peers=regions_to_peers(terraform_vars['regions']),
+        machine_regions=object_regions('machines', terraform_vars),
+        database_regions=object_regions('databases', terraform_vars),
+        aurora_regions=object_regions('aurora', terraform_vars),
+    ))
+
+    return (terraform_vars, template_vars)
+
+
 def new_project_main():
     # Main function of the edb-terraform script.
 
@@ -187,72 +237,42 @@ def new_project_main():
     )
     env = parser.parse_args()
 
+    # Load infrastructure variables from the YAML file that was passed
+    infra_vars = load_infra_file(env.infra_file, env.csp)
+
     # Duplicate terraform code into target project directory
     create_project_dir(env.project_path, env.csp)
 
-    # Load infrastructure variable from the YAML file that was passed
-    vars = load_infra_file(env.infra_file)
-    # Variables used in the template files
-    template_vars = {}
-
-    if 'ssh_user' in vars:
+    # Generate SSH keys if ssh_user is set
+    ssh_priv_key = None
+    ssh_pub_key = None
+    if 'ssh_user' in infra_vars:
         # Generate a new SSH key pair
         (ssh_priv_key, ssh_pub_key) = generate_ssh_key_pair(env.project_path)
-        # Inject SSH variables
-        vars['ssh_priv_key'] = str(ssh_priv_key.resolve())
-        vars['ssh_pub_key'] = str(ssh_pub_key.resolve())
-    else:
-        # When ssh_user is not set in the infrastructure file, then initialize
-        # the terraform vars related to SSH setup to None. They must be passed
-        # to terraform even in this case.
-        vars['ssh_user'] = None
-        vars['ssh_priv_key'] = None
-        vars['ssh_pub_key'] = None
+        ssh_priv_key = str(ssh_priv_key.resolve())
+        ssh_pub_key = str(ssh_pub_key.resolve())
 
-    # Set default empty values if they are not set, this is required by
-    # the terraform part.
-    if 'machines' not in vars:
-        vars['machines'] = dict()
-        template_vars['has_machine'] = False
-    else:
-        template_vars['has_machine'] = True
+    if env.csp == 'aws':
+        # Transform variables extracted from the infrastructure file into
+        # terraform and templates variables.
+        (terraform_vars, template_vars) = \
+            aws_build_vars(infra_vars, ssh_priv_key, ssh_pub_key)
 
-    if 'databases' not in vars:
-        vars['databases'] = dict()
-        template_vars['has_database'] = False
-    else:
-        template_vars['has_database'] = True
-
-    if 'aurora' not in vars:
-        vars['aurora'] = dict()
-        template_vars['has_aurora'] = False
-    else:
-        template_vars['has_aurora'] = True
-
-    if 'operating_system' not in vars:
-        vars['operating_system'] = None
-
-    if 'regions' not in vars:
-        vars['regions'] = dict()
-        template_vars['has_network'] = False
-    else:
-        template_vars['has_network'] = True
-
-    if len(vars['regions'].keys()) > 1:
-        template_vars['has_region_peering'] = True
-    else:
-        template_vars['has_region_peering'] = False
-
-    # Transform infrastructure configuration to terraform variables
-    to_terraform_vars(env.project_path, 'terraform_vars.json', vars)
-
-    # Build template variables
-    template_vars['regions'] = vars['regions'].copy()
-    template_vars['peers'] = regions_to_peers(vars['regions'])
-    template_vars['machine_regions'] = object_regions('machines', vars)
-    template_vars['database_regions'] = object_regions('databases', vars)
-    template_vars['aurora_regions'] = object_regions('aurora', vars)
+    # Save terraform vars file
+    save_terraform_vars(
+        env.project_path, 'terraform_vars.json', terraform_vars
+    )
 
     # Generate the main.tf and providers.tf files.
-    tpl('main.tf', env.project_path / 'main.tf', template_vars)
-    tpl('providers.tf.j2', env.project_path / 'providers.tf', template_vars)
+    tpl(
+        'main.tf.j2',
+        env.project_path / 'main.tf',
+        env.csp,
+        template_vars
+    )
+    tpl(
+        'providers.tf.j2',
+        env.project_path / 'providers.tf',
+        env.csp,
+        template_vars
+    )

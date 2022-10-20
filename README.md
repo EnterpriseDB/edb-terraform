@@ -21,153 +21,156 @@ describing the target cloud infrastructure.
 Following are examples of infrastructure files describing the target cloud
 infrastructure on AWS.
 
-### EC2 machines
+### AWS EC2 machines
 
 ```yaml
 cluster_name: ec2-machines-demo
-ssh_user: rocky
-operating_system:
-  name: Rocky-8-ec2-8.6-20220515.0.x86_64
-  owner: 679593333241
-regions:
-  us-east-1:
-    cidr_block: 10.0.0.0/16
-    azs:
-      us-east-1b: 10.0.0.0/24
-      us-east-1c: 10.0.1.0/24
-    service_ports:
-      - port: 22
-        protocol: tcp
-        description: "SSH"
-      - port: 30000
-        protocol: tcp
-        description: "DBT-2"
-      - port: 30000
-        protocol: udp
-        description: "DBT-2"
-      - port: 5432
-        protocol: tcp
-        description: "PostgreSQL"
-machines:
-  dbt2-client:
-    type: dbt2-client
-    region: us-east-1
-    az: us-east-1b
-    instance_type: c5.18xlarge
-    volume:
-      type: gp2
-      size_gb: 50
-      iops: 5000
-      encrypted: false
-  dbt2-driver:
-    type: dbt2-driver
-    region: us-east-1
-    az: us-east-1b
-    instance_type: c5.18xlarge
-    volume:
-      type: gp2
-      size_gb: 50
-      iops: 5000
-      encrypted: false
-  pg1:
-    type: postgres
-    region: us-east-1
-    az: us-east-1b
-    instance_type: c5.4xlarge
-    volume:
-      type: gp2
-      size_gb: 50
-      iops: 5000
-      encrypted: false
-    additional_volumes:
-      - mount_point: /opt/pg_data
-        size_gb: 200
-        type: io2
-        iops: 50000
+aws:
+  ssh_user: rocky
+  operating_system:
+    name: Rocky-8-ec2-8.6-20220515.0.x86_64
+    owner: 679593333241
+  regions:
+    us-east-1:
+      cidr_block: 10.0.0.0/16
+      azs:
+        us-east-1b: 10.0.0.0/24
+        us-east-1c: 10.0.1.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+        - port: 30000
+          protocol: tcp
+          description: "DBT-2"
+        - port: 30000
+          protocol: udp
+          description: "DBT-2"
+        - port: 5432
+          protocol: tcp
+          description: "PostgreSQL"
+  machines:
+    dbt2-client:
+      type: dbt2-client
+      region: us-east-1
+      az: us-east-1b
+      instance_type: c5.18xlarge
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
         encrypted: false
-      - mount_point: /opt/pg_wal
-        size_gb: 200
-        type: io2
-        iops: 50000
+    dbt2-driver:
+      type: dbt2-driver
+      region: us-east-1
+      az: us-east-1b
+      instance_type: c5.18xlarge
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
         encrypted: false
+    pg1:
+      type: postgres
+      region: us-east-1
+      az: us-east-1b
+      instance_type: c5.4xlarge
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+      additional_volumes:
+        - mount_point: /opt/pg_data
+          size_gb: 200
+          type: io2
+          iops: 50000
+          encrypted: false
+        - mount_point: /opt/pg_wal
+          size_gb: 200
+          type: io2
+          iops: 50000
+          encrypted: false
 ```
 
-### PostgreSQL RDS Database
+### AWS RDS Database
 
 ```yaml
 cluster_name: rds-database-demo
-regions:
-  us-east-1:
-    cidr_block: 10.0.0.0/16
-    azs:
-      us-east-1a: 10.0.0.0/24
-    service_ports:
-      - port: 5432
-        protocol: tcp
-        description: "PostgreSQL"
-databases:
-  mydb1:
-    region: us-east-1
-    engine: postgres
-    engine_version: 13
-    instance_type: db.t3.micro
-    dbname: "dbt2"
-    username: "postgres"
-    password: "12Password!"
-    port: 5432
-    volume:
-      size_gb: 100
-      type: io1
-      iops: 1000
-      encrypted: true
-    settings:
-      - name: checkpoint_timeout
-        value: 900
-      - name: max_connections
-        value: 300
-      - name: max_wal_size
-        value: 5000
-      - name: random_page_cost
-        value: 1.25
-      - name: work_mem
-        value: 16000
+aws:
+  regions:
+    us-east-1:
+      cidr_block: 10.0.0.0/16
+      azs:
+        us-east-1a: 10.0.0.0/24
+      service_ports:
+        - port: 5432
+          protocol: tcp
+          description: "PostgreSQL"
+  databases:
+    mydb1:
+      region: us-east-1
+      engine: postgres
+      engine_version: 13
+      instance_type: db.t3.micro
+      dbname: "dbt2"
+      username: "postgres"
+      password: "12Password!"
+      port: 5432
+      volume:
+        size_gb: 100
+        type: io1
+        iops: 1000
+        encrypted: true
+      settings:
+        - name: checkpoint_timeout
+          value: 900
+        - name: max_connections
+          value: 300
+        - name: max_wal_size
+          value: 5000
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
 ```
 
-### PostgreSQL Aurora Database
+### AWS Aurora Database
 
 ```yaml
 cluster_name: aurora-demo
-regions:
-  us-east-1:
-    cidr_block: 10.0.0.0/16
-    azs:
-      us-east-1a: 10.0.1.0/24
-      us-east-1b: 10.0.2.0/24
-    service_ports:
-      - port: 5432
-        protocol: tcp
-        description: "PostgreSQL"
-aurora:
-  mydb2:
-    region: us-east-1
-    azs:
-      - us-east-1a
-      - us-east-1b
-    count: 1
-    engine: aurora-postgresql
-    engine_version: 13
-    dbname: "test"
-    username: "postgres"
-    password: "12Password!"
-    port: 5432
-    instance_type: db.t3.medium
-    settings:
-      - name: max_connections
-        value: 300
-      - name: random_page_cost
-        value: 1.25
-      - name: work_mem
-        value: 16000
+aws:
+  regions:
+    us-east-1:
+      cidr_block: 10.0.0.0/16
+      azs:
+        us-east-1a: 10.0.1.0/24
+        us-east-1b: 10.0.2.0/24
+      service_ports:
+        - port: 5432
+          protocol: tcp
+          description: "PostgreSQL"
+  aurora:
+    mydb2:
+      region: us-east-1
+      azs:
+        - us-east-1a
+        - us-east-1b
+      count: 1
+      engine: aurora-postgresql
+      engine_version: 13
+      dbname: "test"
+      username: "postgres"
+      password: "12Password!"
+      port: 5432
+      instance_type: db.t3.medium
+      settings:
+        - name: max_connections
+          value: 300
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
 ```
 
 ## Prerequisites and installation

@@ -1,12 +1,12 @@
 locals {
-{% if has_network %}
+{% if has_regions %}
   region_az_networks = {
     for region, region_spec in var.regions: region => {
       for az, network in region_spec.azs: az => network
     }
   }
 {% endif %}
-{% if has_machine %}
+{% if has_machines %}
   region_machines = {
     for name, machine_spec in var.machines: machine_spec.region => {
       name = name
@@ -14,7 +14,7 @@ locals {
     }...
   }
 {% endif %}
-{% if has_database %}
+{% if has_databases %}
   region_databases = {
     for name, database_spec in var.databases: database_spec.region => {
       name = name
@@ -35,28 +35,28 @@ locals {
 {% for region in regions.keys() %}
 {%   set region_ = region | replace('-', '_') %}
 
-{%   if has_network %}
-{%     include "network.tf" %}
+{%   if has_regions %}
+{%     include "network.tf.j2" %}
 {%   endif %}
 
-{%   if has_machine %}
-{%     include "key_pair.tf" %}
+{%   if has_machines %}
+{%     include "key_pair.tf.j2" %}
 
-{%     include "machine.tf" %}
+{%     include "machine.tf.j2" %}
 {%   endif %}
 
-{%   if has_database %}
-{%     include "database.tf" %}
+{%   if has_databases %}
+{%     include "database.tf.j2" %}
 {%   endif %}
 
 {%   if has_aurora %}
-{%     include "aurora.tf" %}
+{%     include "aurora.tf.j2" %}
 {%   endif %}
 
 {% endfor %}
 
 {% if has_region_peering %}
-{%   include "region_peering.tf" %}
+{%   include "region_peering.tf.j2" %}
 {% endif %}
 
 resource "local_file" "servers_yml" {
