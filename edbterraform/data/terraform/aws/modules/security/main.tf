@@ -3,6 +3,8 @@ variable "public_cidrblock" {}
 variable "project_tag" {}
 variable "service_ports" {}
 variable "cluster_name" {}
+variable "region_cidrblocks" {}
+variable "region_ports" {}
 
 terraform {
   required_providers {
@@ -35,6 +37,20 @@ resource "aws_security_group" "rules" {
       // Not recommended for production. 
       // Limit IP Addresses in a Production Environment !
       cidr_blocks = [var.public_cidrblock]
+    }
+  }
+
+  // Allow connections from regions cidr block to specific ports
+  // Reduced exposure compared to service ports
+  dynamic "ingress" {
+    for_each = var.region_ports
+    iterator = region_ports
+    content {
+      from_port = region_ports.value.port
+      to_port = region_ports.value.port
+      protocol = region_ports.value.protocol
+      description = region_ports.value.description
+      cidr_blocks = var.region_cidrblocks
     }
   }
 
