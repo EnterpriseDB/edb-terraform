@@ -40,7 +40,6 @@ aws:
         - port: 22
           protocol: tcp
           description: "SSH"
-      region_ports:
         - port: 30000
           protocol: tcp
           description: "DBT-2"
@@ -211,13 +210,6 @@ aws:
         size_gb: 50
         iops: 5000
         encrypted: false
-      service_ports:
-        - port: 8010
-          protocol: tcp
-          description: "master web UI"
-        - port: 9989
-          protocol: tcp
-          description: "worker connection port"
     ebac-worker-0:
       type: worker
       region: us-east-2
@@ -235,9 +227,9 @@ aws:
           iops: 5000
           encrypted: false
 ```
-**notes:
-* service_ports: ports open to the public
-* region_ports: ports open and restricted to region's subnet cidrblocks
+#### Options:
+* `service_ports`: ports open to the public
+* `region_ports`: ports open and restricted to region's subnet cidrblocks
 
 ## Prerequisites and installation
 
