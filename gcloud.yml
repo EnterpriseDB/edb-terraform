@@ -1,0 +1,80 @@
+cluster_name: demo-infra
+gcloud:
+  ssh_user: rocky
+  operating_system:
+    name: rocky-linux-8
+  regions:
+    us-west1:
+      cidr_block: 10.0.0.0/16
+      azs:
+        us-west1-b: 10.0.0.0/24
+        us-west1-c: 10.0.1.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+      region_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+  machines:
+    dbt2-driver:
+      type: dbt2-driver
+      region: us-west1
+      az: us-west1-b
+      instance_type: c2-standard-4
+      volume:
+        type: pd-standard
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+    pg1:
+      type: postgres
+      region: us-west1
+      az: us-west1-b
+      instance_type: e2-standard-4
+      volume:
+        type: pd-standard
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+      additional_volumes:
+        - mount_point: /opt/pg_data
+          type: pd-ssd
+          size_gb: 50
+          iops: null
+          encrypted: false
+        - mount_point: /opt/pg_wal
+          type: pd-ssd
+          size_gb: 50
+          iops: null
+          encrypted: false
+  databases:
+    mydb1:
+      region: us-west1
+      engine: postgres
+      engine_version: 13
+      dbname: "dbt2"
+      username: "postgres"
+      password: "12Password!"
+      port: 5432
+      instance_type: db-f1-micro
+      volume:
+        size_gb: 100
+        type: SSD
+        iops: 1000
+        encrypted: true
+      settings:
+        - name: checkpoint_timeout
+          value: 900
+        - name: max_connections
+          value: 300
+        - name: max_wal_size
+          value: 5000
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
+
+
+      

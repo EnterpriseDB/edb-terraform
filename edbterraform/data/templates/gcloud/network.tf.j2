@@ -1,0 +1,63 @@
+module "vpc_{{ region_ }}"{
+  source = "./modules/vpc"
+
+  vpc_tag = var.vpc_tag
+  name_id = random_id.apply.hex
+  region  = "{{ region_dash }}"
+
+  providers = {
+    google = google.{{ region_ }}
+  }
+}
+
+module "network_{{ region_ }}" {
+  source = "./modules/network"
+
+  for_each = lookup(local.region_az_networks, "{{ region }}", null)
+
+  network_name    = module.vpc_{{ region_ }}.vpc_id
+  public_subnet_tag = var.public_subnet_tag
+  ip_cidr_range   = each.value
+  name_id = random_id.apply.hex
+  name = "${var.public_subnet_tag}-${each.key}-${random_id.apply.hex}"
+
+
+  depends_on = [module.vpc_{{ region_ }}]
+
+  providers = {
+    google = google.{{ region_ }}
+  }
+}
+
+/*
+https://cloud.google.com/vpc/docs/routes#routingpacketsinternet
+https://cloud.google.com/vpc/docs/routes#subnet-routes
+https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_route
+https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router
+
+module "routes_{{ region_ }}"{
+  source = "./modules/routes"
+}
+*/
+
+module "security_{{ region_ }}" {
+  source = "./modules/security"
+
+  cluster_name = var.cluster_name
+  network_name  = module.vpc_{{ region_ }}.vpc_id
+  public_cidrblock = var.public_cidrblock
+  service_ports    = lookup(lookup(var.regions, "{{ region }}", null), "service_ports", [])
+  region_cidrblocks = ([ for k, v 
+                      in lookup(lookup(var.regions, "{{ region }}", null), "azs", [])
+                      : v ])
+  region_ports = lookup(lookup(var.regions, "{{ region }}", null), "region_ports", [])
+  project_tag = var.project_tag
+  name_id = random_id.apply.hex
+  region  = "{{ region_dash }}"
+
+  depends_on = [module.network_{{ region_ }}]
+
+  providers = {
+    google = google.{{ region_ }}
+  }
+}

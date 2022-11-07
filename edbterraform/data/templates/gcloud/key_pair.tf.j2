@@ -1,0 +1,8 @@
+module "key_pair_{{ region_ }}" {
+  source = "./modules/key_pair"
+
+  ssh_user = var.ssh_user
+  ssh_pub_key  = var.ssh_pub_key
+  name_id = random_id.apply.hex
+  region  = "{{ region_dash }}"
+}
