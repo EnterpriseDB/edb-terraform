@@ -50,7 +50,11 @@ module "security_{{ region_ }}" {
   project_tag      = var.project_tag
   service_ports    = lookup(lookup(var.regions, "{{ region }}", null), "service_ports", [])
   cluster_name     = var.cluster_name
-
+  region_cidrblocks = ([ for k, v 
+                      in lookup(lookup(var.regions, "{{ region }}", null), "azs", [])
+                      : v ])
+  region_ports = lookup(lookup(var.regions, "{{ region }}", null), "region_ports", [])
+  
   depends_on = [module.routes_{{ region_ }}]
 
   providers = {

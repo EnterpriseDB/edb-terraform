@@ -173,6 +173,64 @@ aws:
           value: 16000
 ```
 
+### AWS Buildbot Master and Worker
+
+```yaml
+cluster_name: BuildBot-Demo
+aws:
+  ssh_user: ubuntu
+  operating_system:
+    name: ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-
+    owner: 099720109477
+  regions:
+    us-east-2:
+      cidr_block: 10.0.0.0/16
+      azs:
+        us-east-2b: 10.0.0.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+      region_ports:
+        - port: 9989
+          protocol: tcp
+          description: "worker connection to master"
+        - port: 8010
+          protocol: tcp
+          description: "master web UI"
+  machines:
+    ebac-master:
+      count: 1
+      type: master
+      region: us-east-2
+      az: us-east-2b
+      instance_type: c5.xlarge
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+    ebac-worker-0:
+      type: worker
+      region: us-east-2
+      az: us-east-2b
+      instance_type: c5.xlarge
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+      additional_volumes:
+        - mount_point: /var/lib/buildbot-worker
+          size_gb: 300
+          type: io2
+          iops: 5000
+          encrypted: false
+```
+#### Options:
+* `service_ports`: ports open to the public
+* `region_ports`: ports open and restricted to region's subnet cidrblocks
+
 ## Prerequisites and installation
 
 The following components must be installed on the system:
