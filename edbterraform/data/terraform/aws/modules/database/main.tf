@@ -3,6 +3,7 @@ variable "vpc_id" {}
 variable "custom_security_group_id" {}
 variable "cluster_name" {}
 variable "created_by" {}
+variable "name_id" { default="0" }
 
 terraform {
   required_providers {
@@ -21,7 +22,7 @@ data "aws_subnets" "ids" {
 }
 
 resource "aws_db_subnet_group" "rds" {
-  name       = format("rds-subnet-group-%s", var.database.name)
+  name       = format("rds-subnet-group-%s-%s", var.name_id, var.database.name)
   subnet_ids = tolist(data.aws_subnets.ids.ids)
 
   tags = {
@@ -58,7 +59,7 @@ resource "aws_db_instance" "rds_server" {
 }
 
 resource "aws_db_parameter_group" "edb_rds_db_params" {
-  name   = format("db-parameter-group-%s", lower(var.database.name))
+  name   = format("db-parameter-group-%s-%s", var.name_id, lower(var.database.name))
   family = format("%s%s", var.database.spec.engine, var.database.spec.engine_version)
 
   dynamic "parameter" {

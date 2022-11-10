@@ -8,6 +8,7 @@ module "database_{{ region_ }}" {
   cluster_name             = var.cluster_name
   custom_security_group_id = module.security_{{ region_ }}.aws_security_group_id
   created_by               = var.created_by
+  name_id                  = random_id.apply.hex
 
   depends_on = [module.security_{{ region_ }}]
 
