@@ -32,6 +32,10 @@ locals {
 {% endif %}
 }
 
+resource "random_id" "apply" {
+  byte_length = 4
+}
+
 {% for region in regions.keys() %}
 {%   set region_ = region | replace('-', '_') %}
 
