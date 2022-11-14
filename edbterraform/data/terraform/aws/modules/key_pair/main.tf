@@ -1,5 +1,6 @@
 variable "ssh_pub_key" {}
-variable "cluster_name" {}
+variable "key_name" {}
+variable "name_id" { default="0" }
 
 terraform {
   required_providers {
@@ -11,6 +12,6 @@ terraform {
 }
 
 resource "aws_key_pair" "key_pair" {
-  key_name   = var.cluster_name
+  key_name   = "${var.key_name}-${var.name_id}"
   public_key = file(var.ssh_pub_key)
 }

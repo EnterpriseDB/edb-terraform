@@ -1,5 +1,6 @@
 variable "vpc_cidr_block" {}
 variable "vpc_tag" {}
+variable "name_id" { default = "0" }
 
 terraform {
   required_providers {
@@ -17,7 +18,7 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = var.vpc_tag
+    Name = "${var.vpc_tag}-${var.name_id}"
   }
 }
 
