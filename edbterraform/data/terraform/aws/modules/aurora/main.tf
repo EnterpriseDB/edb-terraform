@@ -22,7 +22,7 @@ data "aws_subnets" "ids" {
 }
 
 resource "aws_db_subnet_group" "aurora" {
-  name       = format("rds-subnet-group-%s-%s", var.name_id, var.aurora.name)
+  name       = format("rds-subnet-group-aurora-%s-%s", var.name_id, var.aurora.name)
   subnet_ids = tolist(data.aws_subnets.ids.ids)
 
   tags = {
@@ -71,7 +71,7 @@ resource "aws_rds_cluster_instance" "aurora_instance" {
 }
 
 resource "aws_db_parameter_group" "aurora_db_params" {
-  name   = format("db-parameter-group-%s-%s", var.name_id, lower(var.aurora.name))
+  name   = format("db-parameter-group-aurora-%s-%s", var.name_id, lower(var.aurora.name))
   family = format("%s%s", var.aurora.spec.engine, var.aurora.spec.engine_version)
 
   dynamic "parameter" {
