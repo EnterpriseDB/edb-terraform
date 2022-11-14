@@ -36,7 +36,7 @@ resource "aws_db_instance" "rds_server" {
   db_subnet_group_name    = aws_db_subnet_group.rds.id
   engine                  = var.database.spec.engine
   engine_version          = var.database.spec.engine_version
-  identifier              = var.database.name
+  identifier              = "${var.database.name}-${var.name_id}"
   instance_class          = var.database.spec.instance_type
   multi_az                = false
   db_name                 = var.database.spec.dbname
