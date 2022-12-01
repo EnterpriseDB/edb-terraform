@@ -1,0 +1,33 @@
+{% for (requester, accepter) in peers %}
+{%   set requester_ = requester|replace('-', '_') %}
+{%   set accepter_ = accepter|replace('-', '_') %}
+module "vpc_peering_{{ requester_ }}_{{ accepter_ }}" {
+  source = "./modules/vpc_peering"
+  
+  name         = "peer-{{ requester }}-{{ accepter }}-${random_id.apply.hex}"
+  network      = module.vpc_{{ requester_ }}.vpc_id
+  peer_network = module.vpc_{{ accepter_ }}.vpc_id
+
+  depends_on = [module.vpc_{{ requester_ }}, module.vpc_{{ accepter_ }}]
+
+  providers = {
+    google = google.{{ requester_ }}
+  }
+
+}
+
+module "vpc_peering_{{ accepter_ }}_{{ requester_ }}" {
+  source = "./modules/vpc_peering"
+  
+  name         = "peer-{{ accepter }}-{{ requester }}-${random_id.apply.hex}"
+  network      = module.vpc_{{ accepter_ }}.vpc_id
+  peer_network = module.vpc_{{ requester_ }}.vpc_id
+
+  depends_on = [module.vpc_{{ requester_ }}, module.vpc_{{ accepter_ }}]
+
+  providers = {
+    google = google.{{ accepter_ }}
+  }
+
+}
+{% endfor %}

@@ -36,6 +36,10 @@ resource "random_id" "apply" {
 
 {% endfor %}
 
+{% if has_region_peering %}
+{%   include "region_peering.tf.j2" %}
+{% endif %}
+
 resource "local_file" "servers_yml" {
   filename        = "${abspath(path.root)}/servers.yml"
   file_permission = "0600"
@@ -53,7 +57,6 @@ servers:
       region: ${module.machine_{{ region_ }}[key].machine_ips.region}
       az: ${module.machine_{{ region_ }}[key].machine_ips.az}
       public_ip: ${module.machine_{{ region_ }}[key].machine_ips.public_ip}
-      private_ip: ${module.machine_{{ region_ }}[key].machine_ips.private_ip}
 %{endfor~}
 {% endfor %}
     EOT

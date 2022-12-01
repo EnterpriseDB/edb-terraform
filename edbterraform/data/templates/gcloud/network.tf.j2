@@ -3,7 +3,7 @@ module "vpc_{{ region_ }}"{
 
   vpc_tag = var.vpc_tag
   name_id = random_id.apply.hex
-  region  = "{{ region_dash }}"
+  region  = "{{ region }}"
 
   providers = {
     google = google.{{ region_ }}
@@ -47,13 +47,15 @@ module "security_{{ region_ }}" {
   network_name  = module.vpc_{{ region_ }}.vpc_id
   public_cidrblock = var.public_cidrblock
   service_ports    = lookup(lookup(var.regions, "{{ region }}", null), "service_ports", [])
-  region_cidrblocks = ([ for k, v 
-                      in lookup(lookup(var.regions, "{{ region }}", null), "azs", [])
-                      : v ])
+  region_cidrblocks = flatten([
+    for region in try(var.regions, []) : [
+      for ip_cidr in try(region.azs, []) : ip_cidr
+      ] 
+    ])
   region_ports = lookup(lookup(var.regions, "{{ region }}", null), "region_ports", [])
   project_tag = var.project_tag
   name_id = random_id.apply.hex
-  region  = "{{ region_dash }}"
+  region  = "{{ region }}"
 
   depends_on = [module.network_{{ region_ }}]
 
