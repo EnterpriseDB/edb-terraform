@@ -232,6 +232,65 @@ aws:
           iops: 5000
           encrypted: false
 ```
+
+### GCloud Compute Engine VMs
+
+```yaml
+cluster_name: gcloud-infra
+gcloud:
+  ssh_user: rocky
+  operating_system:
+    name: rocky-linux-8
+  regions:
+    us-west2:
+      cidr_block: 10.2.0.0/16
+      azs:
+        us-west2-b: 10.2.20.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+    us-west1:
+      cidr_block: 10.1.0.0/16
+      azs:
+        us-west1-b: 10.1.20.0/24
+        us-west1-c: 10.1.30.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+      region_ports:
+        - protocol: icmp
+          description: "ping"
+  machines:
+    dbt2-driver:
+      type: dbt2-driver
+      region: us-west2
+      az: us-west2-b
+      instance_type: c2-standard-4
+      volume:
+        type: pd-standard
+        size_gb: 50
+    pg1:
+      type: postgres
+      region: us-west1
+      az: us-west1-c
+      instance_type: e2-standard-4
+      service_ip: true
+      volume:
+        type: pd-standard
+        size_gb: 50
+      additional_volumes:
+        - mount_point: /opt/pg_data
+          type: pd-ssd
+          size_gb: 50
+          iops: null
+        - mount_point: /opt/pg_wal
+          type: pd-ssd
+          size_gb: 50
+          iops: null
+```
+
 #### Options:
 * `service_ports`: ports open to the public
 * `region_ports`: ports open and restricted to region's and cross-region's subnet cidrblocks
