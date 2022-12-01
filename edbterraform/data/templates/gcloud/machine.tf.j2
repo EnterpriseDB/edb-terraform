@@ -5,8 +5,7 @@ module "machine_{{ region_ }}" {
 
   operating_system                = var.operating_system
   cluster_name                    = var.cluster_name
-  cidr_block                      = var.ip_cidr_range
-  az                              = each.value.spec.az
+  zone                            = each.value.spec.az
   machine                         = each.value
   ssh_user                        = var.ssh_user
   ssh_pub_key                     = var.ssh_pub_key
@@ -14,7 +13,6 @@ module "machine_{{ region_ }}" {
   ssh_metadata                    = module.key_pair_{{ region_ }}.keys
   subnet_name                     = module.network_{{ region_ }}[each.value.spec.az].name
   name_id                         = random_id.apply.hex
-  public_subnet_tag               = var.public_subnet_tag
 
   depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
 
