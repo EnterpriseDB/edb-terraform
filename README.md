@@ -13,8 +13,13 @@ describing the target cloud infrastructure.
 | AWS      | Security (ports)         |:white_check_mark:|
 | AWS      | RDS                      |:white_check_mark:|
 | AWS      | RDS Aurora               |:white_check_mark:|
-| GCloud   | -                        |       :x:        |
-| Azure    | -                        |       :x:        |
+| GCloud   | Compute Engine - VM      |:white_check_mark:|
+| GCloud   | CloudSQL                 |       :x:        |
+| GCloud   | AlloyDB                  |       :x:        |
+| Azure    | VM                       |       :x:        |
+| Azure    | Database - Single        |       :x:        |
+| Azure    | Database - Flexible      |       :x:        |
+| Azure    | CosmosDB                 |       :x:        |
 
 ## Infrastructure file
 
@@ -229,13 +234,14 @@ aws:
 ```
 #### Options:
 * `service_ports`: ports open to the public
-* `region_ports`: ports open and restricted to region's subnet cidrblocks
+* `region_ports`: ports open and restricted to region's and cross-region's subnet cidrblocks
 
 ## Prerequisites and installation
 
 The following components must be installed on the system:
 - Python3
 - AWS CLI
+- GCloud CLI
 - Terraform
 
 ### Prequisites installation on Debian 11
@@ -256,6 +262,15 @@ $ sudo pip3 install awscli
 AWS Access Key and Secret Access Key configuration:
 ```console
 $ aws configure
+```
+
+#### GCloud CLI
+[Install CLI](https://cloud.google.com/sdk/docs/install)
+
+Initialize GCloud and export project id
+```console
+$ gcloud init
+$ export GOOGLE_PROJECT=<project_id>
 ```
 
 #### Terraform
@@ -320,6 +335,7 @@ servers:
     az: us-east-1b
     public_ip: 54.166.46.2
     private_ip: 10.0.0.103
+    # Default provided DNS only supported by AWS
     public_dns: ec2-54-166-46-2.compute-1.amazonaws.com
   pg1:
     type: postgres
