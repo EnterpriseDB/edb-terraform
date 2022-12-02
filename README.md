@@ -17,7 +17,6 @@ describing the target cloud infrastructure.
 | GCloud   | CloudSQL                 |       :x:        |
 | GCloud   | AlloyDB                  |       :x:        |
 | Azure    | VM                       |       :x:        |
-| Azure    | Database - Single        |       :x:        |
 | Azure    | Database - Flexible      |       :x:        |
 | Azure    | CosmosDB                 |       :x:        |
 
