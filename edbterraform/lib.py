@@ -172,8 +172,8 @@ def object_regions(object_type, vars):
 
     return regions
 
+def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
 
-def aws_build_vars(infra_vars, ssh_priv_key, ssh_pub_key):
     # Based on the infra variables, returns a tuple composed of (terraform
     # variables as a dist, template variables as a dict)
 
@@ -190,7 +190,6 @@ def aws_build_vars(infra_vars, ssh_priv_key, ssh_pub_key):
         machines=infra_vars.get('machines', dict()),
         databases=infra_vars.get('databases', dict()),
         regions=infra_vars.get('regions', dict()),
-        aurora=infra_vars.get('aurora', dict()),
         operating_system=infra_vars.get('operating_system', None),
     ))
 
@@ -200,11 +199,35 @@ def aws_build_vars(infra_vars, ssh_priv_key, ssh_pub_key):
         has_machines=('machines' in infra_vars),
         has_databases=('databases' in infra_vars),
         has_regions=('regions' in infra_vars),
-        has_aurora=('aurora' in infra_vars),
         regions=terraform_vars['regions'].copy(),
         peers=regions_to_peers(terraform_vars['regions']),
         machine_regions=object_regions('machines', terraform_vars),
         database_regions=object_regions('databases', terraform_vars),
+    ))
+
+    if csp == 'aws':
+        return aws_build_vars(infra_vars, terraform_vars, template_vars)
+    
+    if csp == 'gcloud':
+        return gcloud_build_vars(infra_vars, terraform_vars, template_vars)
+    
+    return (terraform_vars, template_vars)
+
+def gcloud_build_vars(infra_vars, terraform_vars, template_vars):
+    return (terraform_vars, template_vars)
+
+def aws_build_vars(infra_vars, terraform_vars, template_vars):
+    # Based on the infra variables, returns a tuple composed of (terraform
+    # variables as a dist, template variables as a dict)
+
+    # Add additional terraform variables
+    terraform_vars.update(dict(
+        aurora=infra_vars.get('aurora', dict()),
+    ))
+
+    # Build template variables
+    template_vars.update(dict(
+        has_aurora=('aurora' in infra_vars),
         aurora_regions=object_regions('aurora', terraform_vars),
     ))
 
@@ -231,7 +254,7 @@ def new_project_main():
         '--cloud-service-provider', '-c',
         metavar='CLOUD_SERVICE_PROVIDER',
         dest='csp',
-        choices=['aws'],
+        choices=['aws', 'gcloud'],
         default='aws',
         help="Cloud Service Provider. Default: %(default)s"
     )
@@ -252,11 +275,10 @@ def new_project_main():
         ssh_priv_key = str(ssh_priv_key.resolve())
         ssh_pub_key = str(ssh_pub_key.resolve())
 
-    if env.csp == 'aws':
-        # Transform variables extracted from the infrastructure file into
-        # terraform and templates variables.
-        (terraform_vars, template_vars) = \
-            aws_build_vars(infra_vars, ssh_priv_key, ssh_pub_key)
+    # Transform variables extracted from the infrastructure file into
+    # terraform and templates variables.
+    (terraform_vars, template_vars) = \
+        build_vars(env.csp, infra_vars, ssh_priv_key, ssh_pub_key)
 
     # Save terraform vars file
     save_terraform_vars(

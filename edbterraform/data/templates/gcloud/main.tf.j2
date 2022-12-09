@@ -1,0 +1,69 @@
+locals {
+{% if has_regions %}
+  region_az_networks = {
+    for region, region_spec in var.regions: region => {
+      for az, network in region_spec.azs: az => network
+    }
+  }
+{% endif %}
+{% if has_machines %}
+  region_machines = {
+    for name, machine_spec in var.machines: machine_spec.region => {
+      name = name
+      spec = machine_spec
+    }...
+  }
+{% endif %}
+}
+
+resource "random_id" "apply" {
+  byte_length = 4
+}
+
+{% for region in regions.keys() %}
+{%   set region_ = region | replace('-', '_') %}
+
+{%   if has_regions %}
+{%     include "network.tf.j2" %}
+{%   endif %}
+
+{%   if has_machines %}
+{%     include "key_pair.tf.j2" %}
+
+{%     include "machine.tf.j2" %}
+{%   endif %}
+
+{% endfor %}
+
+{% if has_region_peering %}
+{%   include "region_peering.tf.j2" %}
+{% endif %}
+
+resource "local_file" "servers_yml" {
+  filename        = "${abspath(path.root)}/servers.yml"
+  file_permission = "0600"
+  content         = <<-EOT
+---
+servers:
+{% if machine_regions | length > 0 %}
+  machines:
+{% endif %}
+{% for region in machine_regions %}
+{% set region_ = region | replace('-', '_') %}
+%{for key in keys(module.machine_{{ region_ }}) ~}
+    ${key}:
+      type: ${module.machine_{{ region_ }}[key].machine_ips.type}
+      region: ${module.machine_{{ region_ }}[key].machine_ips.region}
+      az: ${module.machine_{{ region_ }}[key].machine_ips.az}
+      public_ip: ${module.machine_{{ region_ }}[key].machine_ips.public_ip}
+      private_ip: ${module.machine_{{ region_ }}[key].machine_ips.private_ip}
+%{endfor~}
+{% endfor %}
+    EOT
+}
+
+
+
+
+
+
