@@ -1,0 +1,31 @@
+module "database_{{ region_ }}" {
+  source = "./modules/database"
+
+  for_each = { for rm in lookup(local.region_databases, "{{ region }}", []) : rm.name => rm }
+
+  name = "${each.key}-{{ region }}-${random_id.apply.hex}"
+  dbname = each.value.spec.dbname
+  network = module.vpc_{{ region_ }}.vpc_id
+  region = each.value.spec.region
+  zone = each.value.spec.az
+  port = each.value.spec.port
+  instance_type = each.value.spec.instance_type
+  engine = each.value.spec.engine
+  engine_version = each.value.spec.engine_version
+  disk_size = each.value.spec.volume.size_gb
+  disk_type = each.value.spec.volume.type
+  username = each.value.spec.username
+  password = each.value.spec.password
+  settings = ([
+    for setting in lookup(each.value.spec, "settings", []) : {
+      name = setting.name
+      value = setting.value
+    }
+  ])
+
+  depends_on = [module.vpc_{{ region_ }}]
+
+  providers = {
+    google = google.{{ region_ }}
+  }
+}
