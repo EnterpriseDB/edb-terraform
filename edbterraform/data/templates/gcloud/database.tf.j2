@@ -1,7 +1,10 @@
 module "database_{{ region_ }}" {
   source = "./modules/database"
 
-  for_each = { for rm in lookup(local.region_databases, "{{ region }}", []) : rm.name => rm }
+  for_each = ({
+    for rm in lookup(local.region_databases, "{{ region }}", []) :
+      rm.name => rm
+    })
 
   name = "${each.key}-{{ region }}-${random_id.apply.hex}"
   dbname = try(each.value.spec.dbname, null)
@@ -24,7 +27,7 @@ module "database_{{ region_ }}" {
     }
   ])
 
-  depends_on = [module.vpc_{{ region_ }}]
+  depends_on = [module.vpc_{{ region_ }}, module.service_connection_{{ region_ }}]
 
   providers = {
     google = google.{{ region_ }}

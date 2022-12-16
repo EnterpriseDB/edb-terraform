@@ -86,8 +86,3 @@ variable "deletion_protection" {
   default  = false
   nullable = false
 }
-variable "google_service_url" {
-  type     = string
-  default  = "servicenetworking.googleapis.com"
-  nullable = false
-}
