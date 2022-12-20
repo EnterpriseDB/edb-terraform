@@ -8,3 +8,8 @@ variable "cluster_name" {}
 variable "operating_system" {}
 variable "subnet_name" {}
 variable "name_id" { default = "0" }
+variable "ip_forward" {
+  type     = bool
+  default  = false
+  nullable = false
+}

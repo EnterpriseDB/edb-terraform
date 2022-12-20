@@ -4,4 +4,8 @@ module "key_pair_{{ region_ }}" {
   ssh_user = var.ssh_user
   key_name = "ssh-keys-{{ region }}-${random_id.apply.hex}"
   public_keys  = var.ssh_pub_key
+
+  providers = {
+    google = google.{{ region_ }}
+  }
 }
