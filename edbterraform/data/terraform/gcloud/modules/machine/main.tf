@@ -18,9 +18,9 @@ resource "google_compute_address" "public_ip" {
 }
 
 resource "google_compute_instance" "machine" {
-  name         = format("%s-%s-%s", var.cluster_name, var.machine.name, var.name_id)
-  machine_type = var.machine.spec.instance_type
-  zone         = var.zone
+  name           = format("%s-%s-%s", var.cluster_name, var.machine.name, var.name_id)
+  machine_type   = var.machine.spec.instance_type
+  zone           = var.zone
   can_ip_forward = try(var.machine.spec.ip_forward, var.ip_forward)
 
   boot_disk {

@@ -4,6 +4,14 @@ gcloud:
   operating_system:
     name: rocky-linux-8
   regions:
+    us-west1:
+      cidr_block: 10.1.0.0/16
+      azs:
+        us-west1-b: 10.1.20.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
     us-west2:
       cidr_block: 10.2.0.0/16
       azs:
@@ -12,11 +20,24 @@ gcloud:
         - port: 22
           protocol: tcp
           description: "SSH"
+      regional_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
   machines:
-    dbt2-driver:
+    dbt2-driver2:
       type: dbt2-driver
+      region: us-west1
+      az: us-west1-b
+      instance_type: c2-standard-4
+      volume:
+        type: pd-standard
+        size_gb: 50
+    dbt2-proxy:
+      type: proxy
       region: us-west2
       az: us-west2-b
+      ip_forward: true
       instance_type: c2-standard-4
       volume:
         type: pd-standard
