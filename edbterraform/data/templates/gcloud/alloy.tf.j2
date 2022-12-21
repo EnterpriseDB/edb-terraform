@@ -1,9 +1,29 @@
 module "alloy_{{ region_ }}" {
   source = "./modules/alloy"
 
-  depends_on = []
+  for_each = ({
+    for rm in lookup(local.region_alloys, "{{ region }}", []) :
+      rm.name => rm
+    })
+
+  name = "${each.key}-{{ region }}-${random_id.apply.hex}"
+  network = module.vpc_{{ region_ }}.vpc_id
+  region = each.value.spec.region
+  zone = try(each.value.spec.az, null)
+  port = try(each.value.spec.port, null)
+  cpu_count = try(each.value.spec.cpu_count, null)
+  username = try(each.value.spec.username, null)
+  password = each.value.spec.password
+  settings = ([
+    for setting in lookup(each.value.spec, "settings", []) : {
+      name = setting.name
+      value = setting.value
+    }
+  ])
+
+  depends_on = [module.vpc_{{ region_ }}, module.service_connection_{{ region_ }}]
 
   providers = {
-    google = google.{{ region_ }}
+    google = google-beta.{{ region_ }}
   }
 }

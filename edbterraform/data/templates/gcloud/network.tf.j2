@@ -30,7 +30,7 @@ module "service_connection_{{ region_ }}" {
   # Creates a single service connection,
   # if region has dbaas
   for_each = (
-    contains(keys(try(local.region_databases, {})), "{{ region }}") ? 
+    contains(keys(merge(local.region_databases, local.region_alloys)), "{{ region }}") ? 
       toset([ "{{region}}" ]) : toset([])
   )
 

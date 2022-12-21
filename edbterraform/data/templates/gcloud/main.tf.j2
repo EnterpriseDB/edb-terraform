@@ -101,11 +101,9 @@ servers:
 %{for key, value in {{module_}} ~}
     ${key}:
       region: ${ value.ips.region }
-      username: ${ value.ips.username }
       password: ${ value.ips.password }
       address: ${ value.ips.address }
       port: ${ value.ips.port }
-      dbname: ${ value.ips.dbname }
 %{endfor~}
 {% endfor %}
     EOT

@@ -1,0 +1,35 @@
+cluster_name: gcloud-infra
+gcloud:
+  ssh_user: rocky
+  operating_system:
+    name: rocky-linux-8
+  regions:
+    us-west4:
+      cidr_block: 10.4.0.0/16
+      azs:
+        us-west4-a: 10.4.1.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+  machines:
+    dbt2-driver2:
+      type: dbt2-driver
+      region: us-west4
+      az: us-west4-a
+      instance_type: c2-standard-4
+      volume:
+        type: pd-standard
+        size_gb: 50
+  alloy:
+    mydb2:
+      region: us-west4
+      cpu_count: 2
+      password: "12Password!"
+      settings:
+        - name: max_connections
+          value: 1000
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
