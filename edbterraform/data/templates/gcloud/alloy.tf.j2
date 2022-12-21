@@ -1,0 +1,9 @@
+module "alloy_{{ region_ }}" {
+  source = "./modules/alloy"
+
+  depends_on = []
+
+  providers = {
+    google = google.{{ region_ }}
+  }
+}
