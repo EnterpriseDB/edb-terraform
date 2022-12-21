@@ -15,7 +15,7 @@ describing the target cloud infrastructure.
 | AWS      | RDS Aurora               |:white_check_mark:|
 | GCloud   | Compute Engine - VM      |:white_check_mark:|
 | GCloud   | CloudSQL                 |:white_check_mark:|
-| GCloud   | AlloyDB                  |       :x:        |
+| GCloud   | AlloyDB                  |:white_check_mark:|
 | Azure    | VM                       |       :x:        |
 | Azure    | Database - Flexible      |       :x:        |
 | Azure    | CosmosDB                 |       :x:        |
@@ -23,7 +23,7 @@ describing the target cloud infrastructure.
 ## Infrastructure file
 
 Following are examples of infrastructure files describing the target cloud
-infrastructure. Example yaml files found inside [infrastructure-examples dir](./infrastructure-examples/)
+infrastructure. Example yaml files found inside [infrastructure-examples directory](./infrastructure-examples/)
 
 ### AWS EC2 machines
 
