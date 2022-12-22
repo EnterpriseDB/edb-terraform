@@ -92,3 +92,15 @@ servers:
 {% endfor %}
     EOT
 }
+
+{% for type, attributes in boxes.items() if attributes["active"] %}
+output "{{type}}" {
+  value = [
+{%   for region in attributes["regions"] -%}
+{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
+    {{ module }}[*],
+{%   endfor %}
+  ]
+  sensitive = true
+}
+{% endfor %}
