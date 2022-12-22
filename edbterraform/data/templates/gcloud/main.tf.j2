@@ -61,50 +61,34 @@ resource "local_file" "servers_yml" {
   content         = <<-EOT
 ---
 servers:
-{% if machine_regions | length > 0 %}
-  machines:
-{% endif %}
-{% for region in machine_regions %}
-{% set region_ = region | replace('-', '_') %}
-{% set module_ = "module.machine_" ~ region_  %}
-%{for key, value in {{ module_ }} ~}
+{% set boxes = {
+  'machines': { 
+    'active': has_machines,
+    'regions': machine_regions,
+    'module_base': 'module.machine_',
+  },
+  'databases': {
+    'active': has_databases,
+    'regions': database_regions,
+    'module_base': "module.database_",
+  },
+  'alloy': {
+    'active': has_alloy,
+    'regions': alloy_regions,
+    'module_base': "module.alloy_",
+  }
+} %}
+{% for type, attributes in boxes.items() if attributes["active"] %}
+  {{type}}:
+{%   for region in attributes["regions"] -%}
+{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
+%{ for key, value in {{ module }} ~}
     ${key}:
-      type: ${ value.machine_ips.type }
-      region: ${ value.machine_ips.region }
-      az: ${ value.machine_ips.az }
-      public_ip: ${ value.machine_ips.public_ip }
-      private_ip: ${ value.machine_ips.private_ip }
-%{endfor~}
-{% endfor %}
-{% if database_regions | length > 0 %}
-  databases:
-{% endif %}
-{% for region in database_regions %}
-{% set region_ = region | replace('-', '_') %}
-{% set module_ = "module.database_" ~ region_  %}
-%{for key, value in {{module_}} ~}
-    ${key}:
-      region: ${ value.database_ips.region }
-      username: ${ value.database_ips.username }
-      password: ${ value.database_ips.password }
-      address: ${ value.database_ips.address }
-      port: ${ value.database_ips.port }
-      dbname: ${ value.database_ips.dbname }
-%{endfor~}
-{% endfor %}
-{% if alloy_regions | length > 0 %}
-  alloy:
-{% endif %}
-{% for region in alloy_regions %}
-{% set region_ = region | replace('-', '_') %}
-{% set module_ = "module.alloy_" ~ region_ %}
-%{for key, value in {{module_}} ~}
-    ${key}:
-      region: ${ value.ips.region }
-      password: ${ value.ips.password }
-      address: ${ value.ips.address }
-      port: ${ value.ips.port }
-%{endfor~}
+%{   for name, item in value ~}
+      ${name}: ${try(jsonencode(item), "Error, unsupported type",)}
+%{   endfor ~}
+%{ endfor ~}
+{%   endfor %}
 {% endfor %}
     EOT
 }
