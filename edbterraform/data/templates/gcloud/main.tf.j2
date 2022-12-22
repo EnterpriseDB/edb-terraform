@@ -1,7 +1,7 @@
 locals {
   region_az_networks = {
     for region, region_spec in var.regions: region => {
-      for az, network in region_spec.azs: az => network
+      for az, network in try(region_spec.azs, {}): az => network
     }
   }
   region_machines = {

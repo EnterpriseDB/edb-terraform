@@ -37,7 +37,7 @@ module "service_connection_{{ region_ }}" {
   name = "{{ region }}-${random_id.apply.hex}"
   network = module.vpc_{{ region_ }}.vpc_id
 
-  depends_on = [module.vpc_{{ region_ }}, local.region_databases]
+  depends_on = [local.region_databases, module.network_{{ region_ }}]
   
   providers = {
     google = google.{{ region_ }}
@@ -68,7 +68,7 @@ module "security_{{ region_ }}" {
       ] 
     ])
 
-  depends_on = [module.network_{{ region_ }}]
+  depends_on = [module.service_connection_{{ region_ }}]
 
   providers = {
     google = google.{{ region_ }}
