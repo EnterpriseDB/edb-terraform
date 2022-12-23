@@ -1,0 +1,15 @@
+module "machine_{{ region_ }}" {
+  source = "./modules/machine"
+
+  for_each = ({
+    for rm in lookup(local.region_machines, "{{ region }}", []) : 
+      rm.name => rm 
+    })
+
+  depends_on = []
+
+  providers = {
+    azurerm = azurerm.{{ region_ }}
+  }
+
+}

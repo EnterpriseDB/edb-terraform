@@ -1,0 +1,12 @@
+provider "azurerm" {
+  features {}
+}
+
+{% for region in regions.keys() %}
+{%   set region_ = region | replace('-', '_') %}
+provider "azurerm" {
+  region = "{{ region }}"
+  alias = "{{ region_ }}"
+}
+
+{% endfor %}
