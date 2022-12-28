@@ -1,11 +1,27 @@
 provider "azurerm" {
-  features {}
+  features {
+    /*
+    resource_group {
+      https://github.com/hashicorp/terraform-provider-azurerm/issues/16155
+      https://github.com/hashicorp/terraform-provider-azurerm/issues/16928
+      Without the following setting, destruction can fail due to:
+      * Virtual machine status failed and provider loses track of resources
+      * NICs deleted too quickly and asks for retry after 180 seconds
+      
+      prevent_deletion_if_contains_resources = false
+    }
+    */
+  }
 }
 
 {% for region in regions.keys() %}
 {%   set region_ = region | replace('-', '_') %}
 provider "azurerm" {
-  region = "{{ region }}"
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
   alias = "{{ region_ }}"
 }
 

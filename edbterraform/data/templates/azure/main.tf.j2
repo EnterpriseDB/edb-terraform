@@ -16,6 +16,14 @@ resource "random_id" "apply" {
   byte_length = 4
 }
 
+module "agreements" {
+  source = "./modules/agreement"
+
+  publisher = var.operating_system.publisher
+  offer     = var.operating_system.offer
+  plan      = var.operating_system.sku
+}
+
 {% for region in regions.keys() %}
 {%   set region_ = region | replace('-', '_') %}
 
@@ -25,6 +33,7 @@ resource "random_id" "apply" {
 
 {%   if has_machines %}
 {%     include "key_pair.tf.j2" %}
+
 {%     include "machine.tf.j2" %}
 {%   endif %}
 
