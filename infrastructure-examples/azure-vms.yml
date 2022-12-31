@@ -43,8 +43,8 @@ azure:
         size_gb: 50
     pg1:
       type: postgres
-      region: westus3
-      az: 3
+      region: westus
+      az: 0
       instance_type: Standard_D2as_v4
       service_ip: true
       volume:
