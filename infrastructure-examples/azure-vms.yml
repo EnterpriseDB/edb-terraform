@@ -3,7 +3,6 @@ cluster_name: azure-infra
 azure:
   ssh_user: rocky
   operating_system:
-    image_uri: erockyenterprisesoftwarefoundationinc1653071250513:rockylinux:free:8.6.0
     publisher: "erockyenterprisesoftwarefoundationinc1653071250513"
     offer: "rockylinux"
     sku: "free"
@@ -11,7 +10,7 @@ azure:
   regions:
     westus:
       cidr_block: 10.1.0.0/16
-      azs:
+      zones:
         0: 10.1.20.0/24
       service_ports:
         - name: ssh_access
@@ -20,7 +19,7 @@ azure:
           description: "SSH"
     westus3:
       cidr_block: 10.3.0.0/16
-      azs:
+      zones:
         2: 10.3.20.0/24
         3: 10.3.30.0/24
       service_ports:
@@ -35,27 +34,27 @@ azure:
   machines:
     dbt2-driver:
       type: dbt2-driver
-      region: westus3
-      az: 2
+      region: westus
+      zone: 0
       instance_type: Standard_D2as_v4
       volume:
         type: StandardSSD_LRS
         size_gb: 50
     pg1:
       type: postgres
-      region: westus
-      az: 0
+      region: westus3
+      zone: 2
       instance_type: Standard_D2as_v4
-      service_ip: true
       volume:
         type: StandardSSD_LRS
         size_gb: 50
       additional_volumes:
         - mount_point: /opt/pg_data
-          type: Standard_LRS
+          type: UltraSSD_LRS
           size_gb: 50
-          iops: null
+          iops: 1000
         - mount_point: /opt/pg_wal
-          type: Standard_LRS
+          type: UltraSSD_LRS
           size_gb: 50
-          iops: null
+          iops: 1000
+          

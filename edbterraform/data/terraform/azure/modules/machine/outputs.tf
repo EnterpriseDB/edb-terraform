@@ -1,11 +1,11 @@
 output "type" {
-  value = var.machine.spec.type
+  value = var.machine.type
 }
 output "instance_type" {
   value = azurerm_linux_virtual_machine.main.size
 }
 output "zone" {
-  value = var.machine.spec.az
+  value = var.machine.zone
 }
 output "region" {
   value = azurerm_linux_virtual_machine.main.location

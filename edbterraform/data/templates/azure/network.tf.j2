@@ -18,9 +18,8 @@ module "network_{{ region_ }}" {
   resource_name   = module.vpc_{{ region_ }}.resource_name
   network_name    = module.vpc_{{ region_ }}.network_name
   region          = module.vpc_{{ region_ }}.region
-  zone            = [ each.key ]
+  zone            = tostring(each.key) == "0" ? null : each.key
   ip_cidr_range   = [ each.value ]
-#  security_group_ids = module.security_{{ region_ }}["${each.key}"].security_group_ids
   name            = "{{region}}-${each.key}-${random_id.apply.hex}"
 
   depends_on = [module.vpc_{{ region_ }}]
@@ -51,7 +50,7 @@ module "security_{{ region_ }}" {
   region_ports      = lookup(lookup(var.regions, "{{ region }}", null), "region_ports", [])
   region_cidrblocks = flatten([
     for region in try(var.regions, []) : [
-      for ip_cidr in try(region.azs, []) : tostring(ip_cidr)
+      for ip_cidr in try(region.zones, []) : ip_cidr
       ] 
     ])
 

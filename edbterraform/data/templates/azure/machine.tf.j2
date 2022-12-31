@@ -7,14 +7,12 @@ module "machine_{{ region_ }}" {
     }
 
   resource_name                   = module.vpc_{{ region_ }}.resource_name
-  subnet_id                       = module.network_{{ region_ }}[each.value.spec.az].subnet_id
+  subnet_id                       = module.network_{{ region_ }}[each.value.spec.zone].subnet_id
   operating_system                = var.operating_system
   cluster_name                    = var.cluster_name
-  location                        = {
-    region = module.vpc_{{ region_ }}.region
-    zone   = tostring(each.value.spec.az) == "0" ? null : each.value.spec.az
-  }
-  machine                         = each.value
+  region                          = module.vpc_{{ region_ }}.region
+  zone                            = tostring(each.value.spec.zone) == "0" ? null : each.value.spec.zone
+  machine                         = merge(each.value.spec, {name = each.value.name})
   additional_volumes              = try(each.value.spec.additional_volumes, null)
   ssh_user                        = var.ssh_user
   private_key                     = var.ssh_priv_key
