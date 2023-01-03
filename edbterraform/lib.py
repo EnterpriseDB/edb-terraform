@@ -214,6 +214,17 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
     return (terraform_vars, template_vars)
 
 def gcloud_build_vars(infra_vars, terraform_vars, template_vars):
+    # Add additional terraform variables
+    terraform_vars.update(dict(
+        alloy=infra_vars.get('alloy', dict()),
+    ))
+
+    # Build template variables
+    template_vars.update(dict(
+        has_alloy=('alloy' in infra_vars),
+        alloy_regions=object_regions('alloy', terraform_vars),
+    ))
+
     return (terraform_vars, template_vars)
 
 def aws_build_vars(infra_vars, terraform_vars, template_vars):

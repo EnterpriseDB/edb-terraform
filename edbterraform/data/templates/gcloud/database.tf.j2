@@ -27,7 +27,7 @@ module "database_{{ region_ }}" {
     }
   ])
 
-  depends_on = [module.vpc_{{ region_ }}, module.service_connection_{{ region_ }}]
+  depends_on = [module.security_{{ region_ }}]
 
   providers = {
     google = google.{{ region_ }}

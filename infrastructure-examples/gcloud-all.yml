@@ -1,0 +1,111 @@
+cluster_name: gcloud-infra
+gcloud:
+  ssh_user: rocky
+  operating_system:
+    name: rocky-linux-8
+  regions:
+    us-west1:
+      cidr_block: 10.1.0.0/16
+      azs:
+        us-west1-b: 10.1.20.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+    us-west2:
+      cidr_block: 10.2.0.0/16
+      azs:
+        us-west2-b: 10.2.20.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+      regional_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+    us-west4:
+      cidr_block: 10.4.0.0/16
+  machines:
+    dbt2-driver2:
+      type: dbt2-driver
+      region: us-west1
+      az: us-west1-b
+      instance_type: c2-standard-4
+      volume:
+        type: pd-standard
+        size_gb: 50
+    dbt2-proxy:
+      type: proxy
+      region: us-west2
+      az: us-west2-b
+      ip_forward: true
+      instance_type: c2-standard-4
+      volume:
+        type: pd-standard
+        size_gb: 50
+  databases:
+    mydb1:
+      region: us-west2
+      az: us-west2-b
+      engine: postgres
+      engine_version: 14
+      instance_type: db-f1-micro
+      dbname: "dbt2"
+      username: "postgres"
+      password: "12Password!"
+      port: 5432
+      volume:
+        size_gb: 50
+        type: pd-ssd
+        iops: 1000
+        encrypted: true
+      settings:
+        - name: checkpoint_timeout
+          value: 900
+        - name: max_connections
+          value: 300
+        - name: max_wal_size
+          value: 5000
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
+    mydb2:
+      region: us-west2
+      az: us-west2-b
+      engine: postgres
+      engine_version: 14
+      instance_type: db-f1-micro
+      dbname: "dbt2"
+      username: "postgres"
+      password: "12Password!"
+      port: 5432
+      volume:
+        size_gb: 50
+        type: pd-ssd
+        iops: 1000
+        encrypted: true
+      settings:
+        - name: checkpoint_timeout
+          value: 900
+        - name: max_connections
+          value: 300
+        - name: max_wal_size
+          value: 5000
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
+  alloy:
+    mydb2:
+      region: us-west4
+      cpu_count: 2
+      password: "12Password!"
+      settings:
+        - name: max_connections
+          value: 1000
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
