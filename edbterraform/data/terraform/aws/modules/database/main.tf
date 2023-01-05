@@ -60,7 +60,7 @@ resource "aws_db_instance" "rds_server" {
 
 resource "aws_db_parameter_group" "edb_rds_db_params" {
   name   = format("db-parameter-group-rds-%s-%s", var.name_id, lower(var.database.name))
-  family = format("%s%s", var.database.spec.engine, var.database.spec.engine_version)
+  family = format(contains(["postgres", "mysql", "mariadb"], var.database.spec.engine) ? "%s%s" : "%s-%s", var.database.spec.engine, var.database.spec.engine_version)
 
   dynamic "parameter" {
     for_each = { for i, v in lookup(var.database.spec, "settings", []) : i => v }
