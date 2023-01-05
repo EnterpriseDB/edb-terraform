@@ -1,5 +1,5 @@
 output "name" {
-    value = azurerm_ssh_public_key.main.name
+  value = azurerm_ssh_public_key.main.name
 }
 
 output "public_key" {

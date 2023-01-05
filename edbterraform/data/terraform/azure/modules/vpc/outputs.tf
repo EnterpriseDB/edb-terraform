@@ -11,5 +11,5 @@ output "network_id" {
 }
 
 output "region" {
-    value = azurerm_resource_group.main.location
+  value = azurerm_resource_group.main.location
 }
