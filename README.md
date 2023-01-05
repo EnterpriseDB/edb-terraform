@@ -16,7 +16,7 @@ describing the target cloud infrastructure.
 | GCloud   | Compute Engine - VM      |:white_check_mark:|
 | GCloud   | CloudSQL                 |:white_check_mark:|
 | GCloud   | AlloyDB                  |:white_check_mark:|
-| Azure    | VM                       |       :x:        |
+| Azure    | VM                       |:white_check_mark:|
 | Azure    | Database - Flexible      |       :x:        |
 | Azure    | CosmosDB                 |       :x:        |
 
@@ -332,11 +332,12 @@ $ export GOOGLE_PROJECT=<project_id>
 ```
 
 #### Terraform
+Install manually or [use terraform for latest instructions](https://developer.hashicorp.com/terraform/downloads)
 
 ```console
 $ sudo apt install unzip -y
-$ wget https://releases.hashicorp.com/terraform/1.2.6/terraform_1.2.6_linux_amd64.zip
-$ unzip terraform_1.2.6_linux_amd64.zip
+$ wget https://releases.hashicorp.com/terraform/1.3.6/terraform_1.3.6_linux_amd64.zip
+$ unzip terraform_1.3.6_linux_amd64.zip
 $ sudo install terraform /usr/bin
 ```
 
