@@ -29,12 +29,6 @@ module "network_{{ region_ }}" {
   }
 }
 
-/*
-module "routes_{{ region_ }}" {
-  source = "./modules/routes"
-}
-*/
-
 module "security_{{ region_ }}" {
   source = "./modules/security"
 

@@ -17,7 +17,7 @@ resource "random_id" "apply" {
 }
 
 {% if has_machines %}
-{%   include "agreements.tf" %}
+{%   include "agreements.tf.j2" %}
 {% endif %}
 
 {% for region in regions.keys() %}
