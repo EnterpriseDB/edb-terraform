@@ -5,7 +5,7 @@ output "instance_type" {
   value = azurerm_linux_virtual_machine.main.size
 }
 output "zone" {
-  value = var.machine.zone
+  value = azurerm_linux_virtual_machine.main.zone
 }
 output "region" {
   value = azurerm_linux_virtual_machine.main.location

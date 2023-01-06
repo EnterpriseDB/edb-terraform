@@ -21,18 +21,10 @@ variable "machine" {
   })
 }
 variable "cluster_name" {}
-variable "region" {
-  type = string
-}
-variable "zone" {
-  type    = string
-  default = null
-}
 locals {
-  zones         = var.zone == null ? null : [var.zone]
-  public_ip_sku = var.zone == null ? "Basic" : "Standard"
+  zones         = var.machine.zone == null ? null : [var.machine.zone]
+  public_ip_sku = var.machine.zone == null ? "Basic" : "Standard"
 }
-
 variable "resource_name" {
   type = string
 }

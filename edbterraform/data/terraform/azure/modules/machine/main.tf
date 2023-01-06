@@ -6,7 +6,7 @@ data "azurerm_ssh_public_key" "main" {
 resource "azurerm_public_ip" "main" {
   name                = "ip-${var.machine.name}-${var.name_id}"
   resource_group_name = var.resource_name
-  location            = var.region
+  location            = var.machine.region
   allocation_method   = "Static"
   zones               = local.zones
   sku                 = local.public_ip_sku
@@ -15,7 +15,7 @@ resource "azurerm_public_ip" "main" {
 resource "azurerm_network_interface" "internal" {
   name                = "internal-${var.machine.name}-${var.name_id}"
   resource_group_name = var.resource_name
-  location            = var.region
+  location            = var.machine.region
 
   ip_configuration {
     name                          = "internal"
@@ -31,8 +31,8 @@ resource "azurerm_network_interface" "internal" {
 resource "azurerm_linux_virtual_machine" "main" {
   name                = format("%s-%s-%s", var.cluster_name, var.machine.name, var.name_id)
   resource_group_name = var.resource_name
-  location            = var.region
-  zone                = var.zone
+  location            = var.machine.region
+  zone                = var.machine.zone
   size                = var.machine.instance_type
 
   admin_username = var.ssh_user
@@ -74,8 +74,8 @@ resource "azurerm_managed_disk" "volume" {
 
   name                 = format("%s-%s-%s-%s", var.machine.name, var.cluster_name, var.name_id, each.key)
   resource_group_name  = var.resource_name
-  location             = var.region
-  zone                 = var.zone
+  location             = var.machine.region
+  zone                 = var.machine.zone
   storage_account_type = each.value.type
   create_option        = "Empty"
   disk_size_gb         = each.value.size_gb
@@ -85,7 +85,7 @@ resource "azurerm_managed_disk" "volume" {
     precondition {
       condition = (
         each.value.type != local.premium_ssd.value ||
-        contains(local.premium_ssd.regions, var.region)
+        contains(local.premium_ssd.regions, var.machine.region)
       )
       error_message = <<-EOT
       ${var.machine.name} not a valid configuration.

@@ -10,9 +10,13 @@ module "machine_{{ region_ }}" {
   subnet_id                       = module.network_{{ region_ }}[each.value.spec.zone].subnet_id
   operating_system                = var.operating_system
   cluster_name                    = var.cluster_name
-  region                          = module.vpc_{{ region_ }}.region
-  zone                            = tostring(each.value.spec.zone) == "0" ? null : each.value.spec.zone
-  machine                         = merge(each.value.spec, {name = each.value.name})
+  machine                         = (
+    merge(
+      each.value.spec,
+      {name = each.value.name},
+      {zone = tostring(each.value.spec.zone) == "0" ? null : each.value.spec.zone},
+    )
+  )
   additional_volumes              = try(each.value.spec.additional_volumes, null)
   ssh_user                        = var.ssh_user
   private_key                     = var.ssh_priv_key
