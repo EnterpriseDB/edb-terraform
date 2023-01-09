@@ -368,7 +368,7 @@ $ export GOOGLE_PROJECT=<project_id>
 
 ```console
 $ sudo apt install unzip -y
-$ wget https://releases.hashicorp.com/terraform/1.2.6/terraform_1.2.6_linux_amd64.zip
+$ wget https://releases.hashicorp.com/terraform/1.3.6/terraform_1.2.6_linux_amd64.zip
 $ unzip terraform_1.2.6_linux_amd64.zip
 $ sudo install terraform /usr/bin
 ```
