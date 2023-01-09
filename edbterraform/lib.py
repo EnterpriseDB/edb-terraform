@@ -270,7 +270,7 @@ def new_project_main():
         '--cloud-service-provider', '-c',
         metavar='CLOUD_SERVICE_PROVIDER',
         dest='csp',
-        choices=['aws', 'gcloud'],
+        choices=['aws', 'gcloud', 'azure'],
         default='aws',
         help="Cloud Service Provider. Default: %(default)s"
     )

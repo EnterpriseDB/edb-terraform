@@ -19,10 +19,3 @@ gcloud:
       instance_type: "n1-standard-1"
       cpu_count: 2
       password: "12Password!"
-      settings:
-        - name: max_connections
-          value: 1000
-        - name: random_page_cost
-          value: 1.25
-        - name: work_mem
-          value: 16000
