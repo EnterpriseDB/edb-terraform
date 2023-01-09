@@ -1,3 +1,0 @@
-[console_scripts]
-edb-terraform = edbterraform.lib:new_project_main
-

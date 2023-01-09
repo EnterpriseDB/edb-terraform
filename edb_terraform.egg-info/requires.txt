@@ -1,3 +1,0 @@
-PyYAML>=5.1
-cryptography
-jinja2

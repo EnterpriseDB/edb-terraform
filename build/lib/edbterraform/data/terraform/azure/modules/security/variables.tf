@@ -1,9 +1,0 @@
-variable "subnet_id" {}
-variable "resource_name" {}
-variable "region" {}
-variable "service_name" {}
-variable "service_ports" {}
-variable "region_name" {}
-variable "public_cidrblock" {}
-variable "region_ports" {}
-variable "region_cidrblocks" {}
