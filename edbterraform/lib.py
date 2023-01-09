@@ -85,8 +85,9 @@ def generate_ssh_key_pair(dir):
 
 
 def create_project_dir(dir, csp):
-    # Creates a new terraform project (directory) and copy terraform modules
-    # into this directory.
+    # Creates a new terraform project directory and
+    # copies terraform modules with variable.tf from
+    # cloud service provider directory into this project directory.
 
     if os.path.exists(dir):
         sys.exit("ERROR: directory %s already exists" % dir)
@@ -265,7 +266,7 @@ def new_project_main():
         '--cloud-service-provider', '-c',
         metavar='CLOUD_SERVICE_PROVIDER',
         dest='csp',
-        choices=['aws', 'gcloud'],
+        choices=['aws', 'gcloud', 'azure'],
         default='aws',
         help="Cloud Service Provider. Default: %(default)s"
     )
