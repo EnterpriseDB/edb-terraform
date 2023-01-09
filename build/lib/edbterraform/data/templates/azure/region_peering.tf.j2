@@ -1,0 +1,41 @@
+{% set previous_created = [] %}
+{% for (requester, accepter) in peers %}
+{%   set requester_ = requester|replace('-', '_') %}
+{%   set accepter_ = accepter|replace('-', '_') %}
+module "vpc_peering_{{ requester_ }}_{{ accepter_ }}" {
+  source = "./modules/vpc_peering"
+
+  peering_name = "peer-{{ requester }}-{{ accepter }}-${random_id.apply.hex}"
+  resource_name = module.vpc_{{ requester_ }}.resource_name
+  network_name      = module.vpc_{{ requester_ }}.network_name
+  peer_network_id = module.vpc_{{ accepter_ }}.network_id
+
+  depends_on = [
+    module.network_{{ requester_ }},
+    module.network_{{ accepter_ }},
+    {% if previous_created %}{{ previous_created[-1] }},{% endif %}
+    ]
+
+  providers = {
+    azurerm = azurerm.{{ requester_ }}
+  }
+
+}
+
+module "vpc_peering_{{ accepter_ }}_{{ requester_ }}" {
+  source = "./modules/vpc_peering"
+  
+  peering_name = "peer-{{ accepter }}-{{ requester }}-${random_id.apply.hex}"
+  resource_name = module.vpc_{{ accepter_ }}.resource_name
+  network_name      = module.vpc_{{ accepter_ }}.network_name
+  peer_network_id = module.vpc_{{ requester_ }}.network_id
+
+  depends_on = [module.vpc_peering_{{ requester_ }}_{{ accepter_ }}]
+
+  providers = {
+    azurerm = azurerm.{{ accepter_ }}
+  }
+
+}
+{% set dummy = previous_created.append("module.vpc_peering_" + accepter_ + "_" + requester_) %}
+{% endfor %}

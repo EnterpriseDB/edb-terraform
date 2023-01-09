@@ -16,7 +16,8 @@ describing the target cloud infrastructure.
 | GCloud   | Compute Engine - VM      |:white_check_mark:|
 | GCloud   | CloudSQL                 |:white_check_mark:|
 | GCloud   | AlloyDB                  |:white_check_mark:|
-| Azure    | VM                       |:white_check_mark:|
+| GCloud   | Google Kubernetes Engine |:white_check_mark:|
+| Azure    | VM                       |       :x:        |
 | Azure    | Database - Flexible      |       :x:        |
 | Azure    | CosmosDB                 |       :x:        |
 
@@ -290,6 +291,38 @@ gcloud:
           iops: null
 ```
 
+### GCloud Kubernetes Engine
+
+```yaml
+cluster_name: gcloud-gke
+gcloud:
+  ssh_user: rocky
+  operating_system:
+    name: rocky-linux-8
+  regions:
+    us-west2:
+      cidr_block: 10.2.0.0/16
+      azs:
+        us-west2-b: 10.2.20.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+  gke:
+    mydb2:
+      region: us-west2
+      az: us-west2-b
+      instance_type: "n1-standard-1"
+      cpu_count: 2
+      password: "12Password!"
+      settings:
+        - name: max_connections
+          value: 1000
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000```
+
 #### Options:
 * `service_ports`: ports open to the public
 * `region_ports`: ports open and restricted to region's and cross-region's subnet cidrblocks
@@ -332,12 +365,11 @@ $ export GOOGLE_PROJECT=<project_id>
 ```
 
 #### Terraform
-Install manually or [use terraform for latest instructions](https://developer.hashicorp.com/terraform/downloads)
 
 ```console
 $ sudo apt install unzip -y
-$ wget https://releases.hashicorp.com/terraform/1.3.6/terraform_1.3.6_linux_amd64.zip
-$ unzip terraform_1.3.6_linux_amd64.zip
+$ wget https://releases.hashicorp.com/terraform/1.2.6/terraform_1.2.6_linux_amd64.zip
+$ unzip terraform_1.2.6_linux_amd64.zip
 $ sudo install terraform /usr/bin
 ```
 
