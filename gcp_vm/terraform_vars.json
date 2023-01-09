@@ -1,0 +1,50 @@
+{
+  "alloy": {},
+  "cluster_name": "gcloud-gke",
+  "databases": {},
+  "gke": {
+    "mydb2": {
+      "az": "us-west2-b",
+      "cpu_count": 2,
+      "instance_type": "n1-standard-1",
+      "password": "12Password!",
+      "region": "us-west2",
+      "settings": [
+        {
+          "name": "max_connections",
+          "value": 1000
+        },
+        {
+          "name": "random_page_cost",
+          "value": 1.25
+        },
+        {
+          "name": "work_mem",
+          "value": 16000
+        }
+      ]
+    }
+  },
+  "machines": {},
+  "operating_system": {
+    "name": "rocky-linux-8"
+  },
+  "regions": {
+    "us-west2": {
+      "azs": {
+        "us-west2-b": "10.2.20.0/24"
+      },
+      "cidr_block": "10.2.0.0/16",
+      "service_ports": [
+        {
+          "description": "SSH",
+          "port": 22,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  },
+  "ssh_priv_key": "/home/doug.ortiz/wip/edb-terraform/gcp_vm/ssh-id_rsa",
+  "ssh_pub_key": "/home/doug.ortiz/wip/edb-terraform/gcp_vm/ssh-id_rsa.pub",
+  "ssh_user": "rocky"
+}
