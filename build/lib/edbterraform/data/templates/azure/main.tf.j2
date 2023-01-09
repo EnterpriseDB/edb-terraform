@@ -1,38 +1,24 @@
 locals {
   region_az_networks = {
     for region, region_spec in var.regions: region => {
-      for az, network in try(region_spec.azs, {}): az => network
+      for zone, network in try(region_spec.zones, {}): zone => network
+      }
     }
-  }
   region_machines = {
     for name, machine_spec in var.machines: machine_spec.region => {
       name = name
       spec = machine_spec
     }...
   }
-  region_databases = {
-    for name, database_spec in var.databases: database_spec.region => {
-      name = name
-      spec = database_spec
-    }...
-  }
-  region_alloys = {
-    for name, spec in var.alloy: spec.region => {
-      name = name
-      spec = spec
-    }...
-  }
-  region_gke = {
-    for name, spec in var.gke: spec.region => {
-      name = name
-      spec = spec
-    }...    
-  }
 }
 
 resource "random_id" "apply" {
   byte_length = 4
 }
+
+{% if has_machines %}
+{%   include "agreements.tf.j2" %}
+{% endif %}
 
 {% for region in regions.keys() %}
 {%   set region_ = region | replace('-', '_') %}
@@ -47,17 +33,6 @@ resource "random_id" "apply" {
 {%     include "machine.tf.j2" %}
 {%   endif %}
 
-{%  if has_databases %}
-{%    include "database.tf.j2" %}
-{%  endif %}
-
-{%   if has_alloy %}
-{%     include "alloy.tf.j2" %}
-{%   endif %}
-
-{%   if has_gke %}
-{%     include "gke.tf.j2" %}
-{%   endif %}
 {% endfor %}
 
 {% if has_region_peering %}
@@ -76,21 +51,6 @@ servers:
     'regions': machine_regions,
     'module_base': 'module.machine_',
   },
-  'databases': {
-    'active': has_databases,
-    'regions': database_regions,
-    'module_base': "module.database_",
-  },
-  'alloy': {
-    'active': has_alloy,
-    'regions': alloy_regions,
-    'module_base': "module.alloy_",
-  },
-  'gke': {
-    'active': has_gke,
-    'regions': gke_regions,
-    'module_base': "module.gke_",
-  }  
 } %}
 {% for type, attributes in boxes.items() if attributes["active"] %}
   {{type}}:

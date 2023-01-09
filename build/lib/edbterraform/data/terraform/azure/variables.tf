@@ -1,8 +1,5 @@
 variable "regions" {}
 variable "machines" {}
-variable "gke" {}
-variable "alloy" {}
-variable "databases" {}
 variable "cluster_name" {}
 variable "ssh_pub_key" {}
 variable "ssh_priv_key" {}
@@ -25,7 +22,7 @@ variable "project_name" {
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "gcloud-dev"
+  default     = "azure-dev"
 }
 
 variable "resource_tags" {
@@ -59,6 +56,6 @@ variable "vpc_tag" {
 
 variable "created_by" {
   type        = string
-  description = "EDB terraform GCP"
-  default     = "EDB terraform GCP"
+  description = "EDB terraform Azure"
+  default     = "EDB terraform Azure"
 }

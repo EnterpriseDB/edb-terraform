@@ -22,12 +22,6 @@ locals {
       spec = spec
     }...
   }
-  region_gke = {
-    for name, spec in var.gke: spec.region => {
-      name = name
-      spec = spec
-    }...    
-  }
 }
 
 resource "random_id" "apply" {
@@ -55,9 +49,6 @@ resource "random_id" "apply" {
 {%     include "alloy.tf.j2" %}
 {%   endif %}
 
-{%   if has_gke %}
-{%     include "gke.tf.j2" %}
-{%   endif %}
 {% endfor %}
 
 {% if has_region_peering %}
@@ -85,12 +76,7 @@ servers:
     'active': has_alloy,
     'regions': alloy_regions,
     'module_base': "module.alloy_",
-  },
-  'gke': {
-    'active': has_gke,
-    'regions': gke_regions,
-    'module_base': "module.gke_",
-  }  
+  }
 } %}
 {% for type, attributes in boxes.items() if attributes["active"] %}
   {{type}}:

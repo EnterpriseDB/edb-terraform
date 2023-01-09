@@ -1,3 +1,22 @@
+Metadata-Version: 2.1
+Name: edb-terraform
+Version: 0.1.0
+Summary: Terraform templates aimed to provide easy to use YAML configuration file
+Home-page: https://github.com/EnterpriseDB/edb-terraform/
+Author: EDB
+Author-email: edb-devops@enterprisedb.com
+License: BSD
+Keywords: terraform cloud yaml edb cli aws rds aurora azure gcloud gke
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Database
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
 # edb-terraform
 
 Terraform templates aimed to provide easy to use YAML configuration file
@@ -448,3 +467,5 @@ $ terraform destroy \
     -var-file=./terraform_vars.json \
     -auto-approve
 ```
+
+

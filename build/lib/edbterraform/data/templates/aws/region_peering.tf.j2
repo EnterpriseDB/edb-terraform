@@ -1,0 +1,58 @@
+{% for (requester, accepter) in peers %}
+{%   set requester_ = requester|replace('-', '_') %}
+{%   set accepter_ = accepter|replace('-', '_') %}
+module "vpc_peering_{{ requester_ }}_{{ accepter_ }}" {
+  source = "./modules/vpc_peering"
+
+  vpc_id      = module.vpc_{{ requester_ }}.vpc_id
+  peer_vpc_id = module.vpc_{{ accepter_ }}.vpc_id
+  peer_region = "{{ accepter }}"
+
+  depends_on = [module.vpc_{{ requester_ }}, module.vpc_{{ accepter_ }}]
+
+  providers = {
+    aws = aws.{{ requester_ }}
+  }
+}
+
+module "vpc_peering_accepter_{{ requester_}}_{{ accepter_ }}" {
+  source = "./modules/vpc_peering_accepter"
+
+  connection_id = module.vpc_peering_{{ requester_ }}_{{ accepter_ }}.id
+
+  depends_on = [module.vpc_peering_{{ requester_ }}_{{ accepter_ }}]
+
+  providers = {
+    aws = aws.{{ accepter_ }}
+  }
+}
+
+module "vpc_peering_routes_{{ requester_ }}_{{ accepter_ }}" {
+  source = "./modules/vpc_peering_routes"
+
+  connection_id          = module.vpc_peering_{{ requester_ }}_{{ accepter_ }}.id
+  route_table_id         = module.routes_{{ requester_ }}.route_table_id
+  destination_cidr_block = module.vpc_{{ accepter_ }}.vpc_cidr_block
+
+  depends_on = [module.routes_{{ requester_ }}, module.vpc_peering_{{ requester_ }}_{{ accepter_ }}]
+
+  providers = {
+    aws = aws.{{ requester_ }}
+  }
+}
+
+module "vpc_peering_routes_{{ accepter_ }}_{{ requester_ }}" {
+  source = "./modules/vpc_peering_routes"
+
+  connection_id          = module.vpc_peering_{{ requester_ }}_{{ accepter_ }}.id
+  route_table_id         = module.routes_{{ accepter_ }}.route_table_id
+  destination_cidr_block = module.vpc_{{ requester_ }}.vpc_cidr_block
+
+  depends_on = [module.routes_{{ accepter_ }}, module.vpc_peering_{{ requester_ }}_{{ accepter_ }}]
+
+  providers = {
+    aws = aws.{{ accepter_ }}
+  }
+}
+
+{% endfor %}

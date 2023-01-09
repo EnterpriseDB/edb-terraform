@@ -85,8 +85,9 @@ def generate_ssh_key_pair(dir):
 
 
 def create_project_dir(dir, csp):
-    # Creates a new terraform project (directory) and copy terraform modules
-    # into this directory.
+    # Creates a new terraform project directory and
+    # copies terraform modules with variable.tf from
+    # cloud service provider directory into this project directory.
 
     if os.path.exists(dir):
         sys.exit("ERROR: directory %s already exists" % dir)
@@ -188,7 +189,6 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
         ssh_priv_key=ssh_priv_key,
         ssh_pub_key=ssh_pub_key,
         machines=infra_vars.get('machines', dict()),
-        gke=infra_vars.get('gke', dict()),
         databases=infra_vars.get('databases', dict()),
         regions=infra_vars.get('regions', dict()),
         operating_system=infra_vars.get('operating_system', None),
@@ -198,7 +198,6 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
     template_vars.update(dict(
         has_region_peering=(len(terraform_vars['regions'].keys()) > 1),
         has_machines=('machines' in infra_vars),
-        has_gke=('gke' in infra_vars),
         has_databases=('databases' in infra_vars),
         has_regions=('regions' in infra_vars),
         regions=terraform_vars['regions'].copy(),
@@ -219,15 +218,12 @@ def gcloud_build_vars(infra_vars, terraform_vars, template_vars):
     # Add additional terraform variables
     terraform_vars.update(dict(
         alloy=infra_vars.get('alloy', dict()),
-        gke=infra_vars.get('gke', dict()),
     ))
 
     # Build template variables
     template_vars.update(dict(
         has_alloy=('alloy' in infra_vars),
         alloy_regions=object_regions('alloy', terraform_vars),
-        has_gke=('gke' in infra_vars),
-        gke_regions=object_regions('gke', terraform_vars),
     ))
 
     return (terraform_vars, template_vars)
@@ -270,7 +266,7 @@ def new_project_main():
         '--cloud-service-provider', '-c',
         metavar='CLOUD_SERVICE_PROVIDER',
         dest='csp',
-        choices=['aws', 'gcloud'],
+        choices=['aws', 'gcloud', 'azure'],
         default='aws',
         help="Cloud Service Provider. Default: %(default)s"
     )
