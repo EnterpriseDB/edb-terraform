@@ -1,5 +1,6 @@
 variable "regions" {}
 variable "machines" {}
+variable "gke" {}
 variable "alloy" {}
 variable "databases" {}
 variable "cluster_name" {}
