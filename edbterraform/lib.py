@@ -20,7 +20,7 @@ def tpl(template_name, dest, csp, vars={}):
     # variables.
 
     try:
-        # Templates are located in __file__/data/templates
+        # Templates are located in __file__/data/templates/<cloud-service-provider>
         current_dir = Path(__file__).parent.resolve()
         templates_dir = PurePath.joinpath(
             current_dir, 'data', 'templates', csp
@@ -178,34 +178,25 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
     # variables as a dist, template variables as a dict)
 
     # Variables used in the template files
-    template_vars = {}
-    # Starting with making a copy of infra_vars as our terraform_vars dict
-    terraform_vars = infra_vars.copy()
-
-    # Add additional terraform variables
-    terraform_vars.update(dict(
-        ssh_user=infra_vars.get('ssh_user', None),
-        ssh_priv_key=ssh_priv_key,
-        ssh_pub_key=ssh_pub_key,
-        machines=infra_vars.get('machines', dict()),
-        gke=infra_vars.get('gke', dict()),
-        databases=infra_vars.get('databases', dict()),
-        regions=infra_vars.get('regions', dict()),
-        operating_system=infra_vars.get('operating_system', None),
-    ))
-
-    # Build template variables
-    template_vars.update(dict(
-        has_region_peering=(len(terraform_vars['regions'].keys()) > 1),
+    # Build jinja template variable
+    template_vars = dict(
+        has_region_peering=(len(infra_vars['regions'].keys()) > 1),
         has_machines=('machines' in infra_vars),
         has_gke=('gke' in infra_vars),
         has_databases=('databases' in infra_vars),
         has_regions=('regions' in infra_vars),
-        regions=terraform_vars['regions'].copy(),
-        peers=regions_to_peers(terraform_vars['regions']),
-        machine_regions=object_regions('machines', terraform_vars),
-        database_regions=object_regions('databases', terraform_vars),
-    ))
+        regions=infra_vars['regions'].copy(),
+        peers=regions_to_peers(infra_vars['regions']),
+        machine_regions=object_regions('machines', infra_vars),
+        database_regions=object_regions('databases', infra_vars),
+    )
+
+    # Starting with making a copy of infra_vars as our terraform_vars dict
+    terraform_vars = dict(
+        spec = infra_vars.copy(),
+        ssh_priv_key = ssh_priv_key,
+        ssh_pub_key = ssh_pub_key,
+    )
 
     if csp == 'aws':
         return aws_build_vars(infra_vars, terraform_vars, template_vars)
@@ -216,35 +207,19 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
     return (terraform_vars, template_vars)
 
 def gcloud_build_vars(infra_vars, terraform_vars, template_vars):
-    # Add additional terraform variables
-    terraform_vars.update(dict(
-        alloy=infra_vars.get('alloy', dict()),
-        gke=infra_vars.get('gke', dict()),
-    ))
-
-    # Build template variables
     template_vars.update(dict(
         has_alloy=('alloy' in infra_vars),
-        alloy_regions=object_regions('alloy', terraform_vars),
+        alloy_regions=object_regions('alloy', infra_vars),
         has_gke=('gke' in infra_vars),
-        gke_regions=object_regions('gke', terraform_vars),
+        gke_regions=object_regions('gke', infra_vars),
     ))
 
     return (terraform_vars, template_vars)
 
 def aws_build_vars(infra_vars, terraform_vars, template_vars):
-    # Based on the infra variables, returns a tuple composed of (terraform
-    # variables as a dist, template variables as a dict)
-
-    # Add additional terraform variables
-    terraform_vars.update(dict(
-        aurora=infra_vars.get('aurora', dict()),
-    ))
-
-    # Build template variables
     template_vars.update(dict(
         has_aurora=('aurora' in infra_vars),
-        aurora_regions=object_regions('aurora', terraform_vars),
+        aurora_regions=object_regions('aurora', infra_vars),
     ))
 
     return (terraform_vars, template_vars)

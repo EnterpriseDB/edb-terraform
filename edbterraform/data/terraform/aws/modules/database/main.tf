@@ -3,7 +3,12 @@ variable "vpc_id" {}
 variable "custom_security_group_id" {}
 variable "cluster_name" {}
 variable "created_by" {}
-variable "name_id" { default="0" }
+variable "name_id" { default = "0" }
+variable "publicly_accessible" {
+  type = bool
+  default = true
+  nullable = false
+}
 
 terraform {
   required_providers {
@@ -44,7 +49,7 @@ resource "aws_db_instance" "rds_server" {
   username                = var.database.spec.username
   password                = var.database.spec.password
   port                    = var.database.spec.port
-  publicly_accessible     = true
+  publicly_accessible     = var.publicly_accessible
   allocated_storage       = var.database.spec.volume.size_gb
   storage_encrypted       = var.database.spec.volume.encrypted
   storage_type            = var.database.spec.volume.type

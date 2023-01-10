@@ -1,12 +1,11 @@
-variable "regions" {}
-variable "machines" {}
-variable "aurora" {}
-variable "databases" {}
-variable "cluster_name" {}
-variable "ssh_pub_key" {}
+variable "spec" {
+  default     = {}
+  description = <<-EOT
+  Variable used to be passed into the specification module
+  EOT
+}
 variable "ssh_priv_key" {}
-variable "ssh_user" {}
-variable "operating_system" {}
+variable "ssh_pub_key" {}
 
 # VPC
 variable "public_cidrblock" {

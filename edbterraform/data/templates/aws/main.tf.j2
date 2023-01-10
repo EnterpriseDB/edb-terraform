@@ -1,40 +1,7 @@
-locals {
-{% if has_regions %}
-  region_az_networks = {
-    for region, region_spec in var.regions: region => {
-      for az, network in region_spec.azs: az => network
-    }
-  }
-{% endif %}
-{% if has_machines %}
-  region_machines = {
-    for name, machine_spec in var.machines: machine_spec.region => {
-      name = name
-      spec = machine_spec
-    }...
-  }
-{% endif %}
-{% if has_databases %}
-  region_databases = {
-    for name, database_spec in var.databases: database_spec.region => {
-      name = name
-      spec = database_spec
-    }...
-  }
-{% endif %}
-{% if has_aurora %}
-  region_auroras = {
-    for name, aurora_spec in var.aurora: aurora_spec.region => {
-      name = name
-      spec = aurora_spec
-    }...
-  }
-{% endif %}
-}
-
-resource "random_id" "apply" {
-  byte_length = 4
-}
+# All modules should reference module.spec.value.<attribute> as it will hold all the values from the yaml file
+# All modules should depend_on null_resource.validation to ensure all validations complete before continuing
+# Run directly by using terraform apply -target null_resource.validation
+{% include "validation.tf.j2" %}
 
 {% for region in regions.keys() %}
 {%   set region_ = region | replace('-', '_') %}
@@ -69,50 +36,46 @@ resource "local_file" "servers_yml" {
   content         = <<-EOT
 ---
 servers:
-{% if machine_regions | length > 0 %}
-  machines:
-{% endif %}
-{% for region in machine_regions %}
-{% set region_ = region | replace('-', '_') %}
-%{for key in keys(module.machine_{{ region_ }}) ~}
+{% set boxes = {
+  'machines': { 
+    'active': has_machines,
+    'regions': machine_regions,
+    'module_base': 'module.machine_',
+  },
+  'databases': {
+    'active': has_databases,
+    'regions': database_regions,
+    'module_base': "module.database_",
+  },
+  'aurora': {
+    'active': has_aurora,
+    'regions': aurora_regions,
+    'module_base': "module.aurora_",
+  }
+} %}
+{% for type, attributes in boxes.items() if attributes["active"] %}
+  {{type}}:
+{%   for region in attributes["regions"] -%}
+{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
+%{ for key, value in {{ module }} ~}
     ${key}:
-      type: ${module.machine_{{ region_ }}[key].machine_ips.type}
-      region: ${module.machine_{{ region_ }}[key].machine_ips.region}
-      az: ${module.machine_{{ region_ }}[key].machine_ips.az}
-      public_ip: ${module.machine_{{ region_ }}[key].machine_ips.public_ip}
-      private_ip: ${module.machine_{{ region_ }}[key].machine_ips.private_ip}
-      public_dns: ${module.machine_{{ region_ }}[key].machine_ips.public_dns}
-%{endfor~}
-{% endfor %}
-{% if database_regions | length > 0 %}
-  databases:
-{% endif %}
-{% for region in database_regions %}
-{% set region_ = region | replace('-', '_') %}
-%{for key in keys(module.database_{{ region_ }}) ~}
-    ${key}:
-      region: ${module.database_{{ region_ }}[key].database_ips.region}
-      username: "${module.database_{{ region_ }}[key].database_ips.username}"
-      password: "${module.database_{{ region_ }}[key].database_ips.password}"
-      address: ${module.database_{{ region_ }}[key].database_ips.address}
-      port: ${module.database_{{ region_ }}[key].database_ips.port}
-      dbname: "${module.database_{{ region_ }}[key].database_ips.dbname}"
-%{endfor~}
-{% endfor %}
-{% if aurora_regions | length > 0 %}
-  aurora:
-{% endif %}
-{% for region in aurora_regions %}
-{% set region_ = region | replace('-', '_') %}
-%{for key in keys(module.aurora_{{ region_ }}) ~}
-    ${key}:
-      region: ${module.aurora_{{ region_ }}[key].aurora_ips.region}
-      username: "${module.aurora_{{ region_ }}[key].aurora_ips.username}"
-      password: "${module.aurora_{{ region_ }}[key].aurora_ips.password}"
-      address: ${module.aurora_{{ region_ }}[key].aurora_ips.address}
-      port: ${module.aurora_{{ region_ }}[key].aurora_ips.port}
-      dbname: "${module.aurora_{{ region_ }}[key].aurora_ips.dbname}"
-%{endfor~}
+%{   for name, item in value ~}
+      ${name}: ${try(jsonencode(item), "Error, unsupported type",)}
+%{   endfor ~}
+%{ endfor ~}
+{%   endfor %}
 {% endfor %}
     EOT
 }
+
+{% for type, attributes in boxes.items() if attributes["active"] %}
+output "{{type}}" {
+  value = [
+{%   for region in attributes["regions"] -%}
+{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
+    {{ module }}[*],
+{%   endfor %}
+  ]
+  sensitive = true
+}
+{% endfor %}

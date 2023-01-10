@@ -3,7 +3,12 @@ variable "vpc_id" {}
 variable "custom_security_group_id" {}
 variable "cluster_name" {}
 variable "created_by" {}
-variable "name_id" { default="0" }
+variable "name_id" { default = "0" }
+variable "publicly_accessible" {
+  type = bool
+  default = true
+  nullable = false
+}
 
 terraform {
   required_providers {
@@ -41,7 +46,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   master_password        = var.aurora.spec.password
   port                   = var.aurora.spec.port
   db_subnet_group_name   = aws_db_subnet_group.aurora.id
-  availability_zones     = var.aurora.spec.azs
+  availability_zones     = var.aurora.spec.zones
   apply_immediately      = true
   skip_final_snapshot    = true
   vpc_security_group_ids = [var.custom_security_group_id]
@@ -55,14 +60,14 @@ resource "aws_rds_cluster" "aurora_cluster" {
 resource "aws_rds_cluster_instance" "aurora_instance" {
   count = var.aurora.spec.count
 
-  cluster_identifier       = aws_rds_cluster.aurora_cluster.id
-  instance_class           = var.aurora.spec.instance_type
-  engine                   = aws_rds_cluster.aurora_cluster.engine
-  engine_version           = aws_rds_cluster.aurora_cluster.engine_version
-  db_subnet_group_name     = aws_db_subnet_group.aurora.id
-  db_parameter_group_name  = aws_db_parameter_group.aurora_db_params.id
-  apply_immediately        = true
-  publicly_accessible      = true
+  cluster_identifier      = aws_rds_cluster.aurora_cluster.id
+  instance_class          = var.aurora.spec.instance_type
+  engine                  = aws_rds_cluster.aurora_cluster.engine
+  engine_version          = aws_rds_cluster.aurora_cluster.engine_version
+  db_subnet_group_name    = aws_db_subnet_group.aurora.id
+  db_parameter_group_name = aws_db_parameter_group.aurora_db_params.id
+  apply_immediately       = true
+  publicly_accessible     = var.publicly_accessible
 
   tags = {
     Name       = format("%s-%s-%s", var.cluster_name, "aurora-instance", count.index)

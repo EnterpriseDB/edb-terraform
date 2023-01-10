@@ -1,0 +1,37 @@
+# All modules should reference this module's outputs
+# During terraform plan, will act as basic validation of yaml input(var.spec) with variable validation and preconditions
+# During terraform apply, will check for availability of resources with data sources and postconditions
+module "spec" {
+  source = "./modules/specification"
+
+  spec = var.spec
+}
+
+# All modules should use the last created module in their depends_on through jinja
+# This is to ensure that all validation modules run before any resource is created
+# Done per region since some data sources rely on set provider region
+{% set validations = [] %}
+{% for region in regions.keys() %}
+{%   set region_ = region | replace('-', '_') %}
+module "validation_{{ region_ }}" {
+  source = "./modules/validation"
+  
+  region = "{{ region }}"
+  zones = module.spec.value.regions["{{ region }}"].zones
+  
+  providers = {
+    aws = aws.{{ region_ }}
+  }
+
+  depends_on = [ module.spec ]
+}
+{% set dummy = validations.append("module.validation_" + region_) %}
+{% endfor %}
+
+resource "null_resource" "validation" {
+    depends_on = [
+{% for validation in validations %}
+    {{ validation }},
+{% endfor %}
+    ]
+}
