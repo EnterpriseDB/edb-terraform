@@ -1,11 +1,13 @@
 module "key_pair_{{ region_ }}" {
   source = "./modules/key_pair"
 
-  ssh_user = var.ssh_user
-  key_name = "ssh-keys-{{ region }}-${random_id.apply.hex}"
+  ssh_user = module.spec.value.ssh_user
+  key_name = "ssh-keys-{{ region }}-${module.spec.hex_id}"
   public_keys  = var.ssh_pub_key
 
   providers = {
     google = google.{{ region_ }}
   }
+
+  depends_on = [module.spec]
 }

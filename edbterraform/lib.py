@@ -333,13 +333,15 @@ def run_terraform(cwd, validate):
         except subprocess.CalledProcessError as e:
             logging.warning(f'''
             Validation skipped, terraform not found.
-            Delete {cwd} and re-run edb-terraform or
-            Install and manually run: 
+            Remove --validate option or install terraform >= 1.3.6
+            and rerun edb-terraform
+            Install and manually run:
             1. `terraform init`
             2. `terraform plan`
             3. `terraform apply -target=null_resource.validation`
             ''')
-            sys.exit()
+            destroy_project_dir(cwd)
+            sys.exit(e.returncode)
     
         try:
             command = 'terraform init'
@@ -352,9 +354,9 @@ def run_terraform(cwd, validate):
                 text=True
             )
         except subprocess.CalledProcessError as e:
-            logging.error("Error: . \nreturn code %s \n(%s)" % (e.returncode, e.output))
+            logging.error(f'Error: ({e.output})')
             destroy_project_dir(cwd)
-            sys.exit()
+            sys.exit(e.returncode)
     
         try:
             command = 'terraform plan -input=false'    
@@ -377,6 +379,6 @@ def run_terraform(cwd, validate):
                 text=True
             )
         except subprocess.CalledProcessError as e:
-            logging.error("Error: unable to validate terraform files. \nreturn code %s \n(%s)" % (e.returncode, e.output))
+            logging.error(f'Error: unable to validate terraform files.\n({e.output})')
             destroy_project_dir(cwd)
-            sys.exit()
+            sys.exit(e.returncode)

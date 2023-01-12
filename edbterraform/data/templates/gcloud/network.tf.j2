@@ -1,21 +1,23 @@
 module "vpc_{{ region_ }}"{
   source = "./modules/vpc"
 
-  network_name = "${var.vpc_tag}-{{ region }}-${random_id.apply.hex}"
+  network_name = "${var.vpc_tag}-{{ region }}-${module.spec.hex_id}"
 
   providers = {
     google = google.{{ region_ }}
   }
+
+  depends_on = [module.spec]
 }
 
 module "network_{{ region_ }}" {
   source = "./modules/network"
 
-  for_each = lookup(local.region_az_networks, "{{ region }}", null)
+  for_each = lookup(module.spec.region_zone_networks, "{{ region }}", null)
 
   network_name    = module.vpc_{{ region_ }}.vpc_id
   ip_cidr_range   = each.value
-  name            = "{{region}}-${each.key}-${random_id.apply.hex}"
+  name            = "{{region}}-${each.key}-${module.spec.hex_id}"
 
   depends_on = [module.vpc_{{ region_ }}]
 
@@ -30,14 +32,14 @@ module "service_connection_{{ region_ }}" {
   # Creates a single service connection,
   # if region has dbaas
   for_each = (
-    contains(keys(merge(local.region_databases, local.region_alloys)), "{{ region }}") ? 
+    contains(keys(merge(module.spec.region_databases, module.spec.region_alloys)), "{{ region }}") ? 
       toset([ "{{region}}" ]) : toset([])
   )
 
-  name = "{{ region }}-${random_id.apply.hex}"
+  name = "{{ region }}-${module.spec.hex_id}"
   network = module.vpc_{{ region_ }}.vpc_id
 
-  depends_on = [local.region_databases, module.network_{{ region_ }}]
+  depends_on = [module.network_{{ region_ }}]
   
   providers = {
     google = google.{{ region_ }}
@@ -56,15 +58,15 @@ module "security_{{ region_ }}" {
 
   network_name  = module.vpc_{{ region_ }}.vpc_id
 
-  service_name = "service-{{ region }}-${random_id.apply.hex}"
-  service_ports    = lookup(lookup(var.regions, "{{ region }}", null), "service_ports", [])
+  service_name = "service-{{ region }}-${module.spec.hex_id}"
+  service_ports    = lookup(lookup(module.spec.value.regions, "{{ region }}", null), "service_ports", [])
   public_cidrblock = var.public_cidrblock
 
-  region_name = "region-{{ region }}-${random_id.apply.hex}"
-  region_ports = lookup(lookup(var.regions, "{{ region }}", null), "region_ports", [])
+  region_name = "region-{{ region }}-${module.spec.hex_id}"
+  region_ports = lookup(lookup(module.spec.value.regions, "{{ region }}", null), "region_ports", [])
   region_cidrblocks = flatten([
-    for region in try(var.regions, []) : [
-      for ip_cidr in try(region.azs, []) : ip_cidr
+    for region in try(module.spec.value.regions, []) : [
+      for ip_cidr in try(region.zones, []) : ip_cidr
       ] 
     ])
 
