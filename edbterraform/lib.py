@@ -7,6 +7,8 @@ import os
 import sys
 import shutil
 import yaml
+import subprocess
+import logging
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -93,9 +95,20 @@ def create_project_dir(dir, csp):
 
     script_dir = Path(__file__).parent.resolve()
     try:
+        logging.info(f'Creating directory: {dir}')
         shutil.copytree(script_dir / 'data' / 'terraform' / csp, dir)
     except Exception as e:
         sys.exit("ERROR: cannot create project directory %s (%s)" % (dir, e))
+
+def destroy_project_dir(dir):
+    if not os.path.exists(dir):
+        return
+
+    try:
+        logging.info(f'Destroying directory: {dir}')
+        shutil.rmtree(dir)
+    except Exception as e:
+        raise("Error: unable to delete project directory %s (%s)" % (dir, e))
 
 
 def load_infra_file(file_path, csp):
@@ -249,6 +262,19 @@ def new_project_main():
         default='aws',
         help="Cloud Service Provider. Default: %(default)s"
     )
+    parser.add_argument(
+        '--validate',
+        dest='run_validation',
+        action='store_true',
+        required=False,
+        help='''
+            Requires terraform >= 1.3.6
+            Validates the generated files by running:
+            `terraform apply -target=null_resource.validation`
+            If invalid, error will be displayed and project directory destroyed
+            Default: %(default)s
+            '''
+    )
     env = parser.parse_args()
 
     # Load infrastructure variables from the YAML file that was passed
@@ -273,7 +299,7 @@ def new_project_main():
 
     # Save terraform vars file
     save_terraform_vars(
-        env.project_path, 'terraform_vars.json', terraform_vars
+        env.project_path, 'terraform.tfvars.json', terraform_vars
     )
 
     # Generate the main.tf and providers.tf files.
@@ -289,3 +315,68 @@ def new_project_main():
         env.csp,
         template_vars
     )
+
+    run_terraform(env.project_path, env.run_validation)
+
+def run_terraform(cwd, validate):
+    if validate:
+        try:
+            command = 'command -v terraform'
+            logging.info(f'Executing command: {command}')
+            subprocess.check_output(
+                command,
+                shell=True,
+                cwd=cwd,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+        except subprocess.CalledProcessError as e:
+            logging.warning(f'''
+            Validation skipped, terraform not found.
+            Delete {cwd} and re-run edb-terraform or
+            Install and manually run: 
+            1. `terraform init`
+            2. `terraform plan`
+            3. `terraform apply -target=null_resource.validation`
+            ''')
+            sys.exit()
+    
+        try:
+            command = 'terraform init'
+            logging.info(f'Executing command: {command}')
+            subprocess.check_output(
+                command,
+                shell=True,
+                cwd=cwd,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+        except subprocess.CalledProcessError as e:
+            logging.error("Error: . \nreturn code %s \n(%s)" % (e.returncode, e.output))
+            destroy_project_dir(cwd)
+            sys.exit()
+    
+        try:
+            command = 'terraform plan -input=false'    
+            logging.info(f'Executing command: {command}')
+            subprocess.check_output(
+                command,
+                shell=True,
+                cwd=cwd,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+
+            command = 'terraform apply -input=false -target=null_resource.validation -auto-approve'
+            logging.info(f'Executing command: {command}')
+            subprocess.check_output(
+                command,
+                shell=True,
+                cwd=cwd,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+        except subprocess.CalledProcessError as e:
+            logging.error("Error: unable to validate terraform files. \nreturn code %s \n(%s)" % (e.returncode, e.output))
+            destroy_project_dir(cwd)
+            sys.exit()

@@ -25,8 +25,6 @@ variable "spec" {
       region        = string
       zone          = string
       instance_type = string
-      dbname        = optional(string)
-      port          = optional(number)
       volume = object({
         type      = string
         size_gb   = number
