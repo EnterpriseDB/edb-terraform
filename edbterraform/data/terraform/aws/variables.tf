@@ -1,8 +1,6 @@
 variable "spec" {
-  default     = {}
-  description = <<-EOT
-  Variable used to be passed into the specification module
-  EOT
+  description = "Variable is meant to represent the yaml input file handled through python and is meant to be passed through to module/specification var.spec"
+  nullable    = false
 }
 variable "ssh_priv_key" {}
 variable "ssh_pub_key" {}

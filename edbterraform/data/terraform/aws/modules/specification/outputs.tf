@@ -4,8 +4,8 @@ output "value" {
 
 output "region_zone_networks" {
   value = {
-    for region, region_spec in var.spec.regions : region => {
-      for zone, network in region_spec.zones :
+    for region, spec in var.spec.regions : region => {
+      for zone, network in spec.zones :
       zone => network
     }
   }
@@ -29,11 +29,11 @@ output "region_databases" {
   }
 }
 
-output "region_alloys" {
+output "region_auroras" {
   value = {
-    for name, spec in var.spec.alloy : spec.region => {
+    for name, aurora_spec in var.spec.aurora : aurora_spec.region => {
       name = name
-      spec = spec
+      spec = aurora_spec
     }...
   }
 }

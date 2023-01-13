@@ -3,7 +3,7 @@ variable "spec" {
     ssh_user     = string
     cluster_name = string
     operating_system = optional(object({
-      name  = string
+      name = string
     }))
     regions = map(object({
       cidr_block = string
@@ -61,9 +61,9 @@ variable "spec" {
       })), [])
     })), {})
     alloy = optional(map(object({
-      region         = string
-      cpu_count      = number
-      password       = string
+      region    = string
+      cpu_count = number
+      password  = string
       settings = optional(list(object({
         name  = string
         value = string

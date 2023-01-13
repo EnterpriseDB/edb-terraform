@@ -3,7 +3,7 @@ output "region" {
 }
 
 output "username" {
-  value =aws_db_instance.rds_server.username
+  value = aws_db_instance.rds_server.username
 }
 
 output "password" {

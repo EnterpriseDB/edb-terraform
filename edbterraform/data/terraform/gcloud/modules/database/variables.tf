@@ -12,7 +12,7 @@ variable "region" {
   default = null
 }
 variable "zone" {
-  type    = string
+  type     = string
   nullable = false
 }
 variable "public_access" {

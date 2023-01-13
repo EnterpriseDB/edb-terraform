@@ -6,7 +6,7 @@ gcloud:
   regions:
     us-west4:
       cidr_block: 10.4.0.0/16
-      azs:
+      zones:
         us-west4-a: 10.4.1.0/24
       service_ports:
         - port: 22
@@ -16,7 +16,7 @@ gcloud:
     dbt2-driver2:
       type: dbt2-driver
       region: us-west4
-      az: us-west4-a
+      zone: us-west4-a
       instance_type: c2-standard-4
       volume:
         type: pd-standard

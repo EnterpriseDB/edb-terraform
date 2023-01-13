@@ -5,8 +5,8 @@ variable "cluster_name" {}
 variable "created_by" {}
 variable "name_id" { default = "0" }
 variable "publicly_accessible" {
-  type = bool
-  default = true
+  type     = bool
+  default  = true
   nullable = false
 }
 

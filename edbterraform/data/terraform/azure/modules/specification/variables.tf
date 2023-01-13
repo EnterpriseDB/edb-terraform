@@ -3,10 +3,10 @@ variable "spec" {
     ssh_user     = string
     cluster_name = string
     operating_system = optional(object({
-      publisher  = string
-      offer = string
-      sku = string
-      version = string
+      publisher = string
+      offer     = string
+      sku       = string
+      version   = string
     }))
     regions = map(object({
       cidr_block = string
@@ -29,8 +29,8 @@ variable "spec" {
       zone          = number
       instance_type = string
       volume = object({
-        type      = string
-        size_gb   = number
+        type    = string
+        size_gb = number
       })
       additional_volumes = optional(list(object({
         mount_point = string

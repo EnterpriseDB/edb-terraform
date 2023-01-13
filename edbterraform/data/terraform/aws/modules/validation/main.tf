@@ -8,29 +8,33 @@ variable "region" {}
 variable "zones" {}
 
 # availability data depends on providers region
-data "aws_availability_zones" "list"{
+data "aws_availability_zones" "zone_check" {
   all_availability_zones = true
   filter {
-    name = "state"
-    values = [ "available" ]
+    name   = "state"
+    values = ["available"]
   }
-}
-
-# Error: Missing pending object in plan
-# https://github.com/hashicorp/terraform-provider-aws/pull/14853
-# Originally within data.aws_availability zone
-# but terraform bug when loading it multiple times
-resource "null_resource" "zone_check" {
-  for_each = var.zones
 
   lifecycle {
     postcondition {
-      condition = contains(data.aws_availability_zones.list.names, each.key)
-      error_message = <<-EOT
-      Region: ${var.region}
-      Zone: ${each.key}
-      Choose from the following zones for this region: ${jsonencode(data.aws_availability_zones.list.names)}
-      EOT
+      condition = alltrue([
+        for zone in var.zones :
+        contains(self.names, zone)
+      ])
+      error_message = (
+        <<-EOT
+Region:
+  ${var.region}
+Invalid Zones:
+%{for zone in keys(var.zones)~}
+%{if !contains(self.names, zone)~}
+  ${zone}
+%{endif~}
+%{endfor~}
+Valid Zone options:
+  ${jsonencode(self.names)}
+EOT
+      )
     }
   }
 }
