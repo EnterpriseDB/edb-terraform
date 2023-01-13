@@ -1,12 +1,12 @@
-cluster_name: gcloud-infra
 gcloud:
+  cluster_name: gcloud-infra
   ssh_user: rocky
   operating_system:
     name: rocky-linux-8
   regions:
     us-west1:
       cidr_block: 10.1.0.0/16
-      azs:
+      zones:
         us-west1-b: 10.1.20.0/24
       service_ports:
         - port: 22
@@ -14,7 +14,7 @@ gcloud:
           description: "SSH"
     us-west2:
       cidr_block: 10.2.0.0/16
-      azs:
+      zones:
         us-west2-b: 10.2.20.0/24
       service_ports:
         - port: 22
@@ -28,7 +28,7 @@ gcloud:
     dbt2-driver2:
       type: dbt2-driver
       region: us-west1
-      az: us-west1-b
+      zone: us-west1-b
       instance_type: c2-standard-4
       volume:
         type: pd-standard
@@ -36,7 +36,7 @@ gcloud:
     dbt2-proxy:
       type: proxy
       region: us-west2
-      az: us-west2-b
+      zone: us-west2-b
       ip_forward: true
       instance_type: c2-standard-4
       volume:
@@ -45,7 +45,7 @@ gcloud:
   databases:
     mydb1:
       region: us-west2
-      az: us-west2-b
+      zone: us-west2-b
       engine: postgres
       engine_version: 14
       instance_type: db-f1-micro

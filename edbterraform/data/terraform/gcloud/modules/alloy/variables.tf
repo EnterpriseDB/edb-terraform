@@ -1,11 +1,6 @@
 variable "name" {}
 variable "network" {}
 variable "region" {}
-variable "zone" {
-  type     = string
-  default  = ""
-  nullable = false
-}
 variable "port" {
   type     = number
   default  = 5432

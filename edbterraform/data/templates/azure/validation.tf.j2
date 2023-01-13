@@ -1,0 +1,13 @@
+# All modules should reference this module's outputs for input from user
+# All modules should reference this module in depends_on
+# During terraform plan, will act as basic validation of yaml input(var.spec) with variable validation and preconditions
+# During terraform apply, will check for availability of resources with data sources and postconditions
+module "spec" {
+  source = "./modules/specification"
+
+  spec = var.spec
+}
+
+resource "null_resource" "validation" {
+  depends_on = [module.spec]
+}

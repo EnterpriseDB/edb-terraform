@@ -2,20 +2,20 @@ module "machine_{{ region_ }}" {
   source = "./modules/machine"
 
   for_each = ({
-    for rm in lookup(local.region_machines, "{{ region }}", []) : 
+    for rm in lookup(module.spec.region_machines, "{{ region }}", []) : 
       rm.name => rm 
     })
 
-  operating_system                = var.operating_system
-  cluster_name                    = var.cluster_name
-  zone                            = each.value.spec.az
+  operating_system                = module.spec.value.operating_system
+  cluster_name                    = module.spec.value.cluster_name
+  zone                            = each.value.spec.zone
   machine                         = each.value
-  ssh_user                        = var.ssh_user
+  ssh_user                        = module.spec.value.ssh_user
   ssh_pub_key                     = var.ssh_pub_key
   ssh_priv_key                    = var.ssh_priv_key
   ssh_metadata                    = module.key_pair_{{ region_ }}.keys
-  subnet_name                     = module.network_{{ region_ }}[each.value.spec.az].name
-  name_id                         = random_id.apply.hex
+  subnet_name                     = module.network_{{ region_ }}[each.value.spec.zone].name
+  name_id                         = module.spec.hex_id
 
   depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
 

@@ -7,6 +7,8 @@ import os
 import sys
 import shutil
 import yaml
+import subprocess
+import logging
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -20,7 +22,7 @@ def tpl(template_name, dest, csp, vars={}):
     # variables.
 
     try:
-        # Templates are located in __file__/data/templates
+        # Templates are located in __file__/data/templates/<cloud-service-provider>
         current_dir = Path(__file__).parent.resolve()
         templates_dir = PurePath.joinpath(
             current_dir, 'data', 'templates', csp
@@ -93,9 +95,20 @@ def create_project_dir(dir, csp):
 
     script_dir = Path(__file__).parent.resolve()
     try:
+        logging.info(f'Creating directory: {dir}')
         shutil.copytree(script_dir / 'data' / 'terraform' / csp, dir)
     except Exception as e:
         sys.exit("ERROR: cannot create project directory %s (%s)" % (dir, e))
+
+def destroy_project_dir(dir):
+    if not os.path.exists(dir):
+        return
+
+    try:
+        logging.info(f'Destroying directory: {dir}')
+        shutil.rmtree(dir)
+    except Exception as e:
+        raise("Error: unable to delete project directory %s (%s)" % (dir, e))
 
 
 def load_infra_file(file_path, csp):
@@ -112,9 +125,8 @@ def load_infra_file(file_path, csp):
                     "ERROR: key '%s' not present in the infrastructure file."
                     % csp
                 )
-            # Returns CSP variables and cluster_name
+            # Returns CSP (cloud service provider) variables
             new_vars = vars[csp].copy()
-            new_vars['cluster_name'] = vars['cluster_name']
 
             return new_vars
     except Exception as e:
@@ -178,34 +190,25 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
     # variables as a dist, template variables as a dict)
 
     # Variables used in the template files
-    template_vars = {}
-    # Starting with making a copy of infra_vars as our terraform_vars dict
-    terraform_vars = infra_vars.copy()
-
-    # Add additional terraform variables
-    terraform_vars.update(dict(
-        ssh_user=infra_vars.get('ssh_user', None),
-        ssh_priv_key=ssh_priv_key,
-        ssh_pub_key=ssh_pub_key,
-        machines=infra_vars.get('machines', dict()),
-        gke=infra_vars.get('gke', dict()),
-        databases=infra_vars.get('databases', dict()),
-        regions=infra_vars.get('regions', dict()),
-        operating_system=infra_vars.get('operating_system', None),
-    ))
-
-    # Build template variables
-    template_vars.update(dict(
-        has_region_peering=(len(terraform_vars['regions'].keys()) > 1),
+    # Build jinja template variable
+    template_vars = dict(
+        has_region_peering=(len(infra_vars['regions'].keys()) > 1),
         has_machines=('machines' in infra_vars),
         has_gke=('gke' in infra_vars),
         has_databases=('databases' in infra_vars),
         has_regions=('regions' in infra_vars),
-        regions=terraform_vars['regions'].copy(),
-        peers=regions_to_peers(terraform_vars['regions']),
-        machine_regions=object_regions('machines', terraform_vars),
-        database_regions=object_regions('databases', terraform_vars),
-    ))
+        regions=infra_vars['regions'].copy(),
+        peers=regions_to_peers(infra_vars['regions']),
+        machine_regions=object_regions('machines', infra_vars),
+        database_regions=object_regions('databases', infra_vars),
+    )
+
+    # Starting with making a copy of infra_vars as our terraform_vars dict
+    terraform_vars = dict(
+        spec = infra_vars.copy(),
+        ssh_priv_key = ssh_priv_key,
+        ssh_pub_key = ssh_pub_key,
+    )
 
     if csp == 'aws':
         return aws_build_vars(infra_vars, terraform_vars, template_vars)
@@ -216,35 +219,19 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
     return (terraform_vars, template_vars)
 
 def gcloud_build_vars(infra_vars, terraform_vars, template_vars):
-    # Add additional terraform variables
-    terraform_vars.update(dict(
-        alloy=infra_vars.get('alloy', dict()),
-        gke=infra_vars.get('gke', dict()),
-    ))
-
-    # Build template variables
     template_vars.update(dict(
         has_alloy=('alloy' in infra_vars),
-        alloy_regions=object_regions('alloy', terraform_vars),
+        alloy_regions=object_regions('alloy', infra_vars),
         has_gke=('gke' in infra_vars),
-        gke_regions=object_regions('gke', terraform_vars),
+        gke_regions=object_regions('gke', infra_vars),
     ))
 
     return (terraform_vars, template_vars)
 
 def aws_build_vars(infra_vars, terraform_vars, template_vars):
-    # Based on the infra variables, returns a tuple composed of (terraform
-    # variables as a dist, template variables as a dict)
-
-    # Add additional terraform variables
-    terraform_vars.update(dict(
-        aurora=infra_vars.get('aurora', dict()),
-    ))
-
-    # Build template variables
     template_vars.update(dict(
         has_aurora=('aurora' in infra_vars),
-        aurora_regions=object_regions('aurora', terraform_vars),
+        aurora_regions=object_regions('aurora', infra_vars),
     ))
 
     return (terraform_vars, template_vars)
@@ -274,6 +261,19 @@ def new_project_main():
         default='aws',
         help="Cloud Service Provider. Default: %(default)s"
     )
+    parser.add_argument(
+        '--validate',
+        dest='run_validation',
+        action='store_true',
+        required=False,
+        help='''
+            Requires terraform >= 1.3.6
+            Validates the generated files by running:
+            `terraform apply -target=null_resource.validation`
+            If invalid, error will be displayed and project directory destroyed
+            Default: %(default)s
+            '''
+    )
     env = parser.parse_args()
 
     # Load infrastructure variables from the YAML file that was passed
@@ -298,7 +298,7 @@ def new_project_main():
 
     # Save terraform vars file
     save_terraform_vars(
-        env.project_path, 'terraform_vars.json', terraform_vars
+        env.project_path, 'terraform.tfvars.json', terraform_vars
     )
 
     # Generate the main.tf and providers.tf files.
@@ -314,3 +314,70 @@ def new_project_main():
         env.csp,
         template_vars
     )
+
+    run_terraform(env.project_path, env.run_validation)
+
+def run_terraform(cwd, validate):
+    if validate:
+        try:
+            command = 'command -v terraform'
+            logging.info(f'Executing command: {command}')
+            subprocess.check_output(
+                command,
+                shell=True,
+                cwd=cwd,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+        except subprocess.CalledProcessError as e:
+            logging.warning(f'''
+            Validation skipped, terraform not found.
+            Remove --validate option or install terraform >= 1.3.6
+            and rerun edb-terraform
+            Install and manually run:
+            1. `terraform init`
+            2. `terraform plan`
+            3. `terraform apply -target=null_resource.validation`
+            ''')
+            destroy_project_dir(cwd)
+            sys.exit(e.returncode)
+    
+        try:
+            command = 'terraform init'
+            logging.info(f'Executing command: {command}')
+            subprocess.check_output(
+                command,
+                shell=True,
+                cwd=cwd,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+        except subprocess.CalledProcessError as e:
+            logging.error(f'Error: ({e.output})')
+            destroy_project_dir(cwd)
+            sys.exit(e.returncode)
+    
+        try:
+            command = 'terraform plan -input=false'    
+            logging.info(f'Executing command: {command}')
+            subprocess.check_output(
+                command,
+                shell=True,
+                cwd=cwd,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+
+            command = 'terraform apply -input=false -target=null_resource.validation -auto-approve'
+            logging.info(f'Executing command: {command}')
+            subprocess.check_output(
+                command,
+                shell=True,
+                cwd=cwd,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+        except subprocess.CalledProcessError as e:
+            logging.error(f'Error: unable to validate terraform files.\n({e.output})')
+            destroy_project_dir(cwd)
+            sys.exit(e.returncode)

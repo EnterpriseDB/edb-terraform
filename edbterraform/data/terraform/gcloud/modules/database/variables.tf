@@ -12,8 +12,8 @@ variable "region" {
   default = null
 }
 variable "zone" {
-  type    = string
-  default = null
+  type     = string
+  nullable = false
 }
 variable "public_access" {
   type     = bool

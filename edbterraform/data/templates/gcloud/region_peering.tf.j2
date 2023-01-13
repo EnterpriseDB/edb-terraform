@@ -6,7 +6,7 @@ module "vpc_peering_{{ requester_ }}_{{ accepter_ }}" {
   source = "./modules/vpc_peering"
   
   network      = module.vpc_{{ requester_ }}.vpc_id
-  peering_name = "peer-{{ requester }}-{{ accepter }}-${random_id.apply.hex}"
+  peering_name = "peer-{{ requester }}-{{ accepter }}-${module.spec.hex_id}"
   peer_network = module.vpc_{{ accepter_ }}.vpc_id
 
   depends_on = [
@@ -25,7 +25,7 @@ module "vpc_peering_{{ accepter_ }}_{{ requester_ }}" {
   source = "./modules/vpc_peering"
   
   network      = module.vpc_{{ accepter_ }}.vpc_id
-  peering_name = "peer-{{ accepter }}-{{ requester }}-${random_id.apply.hex}"
+  peering_name = "peer-{{ accepter }}-{{ requester }}-${module.spec.hex_id}"
   peer_network = module.vpc_{{ requester_ }}.vpc_id
 
   depends_on = [module.vpc_peering_{{ requester_ }}_{{ accepter_ }}]

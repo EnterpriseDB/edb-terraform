@@ -1,6 +1,6 @@
 ---
-cluster_name: azure-infra
 azure:
+  cluster_name: azure-infra
   ssh_user: rocky
   operating_system:
     publisher: "erockyenterprisesoftwarefoundationinc1653071250513"

@@ -1,7 +1,9 @@
 module "agreements" {
   source = "./modules/agreement"
 
-  publisher = var.operating_system.publisher
-  offer     = var.operating_system.offer
-  plan      = var.operating_system.sku
+  publisher = module.spec.value.operating_system.publisher
+  offer     = module.spec.value.operating_system.offer
+  plan      = module.spec.value.operating_system.sku
+
+  depends_on = [module.spec]
 }

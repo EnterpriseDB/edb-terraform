@@ -1,6 +1,6 @@
 variable "ssh_pub_key" {}
 variable "key_name" {}
-variable "name_id" { default="0" }
+variable "name_id" { default = "0" }
 
 terraform {
   required_providers {
