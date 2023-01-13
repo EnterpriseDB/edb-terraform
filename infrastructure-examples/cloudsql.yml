@@ -1,5 +1,5 @@
-cluster_name: gcloud-infra
 gcloud:
+  cluster_name: gcloud-infra
   ssh_user: rocky
   operating_system:
     name: rocky-linux-8

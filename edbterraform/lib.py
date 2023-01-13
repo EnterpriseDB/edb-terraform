@@ -125,9 +125,8 @@ def load_infra_file(file_path, csp):
                     "ERROR: key '%s' not present in the infrastructure file."
                     % csp
                 )
-            # Returns CSP variables and cluster_name
+            # Returns CSP (cloud service provider) variables
             new_vars = vars[csp].copy()
-            new_vars['cluster_name'] = vars['cluster_name']
 
             return new_vars
     except Exception as e:

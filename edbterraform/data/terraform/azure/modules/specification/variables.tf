@@ -12,6 +12,7 @@ variable "spec" {
       cidr_block = string
       zones      = optional(map(string), {})
       service_ports = optional(list(object({
+        name        = string
         port        = number
         protocol    = string
         description = string
