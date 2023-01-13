@@ -38,6 +38,15 @@ output "region_alloys" {
   }
 }
 
+output "region_gke" {
+  value = {
+    for name, spec in var.spec.gke : spec.region => {
+      name = name
+      spec = spec
+    }...
+  }
+}
+
 output "hex_id" {
   value = random_id.apply.hex
 }

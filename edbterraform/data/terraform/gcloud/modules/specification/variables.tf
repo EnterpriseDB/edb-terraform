@@ -1,6 +1,6 @@
 variable "spec" {
   type = object({
-    ssh_user     = string
+    ssh_user     = optional(string)
     cluster_name = string
     operating_system = optional(object({
       name = string
@@ -69,5 +69,19 @@ variable "spec" {
         value = string
       })), [])
     })), {})
+    gke = optional(map(object({
+      region        = string
+      zone          = string
+      cpu_count     = number
+      instance_type = string
+    })))
   })
+
+  validation {
+    error_message = "spec.operating_system is needed for machines"
+    condition = (
+      length(var.spec.machines) == 0 ||
+      var.spec.operating_system != null
+    )
+  }
 }
