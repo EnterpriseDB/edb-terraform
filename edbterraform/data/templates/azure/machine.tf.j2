@@ -27,7 +27,7 @@ module "machine_{{ region_ }}" {
     module.key_pair_{{ region_ }},
     module.security_{{ region_ }},
     module.agreements,
-    module.spec,
+    null_resource.validation,
   ]
 
   providers = {

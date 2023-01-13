@@ -6,7 +6,7 @@ module "key_pair_{{ region_ }}" {
   region        = module.vpc_{{ region_ }}.region
   public_key    = var.ssh_pub_key
 
-  depends_on = [module.vpc_{{ region_ }}, module.spec]
+  depends_on = [module.vpc_{{ region_ }}, null_resource.validation ]
 
   providers = {
     azurerm = azurerm.{{ region_ }}

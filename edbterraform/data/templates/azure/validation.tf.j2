@@ -7,3 +7,7 @@ module "spec" {
 
   spec = var.spec
 }
+
+resource "null_resource" "validation" {
+  depends_on = [module.spec]
+}

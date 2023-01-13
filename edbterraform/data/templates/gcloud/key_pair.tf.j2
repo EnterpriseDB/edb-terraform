@@ -9,5 +9,5 @@ module "key_pair_{{ region_ }}" {
     google = google.{{ region_ }}
   }
 
-  depends_on = [module.spec]
+  depends_on = [ null_resource.validation ]
 }

@@ -9,7 +9,7 @@ module "vpc_{{ region_ }}"{
     azurerm = azurerm.{{ region_ }}
   }
 
-  depends_on = [module.spec]
+  depends_on = [ null_resource.validation ]
 }
 
 module "network_{{ region_ }}" {
