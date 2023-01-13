@@ -2,14 +2,14 @@ module "machine_{{ region_ }}" {
   source = "./modules/machine"
 
   for_each = {
-    for rm in lookup(local.region_machines, "{{ region }}", []) : 
+    for rm in lookup(module.spec.region_machines, "{{ region }}", []) : 
       rm.name => rm 
     }
 
   resource_name                   = module.vpc_{{ region_ }}.resource_name
   subnet_id                       = module.network_{{ region_ }}[each.value.spec.zone].subnet_id
-  operating_system                = var.operating_system
-  cluster_name                    = var.cluster_name
+  operating_system                = module.spec.value.operating_system
+  cluster_name                    = module.spec.value.cluster_name
   machine                         = (
     merge(
       each.value.spec,
@@ -17,18 +17,17 @@ module "machine_{{ region_ }}" {
       {zone = tostring(each.value.spec.zone) == "0" ? null : each.value.spec.zone},
     )
   )
-  additional_volumes              = try(each.value.spec.additional_volumes, null)
-  ssh_user                        = var.ssh_user
+  additional_volumes              = each.value.spec.additional_volumes
+  ssh_user                        = module.spec.value.ssh_user
   private_key                     = var.ssh_priv_key
   public_key_name                 = module.key_pair_{{ region_ }}.name
-  name_id                         = random_id.apply.hex
+  name_id                         = module.spec.hex_id
 
   depends_on = [
-    module.vpc_{{ region_ }},
     module.key_pair_{{ region_ }},
-    module.network_{{ region_ }},
     module.security_{{ region_ }},
     module.agreements,
+    module.spec,
   ]
 
   providers = {

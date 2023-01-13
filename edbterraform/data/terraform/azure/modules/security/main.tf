@@ -10,10 +10,10 @@ resource "azurerm_network_security_rule" "services" {
   resource_group_name         = var.resource_name
   network_security_group_name = azurerm_network_security_group.firewall.name
 
-  name                       = try(var.service_ports[count.index].name, "none")
+  name                       = var.service_ports[count.index].name
   description                = var.service_ports[count.index].description
   protocol                   = var.service_ports[count.index].protocol
-  destination_port_range     = length(tostring(try(var.service_ports[count.index].port, ""))) > 0 ? var.service_ports[count.index].port : "*"
+  destination_port_range     = var.service_ports[count.index].port != null ? var.service_ports[count.index].port : "*"
   destination_address_prefix = "*"
   source_port_range          = "*"
   source_address_prefix      = "*"
@@ -28,10 +28,10 @@ resource "azurerm_network_security_rule" "regions" {
   resource_group_name         = var.resource_name
   network_security_group_name = azurerm_network_security_group.firewall.name
 
-  name                         = try(var.region_ports[count.index].name, "none")
+  name                         = var.region_ports[count.index].name
   description                  = var.region_ports[count.index].description
   protocol                     = var.region_ports[count.index].protocol
-  destination_port_range       = length(tostring(try(var.region_ports[count.index].port, ""))) > 0 ? var.region_ports[count.index].port : "*"
+  destination_port_range       = var.region_ports[count.index].port != null ? var.region_ports[count.index].port : "*"
   destination_address_prefixes = var.region_cidrblocks
   source_port_range            = "*"
   source_address_prefixes      = var.region_cidrblocks
