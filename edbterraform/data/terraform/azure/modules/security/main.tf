@@ -41,7 +41,7 @@ resource "azurerm_network_security_rule" "regions" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "firewall" {
-  count = length(try(var.service_ports, var.region_ports, [])) > 0 ? 1 : 0
+  count = length(var.service_ports) > 0 || length(var.region_ports) > 0 ? 1 : 0
 
   subnet_id                 = var.subnet_id
   network_security_group_id = azurerm_network_security_group.firewall.id
