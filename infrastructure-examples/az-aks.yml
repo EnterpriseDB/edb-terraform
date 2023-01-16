@@ -1,0 +1,27 @@
+---
+cluster_name: edb-k8s-aks
+azure:
+  ssh_user: rocky
+  regions:
+    westus:
+      cidr_block: 10.1.0.0/16
+      zones:
+        0: 10.1.20.0/24
+  aks:
+    pg1:
+      aksServicePrincipalAppId: <yourserviceprincipalid>
+      aksServicePrincipalClientSecret: <yourserviceprincipalclientsecret>
+      nodeCount: 3
+      dnsPrefix: EDB-k8s
+      logAnalyticsWorkspaceLocation: westus
+      logAnalyticsWorkspaceName: EDBk8sLogAnalyticsWorkspaceName
+      logAnalyticsWorkspaceSku: PerGB2018
+      resourceGroupLocation: westus
+      resourceGroupNamePrefix: EDB-k8s-rg
+      vmSize: Standard_D2_v2
+      environment: Sandbox
+      solutionName: EDB K8s Cluster and Dashboard
+      publisherName: EDB
+      type: postgres
+      region: westus
+      instance_type: Standard_D2_v2

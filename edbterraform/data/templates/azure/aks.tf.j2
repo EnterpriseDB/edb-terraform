@@ -1,0 +1,31 @@
+module "aks_{{ region_ }}" {
+  source = "./modules/aks"
+
+  for_each = ({
+    for rm in lookup(local.region_aks, "{{ region }}", []) : 
+      rm.name => rm 
+    })
+
+  aksServicePrincipalAppId        = each.value.spec.aksServicePrincipalAppId
+  aksServicePrincipalClientSecret = each.value.spec.aksServicePrincipalClientSecret
+  nodeCount                       = each.value.spec.nodeCount
+  cluster_name                    = var.cluster_name
+  dnsPrefix                       = each.value.spec.dnsPrefix
+  logAnalyticsWorkspaceLocation   = each.value.spec.logAnalyticsWorkspaceLocation
+  logAnalyticsWorkspaceName       = each.value.spec.logAnalyticsWorkspaceName
+  logAnalyticsWorkspaceSku        = each.value.spec.logAnalyticsWorkspaceSku
+  resourceGroupLocation           = each.value.spec.resourceGroupLocation
+  resourceGroupNamePrefix         = each.value.spec.resourceGroupNamePrefix
+  vmSize                          = each.value.spec.vmSize
+  environment                     = each.value.spec.environment
+  solutionName                    = each.value.spec.solutionName
+  publisherName                   = each.value.spec.publisherName
+  sshPublicKey                    = var.ssh_pub_key  
+
+  depends_on = [module.security_{{ region_ }}]
+
+  providers = {
+    azurerm = azurerm.{{ region_ }}
+  }
+
+}

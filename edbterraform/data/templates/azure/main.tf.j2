@@ -10,6 +10,12 @@ locals {
       spec = machine_spec
     }...
   }
+  region_aks = {
+    for name, spec in var.aks: spec.region => {
+      name = name
+      spec = spec
+    }...
+  }
 }
 
 resource "random_id" "apply" {
@@ -27,10 +33,16 @@ resource "random_id" "apply" {
 {%     include "network.tf.j2" %}
 {%   endif %}
 
-{%   if has_machines %}
+{%   if has_machines or has_aks %}
 {%     include "key_pair.tf.j2" %}
+{%   endif %}
 
+{%   if has_machines %}
 {%     include "machine.tf.j2" %}
+{%   endif %}
+
+{%   if has_aks %}
+{%     include "aks.tf.j2" %}
 {%   endif %}
 
 {% endfor %}
@@ -51,6 +63,11 @@ servers:
     'regions': machine_regions,
     'module_base': 'module.machine_',
   },
+  'aks': {
+    'active': has_aks,
+    'regions': aks_regions,
+    'module_base': "module.aks_",
+  }
 } %}
 {% for type, attributes in boxes.items() if attributes["active"] %}
   {{type}}:
@@ -78,3 +95,4 @@ output "{{type}}" {
   sensitive = true
 }
 {% endfor %}
+

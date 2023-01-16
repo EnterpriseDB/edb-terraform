@@ -5,6 +5,7 @@ variable "ssh_pub_key" {}
 variable "ssh_priv_key" {}
 variable "ssh_user" {}
 variable "operating_system" {}
+variable "aks" {}
 
 variable "source_ranges" {
   default = "0.0.0.0/0"
@@ -59,3 +60,11 @@ variable "created_by" {
   description = "EDB terraform Azure"
   default     = "EDB terraform Azure"
 }
+
+
+
+
+
+
+
+

@@ -189,6 +189,7 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
         ssh_pub_key=ssh_pub_key,
         machines=infra_vars.get('machines', dict()),
         gke=infra_vars.get('gke', dict()),
+        aks=infra_vars.get('aks', dict()),        
         databases=infra_vars.get('databases', dict()),
         regions=infra_vars.get('regions', dict()),
         operating_system=infra_vars.get('operating_system', None),
@@ -199,6 +200,7 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
         has_region_peering=(len(terraform_vars['regions'].keys()) > 1),
         has_machines=('machines' in infra_vars),
         has_gke=('gke' in infra_vars),
+        has_aks=('aks' in infra_vars),        
         has_databases=('databases' in infra_vars),
         has_regions=('regions' in infra_vars),
         regions=terraform_vars['regions'].copy(),
@@ -209,7 +211,10 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
 
     if csp == 'aws':
         return aws_build_vars(infra_vars, terraform_vars, template_vars)
-    
+
+    if csp == 'azure':
+        return azure_build_vars(infra_vars, terraform_vars, template_vars)
+
     if csp == 'gcloud':
         return gcloud_build_vars(infra_vars, terraform_vars, template_vars)
     
@@ -231,6 +236,25 @@ def gcloud_build_vars(infra_vars, terraform_vars, template_vars):
     ))
 
     return (terraform_vars, template_vars)
+
+
+def azure_build_vars(infra_vars, terraform_vars, template_vars):
+    # Based on the infra variables, returns a tuple composed of (terraform
+    # variables as a dist, template variables as a dict)
+
+    # Add additional terraform variables
+    terraform_vars.update(dict(
+        aks=infra_vars.get('aks', dict()),        
+    ))
+
+    # Build template variables
+    template_vars.update(dict(
+        has_aks=('aks' in infra_vars),
+        aks_regions=object_regions('aks', infra_vars),
+    ))
+
+    return (terraform_vars, template_vars)
+
 
 def aws_build_vars(infra_vars, terraform_vars, template_vars):
     # Based on the infra variables, returns a tuple composed of (terraform

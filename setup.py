@@ -47,7 +47,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Database",
     ],
-    keywords="terraform cloud yaml edb cli aws rds aurora azure gcloud gke",
+    keywords="terraform cloud yaml edb cli aws rds aurora azure aks gcloud gke",
     python_requires=">=3.6",
     install_requires=["PyYAML>=5.1", "cryptography", "jinja2"],
     extras_require={},
