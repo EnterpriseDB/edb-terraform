@@ -80,7 +80,7 @@ variable "spec" {
   validation {
     condition     = length(var.spec.machines) == 0 || var.spec.operating_system != null
     error_message = <<-EOT
-    operating_system key must be defined within spec when machines are used:
+    operating_system key must be defined within spec when machines are used
     EOT
   }
 
