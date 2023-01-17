@@ -18,7 +18,7 @@ data "aws_availability_zones" "zone_check" {
   lifecycle {
     postcondition {
       condition = alltrue([
-        for zone in var.zones :
+        for zone in keys(var.zones) :
         contains(self.names, zone)
       ])
       error_message = (

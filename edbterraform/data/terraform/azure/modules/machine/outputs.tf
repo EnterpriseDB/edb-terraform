@@ -1,7 +1,4 @@
 output "type" {
-  value = var.machine.type
-}
-output "instance_type" {
   value = azurerm_linux_virtual_machine.main.size
 }
 output "zone" {

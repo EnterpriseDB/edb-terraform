@@ -1,7 +1,4 @@
 output "type" {
-  value = var.machine.spec.type
-}
-output "instance_type" {
   value = google_compute_instance.machine.machine_type
 }
 output "zone" {

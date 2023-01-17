@@ -1,5 +1,5 @@
 output "type" {
-  value = var.machine.spec.type
+  value = aws_instance.machine.instance_type
 }
 
 output "zone" {

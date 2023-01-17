@@ -11,12 +11,12 @@ variable "spec" {
     regions = map(object({
       cidr_block = string
       zones      = optional(map(string), {})
-      service_ports = list(object({
+      service_ports = optional(list(object({
         name        = string
         port        = optional(number)
         protocol    = string
         description = string
-      }))
+      })), [])
       region_ports = optional(list(object({
         name        = string
         port        = optional(number)

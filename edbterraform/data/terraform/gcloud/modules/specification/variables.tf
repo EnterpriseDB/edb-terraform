@@ -8,11 +8,11 @@ variable "spec" {
     regions = map(object({
       cidr_block = string
       zones      = optional(map(string), {})
-      service_ports = list(object({
+      service_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
         description = string
-      }))
+      })), [])
       region_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
@@ -76,6 +76,13 @@ variable "spec" {
       instance_type = string
     })), {})
   })
+
+  validation {
+    condition     = length(var.spec.machines) == 0 || var.spec.operating_system != null
+    error_message = <<-EOT
+    operating_system key must be defined within spec when machines are used
+    EOT
+  }
 
   validation {
     condition     = length(var.spec.machines) == 0 || var.spec.operating_system != null
