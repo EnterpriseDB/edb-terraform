@@ -6,7 +6,6 @@ from pathlib import Path, PurePath
 import os
 import sys
 import shutil
-import yaml
 import subprocess
 import logging
 from jinja2 import Environment, FileSystemLoader
@@ -15,6 +14,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 from edbterraform.utils.dict import change_keys
+from edbterraform.utils.files import load_yaml_file
 
 
 def tpl(template_name, dest, csp, vars={}):
@@ -110,29 +110,6 @@ def destroy_project_dir(dir):
     except Exception as e:
         raise("Error: unable to delete project directory %s (%s)" % (dir, e))
 
-
-def load_infra_file(file_path, csp):
-    # Load the infrastructure file, expected format is YAML.
-
-    if not os.path.exists(file_path):
-        sys.exit("ERROR: file %s not found" % file_path)
-
-    try:
-        with open(file_path) as f:
-            vars = yaml.load(f.read(), Loader=yaml.CLoader)
-            if csp not in vars:
-                sys.exit(
-                    "ERROR: key '%s' not present in the infrastructure file."
-                    % csp
-                )
-            # Returns CSP (cloud service provider) variables
-            new_vars = vars[csp].copy()
-
-            return new_vars
-    except Exception as e:
-        sys.exit("ERROR: could not read file %s (%s)" % (file_path, e))
-
-
 def save_terraform_vars(dir, filename, vars):
     # Saves terraform variables as a JSON file.
 
@@ -184,12 +161,22 @@ def object_regions(object_type, vars):
 
     return regions
 
-def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
+def build_vars(csp, infra_vars, project_path):
 
     # Based on the infra variables, returns a tuple composed of (terraform
     # variables as a dist, template variables as a dict)
 
+    # Get a spec compatable object
     infra_vars = spec_compatability(infra_vars, csp)
+
+    # Generate SSH keys if ssh_user is set
+    ssh_priv_key = None
+    ssh_pub_key = None
+    if 'ssh_user' in infra_vars:
+        # Generate a new SSH key pair
+        (ssh_priv_key, ssh_pub_key) = generate_ssh_key_pair(project_path)
+        ssh_priv_key = str(ssh_priv_key.resolve())
+        ssh_pub_key = str(ssh_pub_key.resolve())
 
     # Variables used in the template files
     # Build jinja template variable
@@ -206,6 +193,8 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
     )
 
     # Starting with making a copy of infra_vars as our terraform_vars dict
+    # Since our terraform modules implement a specification module,
+    # it needs the the cloud service provider values from the file as a terraform `spec` variable
     terraform_vars = dict(
         spec = infra_vars.copy(),
         ssh_priv_key = ssh_priv_key,
@@ -279,24 +268,15 @@ def new_project_main():
     env = parser.parse_args()
 
     # Load infrastructure variables from the YAML file that was passed
-    infra_vars = load_infra_file(env.infra_file, env.csp)
+    infra_vars = load_yaml_file(env.infra_file)
 
     # Duplicate terraform code into target project directory
     create_project_dir(env.project_path, env.csp)
 
-    # Generate SSH keys if ssh_user is set
-    ssh_priv_key = None
-    ssh_pub_key = None
-    if 'ssh_user' in infra_vars:
-        # Generate a new SSH key pair
-        (ssh_priv_key, ssh_pub_key) = generate_ssh_key_pair(env.project_path)
-        ssh_priv_key = str(ssh_priv_key.resolve())
-        ssh_pub_key = str(ssh_pub_key.resolve())
-
     # Transform variables extracted from the infrastructure file into
     # terraform and templates variables.
     (terraform_vars, template_vars) = \
-        build_vars(env.csp, infra_vars, ssh_priv_key, ssh_pub_key)
+        build_vars(env.csp, infra_vars, env.project_path)
 
     # Save terraform vars file
     save_terraform_vars(
@@ -389,12 +369,25 @@ Support backwards compatability to older specs
 since each collection of modules should implement a specification module
 with the shape of the data it expects
 """
-def spec_compatability(obj, cloud_service_provider):
-  
+def spec_compatability(infrastructure_variables, cloud_service_provider):
+
+    if cloud_service_provider not in infrastructure_variables:
+        sys.exit(
+                    "ERROR: key '%s' not present in the infrastructure file."
+                    % cloud_service_provider
+                )
+    
+    spec_variables = infrastructure_variables[cloud_service_provider].copy()
+    
+    # Users were able to use 'cluster_name' at the same level as cloud_service_provider before
+    if 'cluster_name' not in spec_variables and 'cluster_name' in infrastructure_variables:
+        spec_variables['cluster_name'] = infrastructure_variables['cluster_name']
+
     replace_pairs = {
+        # Modules used to expect azs and az
         "azs": "zones",
         "az": "zone",
     }
-    obj = change_keys(obj, replace_pairs)
+    spec_variables = change_keys(spec_variables, replace_pairs)
 
-    return obj
+    return spec_variables
