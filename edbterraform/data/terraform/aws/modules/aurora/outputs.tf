@@ -34,6 +34,6 @@ output "dbname" {
   value = aws_rds_cluster.aurora_cluster.database_name
 }
 
-output "type" {
+output "instance_type" {
   value = aws_rds_cluster.aurora_cluster.db_cluster_instance_class
 }

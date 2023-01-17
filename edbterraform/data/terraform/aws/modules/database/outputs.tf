@@ -30,7 +30,7 @@ output "version" {
   value = aws_db_instance.rds_server.engine_version_actual
 }
 
-output "type" {
+output "instance_type" {
   value = aws_db_instance.rds_server.instance_class
 }
 

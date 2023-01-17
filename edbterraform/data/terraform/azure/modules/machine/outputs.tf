@@ -1,5 +1,8 @@
-output "type" {
+output "instance_type" {
   value = azurerm_linux_virtual_machine.main.size
+}
+output "type" {
+ value = var.machine.type
 }
 output "zone" {
   value = azurerm_linux_virtual_machine.main.zone
