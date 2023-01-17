@@ -9,12 +9,12 @@ import shutil
 import yaml
 import subprocess
 import logging
-
 from jinja2 import Environment, FileSystemLoader
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
+from edbterraform.utils.dict import change_keys
 
 
 def tpl(template_name, dest, csp, vars={}):
@@ -188,6 +188,8 @@ def build_vars(csp, infra_vars, ssh_priv_key, ssh_pub_key):
 
     # Based on the infra variables, returns a tuple composed of (terraform
     # variables as a dist, template variables as a dict)
+
+    infra_vars = spec_compatability(infra_vars, csp)
 
     # Variables used in the template files
     # Build jinja template variable
@@ -381,3 +383,18 @@ def run_terraform(cwd, validate):
             logging.error(f'Error: unable to validate terraform files.\n({e.output})')
             destroy_project_dir(cwd)
             sys.exit(e.returncode)
+
+"""
+Support backwards compatability to older specs 
+since each collection of modules should implement a specification module
+with the shape of the data it expects
+"""
+def spec_compatability(obj, cloud_service_provider):
+  
+    replace_pairs = {
+        "azs": "zones",
+        "az": "zone",
+    }
+    obj = change_keys(obj, replace_pairs)
+
+    return obj
