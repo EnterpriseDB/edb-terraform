@@ -6,21 +6,21 @@ variable "aksServicePrincipalClientSecret" {
   default = "<YourServicePrincipalClientSecret>"
 }
 
+variable "cluster_name" {
+  default = "EDB-k8s"
+}
+
 variable "nodeCount" {
   default = 3
 }
 
-variable "dnsPrefix" {
-  default = "EDB-k8s"
-}
-
 # Refer to https://azure.microsoft.com/global-infrastructure/services/?products=monitor for available Log Analytics regions.
 variable "logAnalyticsWorkspaceLocation" {
-  default = "westus"
+  type = string
 }
 
 variable "logAnalyticsWorkspaceName" {
-  default = "EDBk8sLogAnalyticsWorkspaceName"
+  default = "LogAnalyticsWorkspaceName"
 }
 
 # Refer to https://azure.microsoft.com/pricing/details/monitor/ for Log Analytics pricing
@@ -33,8 +33,8 @@ variable "resourceGroupLocation" {
   description = "Location of the resource group."
 }
 
-variable "resourceGroupNamePrefix" {
-  default     = "EDB-k8s-rg"
+variable "resourceGroupName" {
+  default     = "RG"
   description = "Prefix of the resource group name that's combined with a random ID so name is unique in your Azure subscription."
 }
 
@@ -43,9 +43,8 @@ variable "vmSize" {
   description = "Azure VM Size"
 }
 
-variable "environment" {
-  default     = "Sandbox"
-  description = "Target Environment Tag"
+variable "tags" {
+  type = map
 }
 
 variable "solutionName" {
@@ -60,4 +59,8 @@ variable "publisherName" {
 
 variable "sshPublicKey" {
   default = "~/.ssh/id_rsa.pub"
+}
+
+variable "region" {
+  default = "westus"
 }

@@ -1,8 +1,8 @@
-module "aks_{{ region_ }}" {
-  source = "./modules/aks"
+module "kubernetes_{{ region_ }}" {
+  source = "./modules/kubernetes"
 
   for_each = ({
-    for rm in lookup(local.region_aks, "{{ region }}", []) : 
+    for rm in lookup(local.region_kubernetes, "{{ region }}", []) : 
       rm.name => rm 
     })
 
@@ -10,17 +10,16 @@ module "aks_{{ region_ }}" {
   aksServicePrincipalClientSecret = each.value.spec.aksServicePrincipalClientSecret
   nodeCount                       = each.value.spec.nodeCount
   cluster_name                    = var.cluster_name
-  dnsPrefix                       = each.value.spec.dnsPrefix
-  logAnalyticsWorkspaceLocation   = each.value.spec.logAnalyticsWorkspaceLocation
-  logAnalyticsWorkspaceName       = each.value.spec.logAnalyticsWorkspaceName
+  logAnalyticsWorkspaceLocation   = try(each.value.spec.logAnalyticsWorkspaceLocation, null)
+  logAnalyticsWorkspaceName       = "${replace(var.cluster_name,"-","")}${random_pet.name.id}Workspace"
   logAnalyticsWorkspaceSku        = each.value.spec.logAnalyticsWorkspaceSku
-  resourceGroupLocation           = each.value.spec.resourceGroupLocation
-  resourceGroupNamePrefix         = each.value.spec.resourceGroupNamePrefix
-  vmSize                          = each.value.spec.vmSize
-  environment                     = each.value.spec.environment
+  resourceGroupLocation           = try(each.value.spec.resourceGroupLocation, null)
+  resourceGroupName               = "${var.cluster_name}-RG-${random_pet.name.id}"
+  vmSize                          = each.value.spec.instance_type
   solutionName                    = each.value.spec.solutionName
   publisherName                   = each.value.spec.publisherName
   sshPublicKey                    = var.ssh_pub_key  
+  tags                            = try(each.value.spec.tags, {})
 
   depends_on = [module.security_{{ region_ }}]
 

@@ -40,3 +40,7 @@ output "resource_group_name" {
 output "kubernetes_cluster_name" {
   value = azurerm_kubernetes_cluster.k8s.name
 }
+
+output "tags" {
+  value = azurerm_kubernetes_cluster.k8s.tags
+}

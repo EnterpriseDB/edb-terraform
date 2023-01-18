@@ -10,8 +10,8 @@ locals {
       spec = machine_spec
     }...
   }
-  region_aks = {
-    for name, spec in var.aks: spec.region => {
+  region_kubernetes = {
+    for name, spec in var.kubernetes: spec.region => {
       name = name
       spec = spec
     }...
@@ -20,6 +20,9 @@ locals {
 
 resource "random_id" "apply" {
   byte_length = 4
+}
+
+resource "random_pet" "name" {
 }
 
 {% if has_machines %}
@@ -33,7 +36,7 @@ resource "random_id" "apply" {
 {%     include "network.tf.j2" %}
 {%   endif %}
 
-{%   if has_machines or has_aks %}
+{%   if has_machines or has_kubernetes %}
 {%     include "key_pair.tf.j2" %}
 {%   endif %}
 
@@ -41,8 +44,8 @@ resource "random_id" "apply" {
 {%     include "machine.tf.j2" %}
 {%   endif %}
 
-{%   if has_aks %}
-{%     include "aks.tf.j2" %}
+{%   if has_kubernetes %}
+{%     include "kubernetes.tf.j2" %}
 {%   endif %}
 
 {% endfor %}
@@ -63,10 +66,10 @@ servers:
     'regions': machine_regions,
     'module_base': 'module.machine_',
   },
-  'aks': {
-    'active': has_aks,
-    'regions': aks_regions,
-    'module_base': "module.aks_",
+  'kubernetes': {
+    'active': has_kubernetes,
+    'regions': kubernetes_regions,
+    'module_base': "module.kubernetes_",
   }
 } %}
 {% for type, attributes in boxes.items() if attributes["active"] %}

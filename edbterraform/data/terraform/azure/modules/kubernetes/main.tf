@@ -1,19 +1,12 @@
-resource "random_pet" "rg_name" {
-  prefix = var.resourceGroupNamePrefix
-}
 
 resource "azurerm_resource_group" "rg" {
-  location = var.resourceGroupLocation
-  name     = random_pet.rg_name.id
-}
-
-resource "random_id" "log_analytics_workspace_name_suffix" {
-  byte_length = 8
+  location = var.resourceGroupLocation != null ? var.resourceGroupLocation : var.region  
+  name     = var.resourceGroupName
 }
 
 resource "azurerm_log_analytics_workspace" "wrkspc" {
-  location            = var.logAnalyticsWorkspaceLocation
-  name                = "${var.logAnalyticsWorkspaceName}-${random_id.log_analytics_workspace_name_suffix.dec}"
+  location            = var.logAnalyticsWorkspaceLocation != null ? var.logAnalyticsWorkspaceLocation : var.region
+  name                = var.logAnalyticsWorkspaceName
   resource_group_name = azurerm_resource_group.rg.name
   sku                 = var.logAnalyticsWorkspaceSku
 }
@@ -35,10 +28,8 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   location            = azurerm_resource_group.rg.location
   name                = var.cluster_name
   resource_group_name = azurerm_resource_group.rg.name
-  dns_prefix          = var.dnsPrefix
-  tags = {
-    Environment = var.environment
-  }
+  dns_prefix          = var.cluster_name
+  tags                = var.tags
 
   default_node_pool {
     name       = "agentpool"
