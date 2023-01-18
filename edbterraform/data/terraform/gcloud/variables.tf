@@ -1,6 +1,6 @@
 variable "regions" {}
 variable "machines" {}
-variable "gke" {}
+variable "kubernetes" {}
 variable "alloy" {}
 variable "databases" {}
 variable "cluster_name" {}

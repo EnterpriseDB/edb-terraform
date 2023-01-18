@@ -1,8 +1,8 @@
-module "gke_{{ region_ }}" {
-  source = "./modules/gke"
+module "kubernetes_{{ region_ }}" {
+  source = "./modules/kubernetes"
 
   for_each = ({
-    for rm in lookup(local.region_gke, "{{ region }}", []) : 
+    for rm in lookup(local.region_kubernetes, "{{ region }}", []) : 
       rm.name => rm 
     })
 

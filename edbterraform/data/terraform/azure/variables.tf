@@ -5,6 +5,7 @@ variable "ssh_pub_key" {}
 variable "ssh_priv_key" {}
 variable "ssh_user" {}
 variable "operating_system" {}
+variable "kubernetes" {}
 
 variable "source_ranges" {
   default = "0.0.0.0/0"
