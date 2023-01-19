@@ -1,7 +1,10 @@
 variable "spec" {
   type = object({
-    ssh_user     = string
-    cluster_name = string
+    tags = optional(object({
+      cluster_name = optional(string, "AWS-Cluster")
+      created_by   = optional(string, "EDB-Terraform-AWS")
+    }), {})
+    ssh_user = string
     operating_system = optional(object({
       name  = string
       owner = number
@@ -38,6 +41,7 @@ variable "spec" {
         type        = string
         encrypted   = optional(bool)
       })), [])
+      tags = optional(map(string), {})
     })), {})
     databases = optional(map(object({
       region         = string
@@ -58,6 +62,7 @@ variable "spec" {
         name  = string
         value = number
       })), [])
+      tags = optional(map(string), {})
     })), {})
     aurora = optional(map(object({
       region         = string
@@ -74,6 +79,7 @@ variable "spec" {
         name  = string
         value = string
       })), [])
+      tags = optional(map(string), {})
     })), {})
   })
 

@@ -1,7 +1,11 @@
 variable "spec" {
   type = object({
-    ssh_user     = optional(string)
-    cluster_name = string
+    # Project Level Tags
+    tags = optional(object({
+      cluster_name = optional(string, "Azure-Cluster")
+      created_by   = optional(string, "EDB-Terraform-Azure")
+    }), {})
+    ssh_user = optional(string)
     operating_system = optional(object({
       publisher = string
       offer     = string
@@ -39,6 +43,7 @@ variable "spec" {
         iops        = optional(number)
         type        = string
       })), [])
+      tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({
       region                          = string

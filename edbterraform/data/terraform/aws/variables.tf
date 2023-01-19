@@ -51,9 +51,3 @@ variable "custom_security_group_id" {
   type        = string
   default     = ""
 }
-
-variable "created_by" {
-  type        = string
-  description = "EDB terraform AWS"
-  default     = "EDB terraform AWS"
-}

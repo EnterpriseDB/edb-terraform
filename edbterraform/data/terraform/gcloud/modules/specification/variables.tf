@@ -1,7 +1,11 @@
 variable "spec" {
   type = object({
-    ssh_user     = optional(string)
-    cluster_name = string
+    # Project Level Tags
+    tags = optional(object({
+      cluster_name = optional(string, "GCP-Cluster")
+      created_by   = optional(string, "EDB-terraform-GCP")
+    }), {})
+    ssh_user = optional(string)
     operating_system = optional(object({
       name = string
     }))
@@ -38,6 +42,7 @@ variable "spec" {
         type        = string
         encrypted   = optional(bool)
       })), [])
+      tags = optional(map(string), {})
     })), {})
     databases = optional(map(object({
       region         = string
@@ -59,6 +64,7 @@ variable "spec" {
         name  = string
         value = number
       })), [])
+      tags = optional(map(string), {})
     })), {})
     alloy = optional(map(object({
       region    = string
@@ -68,12 +74,14 @@ variable "spec" {
         name  = string
         value = string
       })), [])
+      tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({
       region        = string
       zone          = string
       cpu_count     = number
       instance_type = string
+      tags          = optional(map(string), {})
     })), {})
   })
 

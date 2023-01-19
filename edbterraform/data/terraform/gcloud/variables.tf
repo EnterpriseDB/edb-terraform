@@ -52,9 +52,3 @@ variable "subnet_tag" {
 variable "vpc_tag" {
   default = "edb-vpc"
 }
-
-variable "created_by" {
-  type        = string
-  description = "EDB terraform GCP"
-  default     = "EDB terraform GCP"
-}
