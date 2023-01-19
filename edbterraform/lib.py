@@ -191,6 +191,14 @@ def build_vars(csp, infra_vars, project_path):
         machine_regions=object_regions('machines', infra_vars),
         database_regions=object_regions('databases', infra_vars),
         kubernetes_regions=object_regions('kubernetes', infra_vars),
+
+        # AWS Specific
+        has_aurora=('aurora' in infra_vars),
+        aurora_regions=object_regions('aurora', infra_vars),
+
+        # GCloud Specific
+        has_alloy=('alloy' in infra_vars),
+        alloy_regions=object_regions('alloy', infra_vars),
     )
 
     # Starting with making a copy of infra_vars as our terraform_vars dict
@@ -201,32 +209,8 @@ def build_vars(csp, infra_vars, project_path):
         ssh_priv_key = ssh_priv_key,
         ssh_pub_key = ssh_pub_key,
     )
-
-    if csp == 'aws':
-        return aws_build_vars(infra_vars, terraform_vars, template_vars)
-
-    if csp == 'gcloud':
-        return gcloud_build_vars(infra_vars, terraform_vars, template_vars)
     
     return (terraform_vars, template_vars)
-
-def gcloud_build_vars(infra_vars, terraform_vars, template_vars):
-    template_vars.update(dict(
-        has_alloy=('alloy' in infra_vars),
-        alloy_regions=object_regions('alloy', terraform_vars),
-    ))
-
-    return (terraform_vars, template_vars)
-
-
-def aws_build_vars(infra_vars, terraform_vars, template_vars):
-    template_vars.update(dict(
-        has_aurora=('aurora' in infra_vars),
-        aurora_regions=object_regions('aurora', infra_vars),
-    ))
-
-    return (terraform_vars, template_vars)
-
 
 def new_project_main():
     # Main function of the edb-terraform script.

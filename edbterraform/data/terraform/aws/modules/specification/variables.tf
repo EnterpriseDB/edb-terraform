@@ -87,23 +87,23 @@ variable "spec" {
   validation {
     condition = (
       alltrue([
-        for machine in var.spec.machines:
-          length(machine.additional_volumes) == 0 ||
-          anytrue([for service_port in var.spec.regions[machine.region].service_ports: 
-            service_port.port == 22
+        for machine in var.spec.machines :
+        length(machine.additional_volumes) == 0 ||
+        anytrue([for service_port in var.spec.regions[machine.region].service_ports :
+          service_port.port == 22
         ])
       ])
     )
     error_message = (
-<<-EOT
+      <<-EOT
 When using machines with additional volumes, SSH must be open.
 Ensure each region listed below has port 22 open under service_ports.
 Region - Machine:
-%{ for name, spec in var.spec.machines ~}
-%{ if length(spec.additional_volumes) != 0 ~}
+%{for name, spec in var.spec.machines~}
+%{if length(spec.additional_volumes) != 0~}
   ${spec.region} - ${name}
-%{ endif ~}
-%{ endfor ~}
+%{endif~}
+%{endfor~}
 EOT
     )
   }
