@@ -6,10 +6,13 @@ variable "ssh_user" {}
 variable "ssh_pub_key" {}
 variable "ssh_priv_key" {}
 variable "custom_security_group_id" {}
-variable "cluster_name" {}
 variable "created_by" {}
 variable "key_name" {}
 variable "operating_system" {}
+variable "tags" {
+  type    = map(string)
+  default = string
+}
 
 terraform {
   required_providers {
@@ -56,10 +59,7 @@ resource "aws_instance" "machine" {
     iops                  = var.machine.spec.volume.type == "io2" ? var.machine.spec.volume.iops : var.machine.spec.volume.type == "io1" ? var.machine.spec.volume.iops : null
   }
 
-  tags = {
-    Name       = format("%s-%s", var.cluster_name, var.machine.name)
-    Created_By = var.created_by
-  }
+  tags = var.tags
 
   connection {
     private_key = file(var.ssh_pub_key)
@@ -75,9 +75,7 @@ resource "aws_ebs_volume" "ebs_volume" {
   iops              = each.value.type == "io2" ? each.value.iops : each.value.type == "io1" ? each.value.iops : null
   encrypted         = each.value.encrypted
 
-  tags = {
-    Name = format("%s-%s-%s-%s", var.machine.name, var.cluster_name, "ebs", each.key)
-  }
+  tags = var.tags
 }
 
 locals {

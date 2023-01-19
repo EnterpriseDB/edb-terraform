@@ -9,7 +9,7 @@ module "machine_{{ region_ }}" {
   resource_name                   = module.vpc_{{ region_ }}.resource_name
   subnet_id                       = module.network_{{ region_ }}[each.value.spec.zone].subnet_id
   operating_system                = module.spec.value.operating_system
-  cluster_name                    = module.spec.value.cluster_name
+  cluster_name                    = module.spec.value.tags.cluster_name
   machine                         = (
     merge(
       each.value.spec,
@@ -22,6 +22,7 @@ module "machine_{{ region_ }}" {
   private_key                     = var.ssh_priv_key
   public_key_name                 = module.key_pair_{{ region_ }}.name
   name_id                         = module.spec.hex_id
+  tags                            = each.value.spec.tags
 
   depends_on = [
     module.key_pair_{{ region_ }},

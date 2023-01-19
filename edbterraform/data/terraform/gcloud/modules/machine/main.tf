@@ -18,7 +18,8 @@ resource "google_compute_address" "public_ip" {
 }
 
 resource "google_compute_instance" "machine" {
-  name           = format("%s-%s-%s", var.cluster_name, var.machine.name, var.name_id)
+  # name expects to be lower case
+  name           = lower(format("%s-%s-%s", var.cluster_name, var.machine.name, var.name_id))
   machine_type   = var.machine.spec.instance_type
   zone           = var.zone
   can_ip_forward = try(var.machine.spec.ip_forward, var.ip_forward)
@@ -43,18 +44,20 @@ resource "google_compute_instance" "machine" {
   }
 
   metadata = { ssh-keys = var.ssh_metadata }
+  labels   = var.tags
 }
 
 resource "google_compute_disk" "volumes" {
   for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
 
-  name             = format("%s-%s-%s-%s", var.machine.name, var.cluster_name, var.name_id, each.key)
+  name             = lower(format("%s-%s-%s-%s", var.machine.name, var.cluster_name, var.name_id, each.key))
   type             = each.value.type
   size             = each.value.size_gb
   zone             = var.machine.spec.zone
   provisioned_iops = try(each.value.iops, null)
 
   depends_on = [google_compute_instance.machine]
+
 }
 
 locals {
@@ -77,6 +80,7 @@ resource "google_compute_attached_disk" "attached_volumes" {
   instance    = google_compute_instance.machine.id
 
   depends_on = [google_compute_disk.volumes]
+
 }
 
 resource "null_resource" "copy_setup_volume_script" {

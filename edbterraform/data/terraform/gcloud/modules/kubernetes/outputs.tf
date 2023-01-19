@@ -9,3 +9,6 @@ output "kubernetes_cluster_host" {
   value       = google_container_cluster.primary.endpoint
   description = "GKE Cluster Host"
 }
+output "tags" {
+  value = google_container_cluster.primary.labels
+}

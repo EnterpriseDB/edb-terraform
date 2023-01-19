@@ -66,6 +66,8 @@ resource "azurerm_linux_virtual_machine" "main" {
     version   = var.operating_system.version
   }
 
+  tags = var.tags
+
   depends_on = [azurerm_network_interface.internal, ]
 }
 

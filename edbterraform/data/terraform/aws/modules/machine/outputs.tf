@@ -25,3 +25,7 @@ output "private_ip" {
 output "public_dns" {
   value = aws_instance.machine.public_dns
 }
+
+output "tags" {
+  value = aws_instance.machine.tags_all
+}

@@ -16,3 +16,6 @@ output "public_ip" {
 output "private_ip" {
   value = azurerm_linux_virtual_machine.main.private_ip_address
 }
+output "tags" {
+  value = azurerm_linux_virtual_machine.main.tags
+}

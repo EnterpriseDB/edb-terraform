@@ -13,3 +13,7 @@ variable "ip_forward" {
   default  = false
   nullable = false
 }
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

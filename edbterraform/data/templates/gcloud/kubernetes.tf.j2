@@ -6,12 +6,13 @@ module "kubernetes_{{ region_ }}" {
       rm.name => rm 
     })
 
-  cluster_name                    = module.spec.value.cluster_name
+  cluster_name                    = module.spec.value.tags.cluster_name
   region                          = each.value.spec.region
   machine                         = each.value
   subnetwork                      = module.network_{{ region_ }}[each.value.spec.zone].name
   network                         = module.vpc_{{ region_ }}.name
   name_id                         = module.spec.hex_id
+  tags = each.value.spec.tags
 
   depends_on = [module.security_{{ region_ }}]
 

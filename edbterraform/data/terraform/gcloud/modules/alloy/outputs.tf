@@ -24,3 +24,6 @@ output "port" {
 output "version" {
   value = google_alloydb_cluster.main.database_version
 }
+output "tags" {
+  value = google_alloydb_cluster.main.labels
+}

@@ -9,12 +9,12 @@ module "kubernetes_{{ region_ }}" {
   aksServicePrincipalAppId        = each.value.spec.aksServicePrincipalAppId
   aksServicePrincipalClientSecret = each.value.spec.aksServicePrincipalClientSecret
   nodeCount                       = each.value.spec.nodeCount
-  cluster_name                    = module.spec.value.cluster_name
+  cluster_name                    = module.spec.value.tags.cluster_name
   logAnalyticsWorkspaceLocation   = each.value.spec.logAnalyticsWorkspaceLocation
-  logAnalyticsWorkspaceName       = "${replace(module.spec.value.cluster_name,"-","")}${module.spec.pet_name}Workspace"
+  logAnalyticsWorkspaceName       = "${replace(module.spec.value.tags.cluster_name,"-","")}${module.spec.pet_name}Workspace"
   logAnalyticsWorkspaceSku        = each.value.spec.logAnalyticsWorkspaceSku
   resourceGroupLocation           = each.value.spec.resourceGroupLocation
-  resourceGroupName               = "${module.spec.value.cluster_name}-RG-${module.spec.pet_name}"
+  resourceGroupName               = "${module.spec.value.tags.cluster_name}-RG-${module.spec.pet_name}"
   vmSize                          = each.value.spec.instance_type
   solutionName                    = each.value.spec.solutionName
   publisherName                   = each.value.spec.publisherName

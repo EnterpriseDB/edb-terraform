@@ -20,6 +20,10 @@ variable "machine" {
     })
   })
 }
+variable "tags" {
+  type    = map(sting)
+  default = {}
+}
 variable "cluster_name" {}
 locals {
   zones         = var.machine.zone == null ? null : [var.machine.zone]

@@ -15,7 +15,13 @@ output "region_machines" {
   value = {
     for name, machine_spec in var.spec.machines : machine_spec.region => {
       name = name
-      spec = machine_spec
+      spec = merge(machine_spec, {
+        # spec project tags
+        tags = merge(var.spec.tags, machine_spec.tags, {
+          # machine module specific tags
+          name = format("%s-%s", var.spec.tags.cluster_name, name)
+        })
+      })
     }...
   }
 }
@@ -24,7 +30,13 @@ output "region_kubernetes" {
   value = {
     for name, spec in var.spec.kubernetes : spec.region => {
       name = name
-      spec = spec
+      spec = merge(spec, {
+        # spec project tags
+        tags = merge(var.spec.tags, spec.tags, {
+          # kubernetes module specific tags
+          name = format("%s-%s", var.spec.tags.cluster_name, name)
+        })
+      })
     }...
   }
 }

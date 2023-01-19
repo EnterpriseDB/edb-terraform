@@ -7,7 +7,7 @@ module "machine_{{ region_ }}" {
     })
 
   operating_system                = module.spec.value.operating_system
-  cluster_name                    = module.spec.value.cluster_name
+  cluster_name                    = module.spec.value.tags.cluster_name
   zone                            = each.value.spec.zone
   machine                         = each.value
   ssh_user                        = module.spec.value.ssh_user
@@ -16,6 +16,7 @@ module "machine_{{ region_ }}" {
   ssh_metadata                    = module.key_pair_{{ region_ }}.keys
   subnet_name                     = module.network_{{ region_ }}[each.value.spec.zone].name
   name_id                         = module.spec.hex_id
+  tags = each.value.spec.tags
 
   depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
 

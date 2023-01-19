@@ -25,6 +25,8 @@ resource "google_alloydb_cluster" "main" {
     }
   }
 
+  labels = var.tags
+
 }
 
 resource "google_alloydb_instance" "main" {
@@ -44,4 +46,6 @@ resource "google_alloydb_instance" "main" {
   }
 
   depends_on = [google_alloydb_cluster.main]
+
+  labels = var.tags
 }

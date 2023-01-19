@@ -16,3 +16,6 @@ output "public_ip" {
 output "private_ip" {
   value = google_compute_instance.machine.network_interface.0.network_ip
 }
+output "tags" {
+  value = google_compute_instance.machine.labels
+}

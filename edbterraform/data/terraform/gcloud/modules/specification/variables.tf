@@ -2,8 +2,8 @@ variable "spec" {
   type = object({
     # Project Level Tags
     tags = optional(object({
-      cluster_name = optional(string, "GCP-Cluster")
-      created_by   = optional(string, "EDB-terraform-GCP")
+      cluster_name = optional(string, "gcp-cluster")
+      created_by   = optional(string, "edb-terraform")
     }), {})
     ssh_user = optional(string)
     operating_system = optional(object({
@@ -84,6 +84,22 @@ variable "spec" {
       tags          = optional(map(string), {})
     })), {})
   })
+
+  validation {
+    condition     = alltrue([
+      for key, value in var.spec.tags:
+        lower(key) == key && lower(value) == value
+    ])
+    error_message = <<-EOT
+Gcloud expects all tags(labels) to be lowercase
+Fix the following tags:
+%{for key, value in var.spec.tags}
+%{if !(lower(key) == key && lower(value) == value)}
+  ${key}: ${value}
+%{endif}
+%{endfor}
+    EOT
+  }
 
   validation {
     condition     = length(var.spec.machines) == 0 || var.spec.operating_system != null

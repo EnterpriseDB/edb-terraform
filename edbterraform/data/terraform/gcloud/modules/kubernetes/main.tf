@@ -6,6 +6,7 @@ resource "google_container_cluster" "primary" {
 
   network    = var.network
   subnetwork = var.subnetwork
+  labels     = var.tags
 }
 
 resource "google_container_node_pool" "primary_nodes" {

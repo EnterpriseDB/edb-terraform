@@ -65,3 +65,7 @@ variable "backup_days" {
   default  = ["SUNDAY"]
   nullable = false
 }
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

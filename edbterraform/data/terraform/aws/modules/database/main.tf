@@ -1,13 +1,15 @@
 variable "database" {}
 variable "vpc_id" {}
 variable "custom_security_group_id" {}
-variable "cluster_name" {}
-variable "created_by" {}
 variable "name_id" { default = "0" }
 variable "publicly_accessible" {
   type     = bool
   default  = true
   nullable = false
+}
+variable "tags" {
+  type    = map(string)
+  default = {}
 }
 
 terraform {
@@ -30,10 +32,7 @@ resource "aws_db_subnet_group" "rds" {
   name       = format("rds-subnet-group-rds-%s-%s", var.name_id, var.database.name)
   subnet_ids = tolist(data.aws_subnets.ids.ids)
 
-  tags = {
-    Name       = format("%s-%s", var.cluster_name, "rds")
-    Created_By = var.created_by
-  }
+  tags = var.tags
 }
 
 resource "aws_db_instance" "rds_server" {
@@ -57,10 +56,7 @@ resource "aws_db_instance" "rds_server" {
   vpc_security_group_ids  = [var.custom_security_group_id]
   skip_final_snapshot     = true
 
-  tags = {
-    Name       = format("%s-%s", var.cluster_name, "rds")
-    Created_By = var.created_by
-  }
+  tags = var.tags
 }
 
 resource "aws_db_parameter_group" "edb_rds_db_params" {
@@ -76,8 +72,5 @@ resource "aws_db_parameter_group" "edb_rds_db_params" {
     }
   }
 
-  tags = {
-    Name       = format("%s-%s", var.cluster_name, "rds")
-    Created_By = var.created_by
-  }
+  tags = var.tags
 }

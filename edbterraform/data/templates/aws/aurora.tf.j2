@@ -5,10 +5,9 @@ module "aurora_{{ region_ }}" {
 
   vpc_id                   = module.vpc_{{ region_ }}.vpc_id
   aurora                   = each.value
-  cluster_name             = module.spec.value.cluster_name
   custom_security_group_id = module.security_{{ region_ }}.aws_security_group_id
-  created_by               = var.created_by
   name_id                  = module.spec.hex_id
+  tags                     = each.value.spec.tags
 
   depends_on = [module.security_{{ region_ }}]
 
