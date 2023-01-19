@@ -38,9 +38,9 @@ output "region_alloys" {
   }
 }
 
-output "region_gke" {
+output "region_kubernetes" {
   value = {
-    for name, spec in var.spec.gke : spec.region => {
+    for name, spec in var.spec.kubernetes : spec.region => {
       name = name
       spec = spec
     }...
@@ -49,4 +49,8 @@ output "region_gke" {
 
 output "hex_id" {
   value = random_id.apply.hex
+}
+
+output "pet_name" {
+  value = random_pet.name.id
 }

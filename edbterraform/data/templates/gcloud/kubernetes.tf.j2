@@ -1,12 +1,12 @@
-module "gke_{{ region_ }}" {
-  source = "./modules/gke"
+module "kubernetes_{{ region_ }}" {
+  source = "./modules/kubernetes"
 
   for_each = ({
-    for rm in lookup(module.spec.region_gke, "{{ region }}", []) : 
+    for rm in lookup(module.spec.region_kubernetes, "{{ region }}", []) : 
       rm.name => rm 
     })
 
-  cluster_name                    = var.spec.cluster_name
+  cluster_name                    = module.spec.value.cluster_name
   region                          = each.value.spec.region
   machine                         = each.value
   subnetwork                      = module.network_{{ region_ }}[each.value.spec.zone].name

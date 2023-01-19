@@ -1,6 +1,6 @@
 variable "spec" {
   type = object({
-    ssh_user     = string
+    ssh_user     = optional(string)
     cluster_name = string
     operating_system = optional(object({
       publisher = string
@@ -40,6 +40,20 @@ variable "spec" {
         type        = string
       })), [])
     })), {})
+    kubernetes = optional(map(object({
+      region                          = string
+      resourceGroupLocation           = optional(string)
+      logAnalyticsWorkspaceLocation   = optional(string)
+      zone                            = string
+      nodeCount                       = number
+      instance_type                   = string
+      aksServicePrincipalAppId        = string
+      aksServicePrincipalClientSecret = string
+      logAnalyticsWorkspaceSku        = string
+      solutionName                    = string
+      publisherName                   = string
+      tags                            = optional(map(string), {})
+    })), {})
   })
 
   validation {
@@ -51,24 +65,34 @@ variable "spec" {
 
   validation {
     condition = (
+      (length(var.spec.machines) == 0 && length(var.spec.kubernetes) == 0) ||
+      var.spec.ssh_user != null
+    )
+    error_message = <<-EOT
+    ssh_user key must be defined within spec when machines or kubernetes is used
+    EOT
+  }
+
+  validation {
+    condition = (
       alltrue([
-        for machine in var.spec.machines:
-          length(machine.additional_volumes) == 0 ||
-          anytrue([for service_port in var.spec.regions[machine.region].service_ports: 
-            service_port.port == 22
+        for machine in var.spec.machines :
+        length(machine.additional_volumes) == 0 ||
+        anytrue([for service_port in var.spec.regions[machine.region].service_ports :
+          service_port.port == 22
         ])
       ])
     )
     error_message = (
-<<-EOT
+      <<-EOT
 When using machines with additional volumes, SSH must be open.
 Ensure each region listed below has port 22 open under service_ports.
 Region - Machine:
-%{ for name, spec in var.spec.machines ~}
-%{ if length(spec.additional_volumes) != 0 ~}
+%{for name, spec in var.spec.machines~}
+%{if length(spec.additional_volumes) != 0~}
   ${spec.region} - ${name}
-%{ endif ~}
-%{ endfor ~}
+%{endif~}
+%{endfor~}
 EOT
     )
   }

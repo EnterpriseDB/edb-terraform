@@ -1,0 +1,31 @@
+module "kubernetes_{{ region_ }}" {
+  source = "./modules/kubernetes"
+
+  for_each = ({
+    for rm in lookup(module.spec.region_kubernetes, "{{ region }}", []) : 
+      rm.name => rm 
+    })
+
+  aksServicePrincipalAppId        = each.value.spec.aksServicePrincipalAppId
+  aksServicePrincipalClientSecret = each.value.spec.aksServicePrincipalClientSecret
+  nodeCount                       = each.value.spec.nodeCount
+  cluster_name                    = module.spec.value.cluster_name
+  logAnalyticsWorkspaceLocation   = each.value.spec.logAnalyticsWorkspaceLocation
+  logAnalyticsWorkspaceName       = "${replace(module.spec.value.cluster_name,"-","")}${module.spec.pet_name}Workspace"
+  logAnalyticsWorkspaceSku        = each.value.spec.logAnalyticsWorkspaceSku
+  resourceGroupLocation           = each.value.spec.resourceGroupLocation
+  resourceGroupName               = "${module.spec.value.cluster_name}-RG-${module.spec.pet_name}"
+  vmSize                          = each.value.spec.instance_type
+  solutionName                    = each.value.spec.solutionName
+  publisherName                   = each.value.spec.publisherName
+  ssh_user                        = module.spec.value.ssh_user
+  sshPublicKey                    = var.ssh_pub_key  
+  tags                            = each.value.spec.tags
+
+  depends_on = [module.security_{{ region_ }}]
+
+  providers = {
+    azurerm = azurerm.{{ region_ }}
+  }
+
+}

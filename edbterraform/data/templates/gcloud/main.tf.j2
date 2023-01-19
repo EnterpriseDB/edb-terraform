@@ -21,8 +21,8 @@
 {%     include "alloy.tf.j2" %}
 {%   endif %}
 
-{%   if has_gke %}
-{%     include "gke.tf.j2" %}
+{%   if has_kubernetes %}
+{%     include "kubernetes.tf.j2" %}
 {%   endif %}
 {% endfor %}
 
@@ -52,10 +52,10 @@ servers:
     'regions': alloy_regions,
     'module_base': "module.alloy_",
   },
-  'gke': {
-    'active': has_gke,
-    'regions': gke_regions,
-    'module_base': "module.gke_",
+  'kubernetes': {
+    'active': has_kubernetes,
+    'regions': kubernetes_regions,
+    'module_base': "module.kubernetes_",
   }  
 } %}
 {% for type, attributes in boxes.items() if attributes["active"] %}

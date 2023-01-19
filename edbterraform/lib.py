@@ -182,14 +182,15 @@ def build_vars(csp, infra_vars, project_path):
     # Build jinja template variable
     template_vars = dict(
         has_region_peering=(len(infra_vars['regions'].keys()) > 1),
-        has_machines=('machines' in infra_vars),
-        has_gke=('gke' in infra_vars),
-        has_databases=('databases' in infra_vars),
         has_regions=('regions' in infra_vars),
+        has_machines=('machines' in infra_vars),
+        has_databases=('databases' in infra_vars),
+        has_kubernetes=('kubernetes' in infra_vars),        
         regions=infra_vars['regions'].copy(),
         peers=regions_to_peers(infra_vars['regions']),
         machine_regions=object_regions('machines', infra_vars),
         database_regions=object_regions('databases', infra_vars),
+        kubernetes_regions=object_regions('kubernetes', infra_vars),
     )
 
     # Starting with making a copy of infra_vars as our terraform_vars dict
@@ -203,7 +204,7 @@ def build_vars(csp, infra_vars, project_path):
 
     if csp == 'aws':
         return aws_build_vars(infra_vars, terraform_vars, template_vars)
-    
+
     if csp == 'gcloud':
         return gcloud_build_vars(infra_vars, terraform_vars, template_vars)
     
@@ -212,12 +213,11 @@ def build_vars(csp, infra_vars, project_path):
 def gcloud_build_vars(infra_vars, terraform_vars, template_vars):
     template_vars.update(dict(
         has_alloy=('alloy' in infra_vars),
-        alloy_regions=object_regions('alloy', infra_vars),
-        has_gke=('gke' in infra_vars),
-        gke_regions=object_regions('gke', infra_vars),
+        alloy_regions=object_regions('alloy', terraform_vars),
     ))
 
     return (terraform_vars, template_vars)
+
 
 def aws_build_vars(infra_vars, terraform_vars, template_vars):
     template_vars.update(dict(
