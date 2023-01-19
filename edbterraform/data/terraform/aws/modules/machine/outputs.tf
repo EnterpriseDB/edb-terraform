@@ -1,10 +1,27 @@
-output "machine_ips" {
-  value = {
-    type       = var.machine.spec.type
-    az         = var.machine.spec.az
-    region     = var.machine.spec.region
-    private_ip = aws_instance.machine.private_ip
-    public_ip  = aws_instance.machine.public_ip
-    public_dns = aws_instance.machine.public_dns
-  }
+output "instance_type" {
+  value = aws_instance.machine.instance_type
+}
+
+output "type" {
+  value = var.machine.spec.type
+}
+
+output "zone" {
+  value = var.machine.spec.zone
+}
+
+output "region" {
+  value = var.machine.spec.region
+}
+
+output "public_ip" {
+  value = aws_instance.machine.public_ip
+}
+
+output "private_ip" {
+  value = aws_instance.machine.private_ip
+}
+
+output "public_dns" {
+  value = aws_instance.machine.public_dns
 }

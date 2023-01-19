@@ -1,38 +1,4 @@
-locals {
-  region_az_networks = {
-    for region, region_spec in var.regions: region => {
-      for az, network in try(region_spec.azs, {}): az => network
-    }
-  }
-  region_machines = {
-    for name, machine_spec in var.machines: machine_spec.region => {
-      name = name
-      spec = machine_spec
-    }...
-  }
-  region_databases = {
-    for name, database_spec in var.databases: database_spec.region => {
-      name = name
-      spec = database_spec
-    }...
-  }
-  region_alloys = {
-    for name, spec in var.alloy: spec.region => {
-      name = name
-      spec = spec
-    }...
-  }
-  region_kubernetes = {
-    for name, spec in var.kubernetes: spec.region => {
-      name = name
-      spec = spec
-    }...    
-  }
-}
-
-resource "random_id" "apply" {
-  byte_length = 4
-}
+{% include "validation.tf.j2" %}
 
 {% for region in regions.keys() %}
 {%   set region_ = region | replace('-', '_') %}

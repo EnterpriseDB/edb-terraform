@@ -1,9 +1,9 @@
-cluster_name: test-aurora
 aws:
+  cluster_name: test-aurora
   regions:
     us-east-1:
       cidr_block: 10.0.0.0/16
-      azs:
+      zones:
         us-east-1a: 10.0.1.0/24
         us-east-1b: 10.0.2.0/24
       service_ports:
@@ -13,7 +13,7 @@ aws:
   aurora:
     mydb2:
       region: us-east-1
-      azs:
+      zones:
         - us-east-1a
         - us-east-1b
       count: 1

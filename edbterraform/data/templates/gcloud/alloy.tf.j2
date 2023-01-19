@@ -2,14 +2,13 @@ module "alloy_{{ region_ }}" {
   source = "./modules/alloy"
 
   for_each = ({
-    for rm in lookup(local.region_alloys, "{{ region }}", []) :
+    for rm in lookup(module.spec.region_alloys, "{{ region }}", []) :
       rm.name => rm
     })
 
-  name = "${each.key}-{{ region }}-${random_id.apply.hex}"
+  name = "${each.key}-{{ region }}-${module.spec.hex_id}"
   network = module.vpc_{{ region_ }}.vpc_id
   region = each.value.spec.region
-  zone = try(each.value.spec.az, null)
   port = try(each.value.spec.port, null)
   cpu_count = try(each.value.spec.cpu_count, null)
   username = try(each.value.spec.username, null)

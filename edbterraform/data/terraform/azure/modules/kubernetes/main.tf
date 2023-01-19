@@ -1,6 +1,6 @@
 
 resource "azurerm_resource_group" "rg" {
-  location = var.resourceGroupLocation != null ? var.resourceGroupLocation : var.region  
+  location = var.resourceGroupLocation != null ? var.resourceGroupLocation : var.region
   name     = var.resourceGroupName
 }
 
@@ -37,7 +37,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     node_count = var.nodeCount
   }
   linux_profile {
-    admin_username = "ubuntu"
+    admin_username = var.ssh_user
 
     ssh_key {
       key_data = file(var.sshPublicKey)

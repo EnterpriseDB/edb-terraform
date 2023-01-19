@@ -58,6 +58,7 @@ setup(
             'data/terraform/*/modules/*/*.tf',
             'data/terraform/*/modules/*/*.sh',
             'data/templates/*/*',
+            'utils/*'
         ]
     }
 )

@@ -1,29 +1,4 @@
-locals {
-  region_az_networks = {
-    for region, region_spec in var.regions: region => {
-      for zone, network in try(region_spec.zones, {}): zone => network
-      }
-    }
-  region_machines = {
-    for name, machine_spec in var.machines: machine_spec.region => {
-      name = name
-      spec = machine_spec
-    }...
-  }
-  region_kubernetes = {
-    for name, spec in var.kubernetes: spec.region => {
-      name = name
-      spec = spec
-    }...
-  }
-}
-
-resource "random_id" "apply" {
-  byte_length = 4
-}
-
-resource "random_pet" "name" {
-}
+{% include "validation.tf.j2" %}
 
 {% if has_machines %}
 {%   include "agreements.tf.j2" %}

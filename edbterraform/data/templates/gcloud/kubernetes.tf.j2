@@ -2,20 +2,16 @@ module "kubernetes_{{ region_ }}" {
   source = "./modules/kubernetes"
 
   for_each = ({
-    for rm in lookup(local.region_kubernetes, "{{ region }}", []) : 
+    for rm in lookup(module.spec.region_kubernetes, "{{ region }}", []) : 
       rm.name => rm 
     })
 
-  operating_system                = var.operating_system
-  cluster_name                    = var.cluster_name
+  cluster_name                    = module.spec.value.cluster_name
   region                          = each.value.spec.region
   machine                         = each.value
-  ssh_user                        = var.ssh_user
-  ssh_pub_key                     = var.ssh_pub_key
-  ssh_priv_key                    = var.ssh_priv_key
-  subnetwork                      = module.network_{{ region_ }}[each.value.spec.az].name
+  subnetwork                      = module.network_{{ region_ }}[each.value.spec.zone].name
   network                         = module.vpc_{{ region_ }}.name
-  name_id                         = random_id.apply.hex
+  name_id                         = module.spec.hex_id
 
   depends_on = [module.security_{{ region_ }}]
 

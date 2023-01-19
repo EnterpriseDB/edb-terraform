@@ -51,7 +51,7 @@ resource "google_compute_disk" "volumes" {
   name             = format("%s-%s-%s-%s", var.machine.name, var.cluster_name, var.name_id, each.key)
   type             = each.value.type
   size             = each.value.size_gb
-  zone             = var.machine.spec.az
+  zone             = var.machine.spec.zone
   provisioned_iops = try(each.value.iops, null)
 
   depends_on = [google_compute_instance.machine]

@@ -10,6 +10,11 @@ variable "cluster_name" {
   default = "EDB-k8s"
 }
 
+variable "ssh_user" {
+  type     = string
+  nullable = false
+}
+
 variable "nodeCount" {
   default = 3
 }
@@ -44,7 +49,7 @@ variable "vmSize" {
 }
 
 variable "tags" {
-  type = map
+  type = map(any)
 }
 
 variable "solutionName" {

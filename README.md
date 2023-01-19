@@ -29,8 +29,8 @@ infrastructure. Example yaml files found inside [infrastructure-examples directo
 ### AWS EC2 machines
 
 ```yaml
-cluster_name: ec2-machines-demo
 aws:
+  cluster_name: ec2-machines-demo
   ssh_user: rocky
   operating_system:
     name: Rocky-8-ec2-8.6-20220515.0.x86_64
@@ -38,7 +38,7 @@ aws:
   regions:
     us-east-1:
       cidr_block: 10.0.0.0/16
-      azs:
+      zones:
         us-east-1b: 10.0.0.0/24
         us-east-1c: 10.0.1.0/24
       service_ports:
@@ -58,7 +58,7 @@ aws:
     dbt2-client:
       type: dbt2-client
       region: us-east-1
-      az: us-east-1b
+      zone: us-east-1b
       instance_type: c5.18xlarge
       volume:
         type: gp2
@@ -68,7 +68,7 @@ aws:
     dbt2-driver:
       type: dbt2-driver
       region: us-east-1
-      az: us-east-1b
+      zone: us-east-1b
       instance_type: c5.18xlarge
       volume:
         type: gp2
@@ -78,7 +78,7 @@ aws:
     pg1:
       type: postgres
       region: us-east-1
-      az: us-east-1b
+      zone: us-east-1b
       instance_type: c5.4xlarge
       volume:
         type: gp2
@@ -101,12 +101,12 @@ aws:
 ### AWS RDS Database
 
 ```yaml
-cluster_name: rds-database-demo
 aws:
+  cluster_name: rds-database-demo
   regions:
     us-east-1:
       cidr_block: 10.0.0.0/16
-      azs:
+      zones:
         us-east-1a: 10.0.0.0/24
       service_ports:
         - port: 5432
@@ -143,12 +143,12 @@ aws:
 ### AWS Aurora Database
 
 ```yaml
-cluster_name: aurora-demo
 aws:
+  cluster_name: aurora-demo
   regions:
     us-east-1:
       cidr_block: 10.0.0.0/16
-      azs:
+      zones:
         us-east-1a: 10.0.1.0/24
         us-east-1b: 10.0.2.0/24
       service_ports:
@@ -158,7 +158,7 @@ aws:
   aurora:
     mydb2:
       region: us-east-1
-      azs:
+      zones:
         - us-east-1a
         - us-east-1b
       count: 1
@@ -181,8 +181,8 @@ aws:
 ### AWS Buildbot Master and Worker
 
 ```yaml
-cluster_name: BuildBot-Demo
 aws:
+  cluster_name: BuildBot-Demo
   ssh_user: ubuntu
   operating_system:
     name: ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-
@@ -190,7 +190,7 @@ aws:
   regions:
     us-east-2:
       cidr_block: 10.0.0.0/16
-      azs:
+      zones:
         us-east-2b: 10.0.0.0/24
       service_ports:
         - port: 22
@@ -208,7 +208,7 @@ aws:
       count: 1
       type: master
       region: us-east-2
-      az: us-east-2b
+      zone: us-east-2b
       instance_type: c5.xlarge
       volume:
         type: gp2
@@ -218,7 +218,7 @@ aws:
     ebac-worker-0:
       type: worker
       region: us-east-2
-      az: us-east-2b
+      zone: us-east-2b
       instance_type: c5.xlarge
       volume:
         type: gp2
@@ -236,15 +236,15 @@ aws:
 ### GCloud Compute Engine VMs
 
 ```yaml
-cluster_name: gcloud-infra
 gcloud:
+  cluster_name: gcloud-infra
   ssh_user: rocky
   operating_system:
     name: rocky-linux-8
   regions:
     us-west2:
       cidr_block: 10.2.0.0/16
-      azs:
+      zones:
         us-west2-b: 10.2.20.0/24
       service_ports:
         - port: 22
@@ -252,7 +252,7 @@ gcloud:
           description: "SSH"
     us-west1:
       cidr_block: 10.1.0.0/16
-      azs:
+      zones:
         us-west1-b: 10.1.20.0/24
         us-west1-c: 10.1.30.0/24
       service_ports:
@@ -266,7 +266,7 @@ gcloud:
     dbt2-driver:
       type: dbt2-driver
       region: us-west2
-      az: us-west2-b
+      zone: us-west2-b
       instance_type: c2-standard-4
       volume:
         type: pd-standard
@@ -274,7 +274,7 @@ gcloud:
     pg1:
       type: postgres
       region: us-west1
-      az: us-west1-c
+      zone: us-west1-c
       instance_type: e2-standard-4
       service_ip: true
       volume:
@@ -301,6 +301,7 @@ The following components must be installed on the system:
 - Python3
 - AWS CLI
 - GCloud CLI
+- Azure CLI
 - Terraform
 
 ### Prequisites installation on Debian 11
@@ -358,10 +359,24 @@ resources creation:
      configuration based on the infrastructure file, copying Terraform modules
      into the *project* directory.
 
-     First argument is the *project* path, second argument is the
-     path to the infrastructure file:
+      a. First argument is the *project* path, second argument is the
+     path to the infrastructure file
+     
+     Use option `-c` to specify the cloud provider option: `azure` `aws` `gcloud`
+     
+     Defaults to `aws` if not used
      ```shell
-     $ edb-terraform ~/my_project my_infrastructure.yml
+     $ edb-terraform ~/my_project -c aws my_infrastructure.yml
+     ```
+
+      b. Step 2 can be skipped if using option `--validate`,
+     which provides basic validations and checks through terraform.
+     
+     Requires:
+      * terraform `>= 1.3.6` 
+      * CLI from chosen provider setup already (authenticated, export needed variables/files)
+     ```shell
+     $ edb-terraform ~/my_project -c aws my_infrastructure.yml --validate
      ```
 
   2. Terraform initialisation of the *project*:
@@ -373,9 +388,7 @@ resources creation:
   3. Apply Cloud resources creation:
      ```shell
      $ cd ~/my_project
-     $ terraform apply \
-           -var-file=./terraform_vars.json \
-           -auto-approve
+     $ terraform apply -auto-approve
      ```
 
 ## SSH access to the machines
@@ -391,7 +404,7 @@ servers:
   barman1:
     type: barman
     region: us-east-1
-    az: us-east-1b
+    zone: us-east-1b
     public_ip: 54.166.46.2
     private_ip: 10.0.0.103
     # Default provided DNS only supported by AWS
@@ -399,7 +412,7 @@ servers:
   pg1:
     type: postgres
     region: us-east-1
-    az: us-east-1b
+    zone: us-east-1b
     public_ip: 3.80.202.134
     private_ip: 10.0.0.148
     public_dns: ec2-3-80-202-134.compute-1.amazonaws.com
@@ -412,7 +425,5 @@ SSH key files: `ssh-id_rsa` and `ssh-id_rsa.pub`.
 
 ```shell
 $ cd ~/my_project
-$ terraform destroy \
-    -var-file=./terraform_vars.json \
-    -auto-approve
+$ terraform destroy -auto-approve
 ```

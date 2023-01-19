@@ -1,21 +1,13 @@
-cluster_name: gcloud-gke
 gcloud:
-  ssh_user: rocky
-  operating_system:
-    name: rocky-linux-8
+  cluster_name: gcloud-gke
   regions:
     us-west2:
       cidr_block: 10.2.0.0/16
-      azs:
+      zones:
         us-west2-b: 10.2.20.0/24
-      service_ports:
-        - port: 22
-          protocol: tcp
-          description: "SSH"
   kubernetes:
     mydb2:
       region: us-west2
-      az: us-west2-b
+      zone: us-west2-b
       instance_type: "n1-standard-1"
       cpu_count: 2
-      password: "12Password!"

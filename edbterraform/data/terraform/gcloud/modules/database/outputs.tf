@@ -1,3 +1,6 @@
+output "instance_type" {
+  value = google_sql_database_instance.instance.settings[0].tier
+}
 output "region" {
   value = google_sql_database_instance.instance.region
 }
@@ -22,3 +25,4 @@ output "version" {
 output "dbname" {
   value = google_sql_database.db.name
 }
+
