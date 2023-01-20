@@ -1,7 +1,7 @@
 module "key_pair_{{ region_ }}" {
   source = "./modules/key_pair"
 
-  key_name = module.spec.value.cluster_name
+  key_name = module.spec.value.tags.cluster_name
   ssh_pub_key  = var.ssh_pub_key
   name_id = module.spec.hex_id
 

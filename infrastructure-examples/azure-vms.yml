@@ -1,6 +1,8 @@
 ---
 azure:
-  cluster_name: azure-infra
+  tags:
+    cluster_name: azure-infra
+    created_by: edb-terraform
   ssh_user: rocky
   operating_system:
     publisher: "erockyenterprisesoftwarefoundationinc1653071250513"

@@ -1,5 +1,7 @@
 gcloud:
-  cluster_name: gcloud-infra
+  tags:
+    created_by: edb-terraform
+    cluster_name: gcloud-infra
   ssh_user: rocky
   operating_system:
     name: rocky-linux-8
@@ -35,6 +37,8 @@ gcloud:
       volume:
         type: pd-standard
         size_gb: 50
+      tags:
+        foo: bar
     dbt2-proxy:
       type: proxy
       region: us-west2
@@ -71,6 +75,8 @@ gcloud:
           value: 1.25
         - name: work_mem
           value: 16000
+      tags:
+        foo: bar
     mydb2:
       region: us-west2
       zone: us-west2-b
@@ -109,3 +115,5 @@ gcloud:
           value: 1.25
         - name: work_mem
           value: 16000
+      tags:
+        foo: bar

@@ -1,5 +1,7 @@
 gcloud:
-  cluster_name: gcloud-infra
+  tags:
+    cluster_name: gcloud-infra
+    created_by: edb-terraform
   ssh_user: rocky
   operating_system:
     name: rocky-linux-8

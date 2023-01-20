@@ -37,3 +37,7 @@ output "dbname" {
 output "instance_type" {
   value = aws_rds_cluster.aurora_cluster.db_cluster_instance_class
 }
+
+output "tags" {
+  value = aws_rds_cluster.aurora_cluster.tags_all
+}

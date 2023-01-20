@@ -19,6 +19,7 @@ module "alloy_{{ region_ }}" {
       value = setting.value
     }
   ])
+  tags = each.value.spec.tags
 
   depends_on = [module.security_{{ region_ }}]
 

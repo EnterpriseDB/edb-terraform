@@ -364,8 +364,11 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
     spec_variables = infrastructure_variables[cloud_service_provider].copy()
     
     # Users were able to use 'cluster_name' at the same level as cloud_service_provider before
-    if 'cluster_name' not in spec_variables and 'cluster_name' in infrastructure_variables:
-        spec_variables['cluster_name'] = infrastructure_variables['cluster_name']
+    if 'tags' not in spec_variables:
+        spec_variables['tags'] = dict()
+    if 'cluster_name' not in spec_variables['tags'] and \
+        'cluster_name' in infrastructure_variables:
+        spec_variables['tags']['cluster_name'] = infrastructure_variables['cluster_name']
 
     replace_pairs = {
         # Modules used to expect azs and az

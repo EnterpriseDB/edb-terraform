@@ -1,5 +1,6 @@
 gcloud:
-  cluster_name: gcloud-gke
+  tags:
+    cluster_name: gcloud-gke
   regions:
     us-west2:
       cidr_block: 10.2.0.0/16
@@ -10,4 +11,4 @@ gcloud:
       region: us-west2
       zone: us-west2-b
       instance_type: "n1-standard-1"
-      cpu_count: 2
+      node_count: 3

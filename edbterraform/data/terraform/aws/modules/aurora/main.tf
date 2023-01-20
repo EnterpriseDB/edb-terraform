@@ -2,12 +2,15 @@ variable "aurora" {}
 variable "vpc_id" {}
 variable "custom_security_group_id" {}
 variable "cluster_name" {}
-variable "created_by" {}
 variable "name_id" { default = "0" }
 variable "publicly_accessible" {
   type     = bool
   default  = true
   nullable = false
+}
+variable "tags" {
+  type    = map(string)
+  default = {}
 }
 
 terraform {
@@ -30,10 +33,7 @@ resource "aws_db_subnet_group" "aurora" {
   name       = format("rds-subnet-group-aurora-%s-%s", var.name_id, var.aurora.name)
   subnet_ids = tolist(data.aws_subnets.ids.ids)
 
-  tags = {
-    Name       = format("%s-%s", var.cluster_name, "aurora")
-    Created_By = var.created_by
-  }
+  tags = var.tags
 }
 
 resource "aws_rds_cluster" "aurora_cluster" {
@@ -51,10 +51,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   skip_final_snapshot    = true
   vpc_security_group_ids = [var.custom_security_group_id]
 
-  tags = {
-    Name       = format("%s-%s", var.cluster_name, "aurora-cluster")
-    Created_By = var.created_by
-  }
+  tags = var.tags
 }
 
 resource "aws_rds_cluster_instance" "aurora_instance" {
@@ -69,10 +66,7 @@ resource "aws_rds_cluster_instance" "aurora_instance" {
   apply_immediately       = true
   publicly_accessible     = var.publicly_accessible
 
-  tags = {
-    Name       = format("%s-%s-%s", var.cluster_name, "aurora-instance", count.index)
-    Created_By = var.created_by
-  }
+  tags = var.tags
 }
 
 resource "aws_db_parameter_group" "aurora_db_params" {
@@ -88,8 +82,5 @@ resource "aws_db_parameter_group" "aurora_db_params" {
     }
   }
 
-  tags = {
-    Name       = format("%s-%s", var.cluster_name, "rds-aurora")
-    Created_By = var.created_by
-  }
+  tags = var.tags
 }

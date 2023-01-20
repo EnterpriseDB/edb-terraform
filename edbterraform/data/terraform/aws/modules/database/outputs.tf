@@ -37,3 +37,7 @@ output "instance_type" {
 output "dbname" {
   value = aws_db_instance.rds_server.db_name
 }
+
+output "tags" {
+  value = aws_db_instance.rds_server.tags_all
+}

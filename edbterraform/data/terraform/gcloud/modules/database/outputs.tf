@@ -25,4 +25,6 @@ output "version" {
 output "dbname" {
   value = google_sql_database.db.name
 }
-
+output "tags" {
+  value = google_sql_database_instance.instance.settings[0].user_labels
+}
