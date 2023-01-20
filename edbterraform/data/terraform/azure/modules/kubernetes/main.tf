@@ -47,9 +47,8 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     network_plugin    = "kubenet"
     load_balancer_sku = "standard"
   }
-  service_principal {
-    client_id     = var.aksServicePrincipalAppId
-    client_secret = var.aksServicePrincipalClientSecret
+  identity {
+    type = "SystemAssigned"
   }
 }
 

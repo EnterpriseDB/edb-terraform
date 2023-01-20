@@ -1,11 +1,3 @@
-variable "aksServicePrincipalAppId" {
-  default = "<YourServicePrincipalAppId"
-}
-
-variable "aksServicePrincipalClientSecret" {
-  default = "<YourServicePrincipalClientSecret>"
-}
-
 variable "cluster_name" {
   default = "EDB-k8s"
 }

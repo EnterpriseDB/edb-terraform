@@ -1,6 +1,6 @@
 variable "spec" {
   type = object({
-    # Project Level Tags
+    # Project Level Tags to be merged with other tags
     tags = optional(object({
       cluster_name = optional(string, "Azure-Cluster")
       created_by   = optional(string, "EDB-Terraform-Azure")
@@ -46,18 +46,15 @@ variable "spec" {
       tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({
-      region                          = string
-      resourceGroupLocation           = optional(string)
-      logAnalyticsWorkspaceLocation   = optional(string)
-      zone                            = string
-      nodeCount                       = number
-      instance_type                   = string
-      aksServicePrincipalAppId        = string
-      aksServicePrincipalClientSecret = string
-      logAnalyticsWorkspaceSku        = string
-      solutionName                    = string
-      publisherName                   = string
-      tags                            = optional(map(string), {})
+      region                  = string
+      resource_group_location = optional(string)
+      log_analytics_location  = optional(string)
+      node_count              = number
+      instance_type           = string
+      log_analytics_sku       = string
+      solution_name           = string
+      publisher_name          = string
+      tags                    = optional(map(string), {})
     })), {})
   })
 

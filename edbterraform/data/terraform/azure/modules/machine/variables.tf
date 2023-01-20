@@ -21,7 +21,7 @@ variable "machine" {
   })
 }
 variable "tags" {
-  type    = map(sting)
+  type    = map(string)
   default = {}
 }
 variable "cluster_name" {}
