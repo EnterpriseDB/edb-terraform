@@ -1,6 +1,6 @@
 variable "spec" {
   type = object({
-    # Project Level Tags
+    # Project Level Tags used by other resources for naming or merged with other tags
     tags = optional(object({
       cluster_name = optional(string, "gcp-cluster")
       created_by   = optional(string, "edb-terraform")
