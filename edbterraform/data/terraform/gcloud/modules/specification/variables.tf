@@ -86,22 +86,6 @@ variable "spec" {
   })
 
   validation {
-    condition     = alltrue([
-      for key, value in var.spec.tags:
-        lower(key) == key && lower(value) == value
-    ])
-    error_message = <<-EOT
-Gcloud expects all tags(labels) to be lowercase
-Fix the following tags:
-%{for key, value in var.spec.tags}
-%{if !(lower(key) == key && lower(value) == value)}
-  ${key}: ${value}
-%{endif}
-%{endfor}
-    EOT
-  }
-
-  validation {
     condition     = length(var.spec.machines) == 0 || var.spec.operating_system != null
     error_message = <<-EOT
     operating_system key must be defined within spec when machines are used
