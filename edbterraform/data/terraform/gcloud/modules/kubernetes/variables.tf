@@ -3,15 +3,18 @@ variable "region" {}
 variable "cluster_name" {}
 variable "subnetwork" {}
 variable "network" {}
+variable "node_count" {
+  type = number
+}
 variable "name_id" { default = "0" }
 variable "tags" {
   type    = map(string)
   default = {}
 
   validation {
-    condition     = alltrue([
-      for key, value in var.tags:
-        lower(key) == key && lower(value) == value
+    condition = alltrue([
+      for key, value in var.tags :
+      lower(key) == key && lower(value) == value
     ])
     error_message = <<-EOT
 GCloud expects all tags(labels) to be lowercase

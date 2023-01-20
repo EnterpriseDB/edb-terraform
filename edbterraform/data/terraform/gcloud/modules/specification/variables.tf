@@ -1,6 +1,6 @@
 variable "spec" {
   type = object({
-    # Project Level Tags used by other resources for naming or merged with other tags
+    # Project Level Tags to be merged with other tags
     tags = optional(object({
       cluster_name = optional(string, "gcp-cluster")
       created_by   = optional(string, "edb-terraform")
@@ -79,7 +79,7 @@ variable "spec" {
     kubernetes = optional(map(object({
       region        = string
       zone          = string
-      cpu_count     = number
+      node_count    = number
       instance_type = string
       tags          = optional(map(string), {})
     })), {})

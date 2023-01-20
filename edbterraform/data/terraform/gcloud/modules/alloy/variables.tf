@@ -70,9 +70,9 @@ variable "tags" {
   default = {}
 
   validation {
-    condition     = alltrue([
-      for key, value in var.tags:
-        lower(key) == key && lower(value) == value
+    condition = alltrue([
+      for key, value in var.tags :
+      lower(key) == key && lower(value) == value
     ])
     error_message = <<-EOT
 GCloud expects all tags(labels) to be lowercase
