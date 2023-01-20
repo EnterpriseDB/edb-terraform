@@ -6,12 +6,11 @@ variable "ssh_user" {}
 variable "ssh_pub_key" {}
 variable "ssh_priv_key" {}
 variable "custom_security_group_id" {}
-variable "created_by" {}
 variable "key_name" {}
 variable "operating_system" {}
 variable "tags" {
   type    = map(string)
-  default = string
+  default = {}
 }
 
 terraform {

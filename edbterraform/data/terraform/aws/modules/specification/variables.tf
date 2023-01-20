@@ -1,5 +1,6 @@
 variable "spec" {
   type = object({
+    # Project Level Tags to be merged with other tags
     tags = optional(object({
       cluster_name = optional(string, "AWS-Cluster")
       created_by   = optional(string, "EDB-Terraform-AWS")

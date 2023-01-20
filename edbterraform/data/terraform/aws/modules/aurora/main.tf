@@ -2,7 +2,6 @@ variable "aurora" {}
 variable "vpc_id" {}
 variable "custom_security_group_id" {}
 variable "cluster_name" {}
-variable "created_by" {}
 variable "name_id" { default = "0" }
 variable "publicly_accessible" {
   type     = bool
