@@ -30,7 +30,9 @@ infrastructure. Example yaml files found inside [infrastructure-examples directo
 
 ```yaml
 aws:
-  cluster_name: ec2-machines-demo
+  tags:
+    cluster_name: ec2-machines-demo
+    created_by: terraform
   ssh_user: rocky
   operating_system:
     name: Rocky-8-ec2-8.6-20220515.0.x86_64
@@ -102,7 +104,8 @@ aws:
 
 ```yaml
 aws:
-  cluster_name: rds-database-demo
+  tags:
+    cluster_name: rds-database-demo
   regions:
     us-east-1:
       cidr_block: 10.0.0.0/16
@@ -144,7 +147,8 @@ aws:
 
 ```yaml
 aws:
-  cluster_name: aurora-demo
+  tags:
+    cluster_name: aurora-demo
   regions:
     us-east-1:
       cidr_block: 10.0.0.0/16
@@ -182,7 +186,8 @@ aws:
 
 ```yaml
 aws:
-  cluster_name: BuildBot-Demo
+  tags:
+    cluster_name: BuildBot-Demo
   ssh_user: ubuntu
   operating_system:
     name: ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-
@@ -237,7 +242,8 @@ aws:
 
 ```yaml
 gcloud:
-  cluster_name: gcloud-infra
+  tags:
+    cluster_name: gcloud-infra
   ssh_user: rocky
   operating_system:
     name: rocky-linux-8
