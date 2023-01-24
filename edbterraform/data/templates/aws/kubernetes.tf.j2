@@ -3,27 +3,21 @@ module "kubernetes_{{ region_ }}" {
 
   for_each = { for rm in lookup(module.spec.region_kubernetes, "{{ region }}", []) : rm.name => rm }
 
-  nodeCount                = each.value.spec.node_count
-#  cluster_name             = module.spec.value.tags.cluster_name
-  cluster_name             = "${replace(module.spec.value.tags.cluster_name,"-","")}${module.spec.pet_name}Workspace"  
-  instance_type            = each.value.spec.instance_type
-
-  operating_system         = module.spec.value.operating_system
-  vpc_id                   = module.vpc_{{ region_ }}.vpc_id
-  cidr_block               = lookup(lookup(module.spec.region_zone_networks, "{{ region }}", null), each.value.spec.zone, null)
-  az                       = each.value.spec.zone
-  machine                  = each.value
-  custom_security_group_id = module.security_{{ region_ }}.aws_security_group_id
-  ssh_pub_key              = var.ssh_pub_key
-  ssh_priv_key             = var.ssh_priv_key
-  ssh_user                 = module.spec.value.ssh_user
-  key_name                 = module.key_pair_{{ region_ }}.key_pair_id
-  tags                     = each.value.spec.tags
-
-  depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
+  region                  = each.value.spec.region
+  desiredCapacity         = each.value.spec.node_count
+  vpcAndClusterPrefix     = "${module.spec.value.tags.cluster_name}-${module.spec.pet_name}"  
+  instanceType            = each.value.spec.instance_type
 
   providers = {
     aws = aws.{{ region_ }}
+    kubernetes = kubernetes.{{ region_ }}
   }
+
+# This statement works for: Azure Kubernetes Services and Google Kubernetes Engine
+# TODO: Future versions of AWS Elastic Kubernetes Services might support it.
+#       Check on any updates that occur to AWS EKS Modules versions.
+#       This bug causes 'terraform plan' to fail since it forces aws k8s modules variable casting issues
+#       Refer to: https://support.hashicorp.com/hc/en-us/articles/4408936406803-Kubernetes-Provider-block-fails-with-connect-connection-refused-
+#  depends_on = [ null_resource.validation ]
 
 }

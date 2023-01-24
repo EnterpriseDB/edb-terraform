@@ -10,9 +10,11 @@
 {%     include "network.tf.j2" %}
 {%   endif %}
 
-{%   if has_machines %}
+{%   if has_machines or has_kubernetes %}
 {%     include "key_pair.tf.j2" %}
+{%   endif %}
 
+{%   if has_machines %}
 {%     include "machine.tf.j2" %}
 {%   endif %}
 
@@ -22,6 +24,10 @@
 
 {%   if has_aurora %}
 {%     include "aurora.tf.j2" %}
+{%   endif %}
+
+{%   if has_kubernetes %}
+{%     include "kubernetes.tf.j2" %}
 {%   endif %}
 
 {% endfor %}
@@ -51,7 +57,12 @@ servers:
     'active': has_aurora,
     'regions': aurora_regions,
     'module_base': "module.aurora_",
-  }
+  },
+  'kubernetes': {
+    'active': has_kubernetes,
+    'regions': kubernetes_regions,
+    'module_base': "module.kubernetes_",
+  }  
 } %}
 {% for type, attributes in boxes.items() if attributes["active"] %}
   {{type}}:

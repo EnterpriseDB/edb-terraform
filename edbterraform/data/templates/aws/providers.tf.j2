@@ -8,4 +8,12 @@ provider "aws" {
   alias = "{{ region_ }}"
 }
 
+{%   if has_kubernetes %}
+
+provider "kubernetes" {
+  alias = "{{ region_ }}"
+}
+
+{%   endif %}
+
 {% endfor %}

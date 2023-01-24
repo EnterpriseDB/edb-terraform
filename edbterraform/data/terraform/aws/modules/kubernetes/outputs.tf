@@ -13,6 +13,11 @@ output "cluster_security_group_id" {
   value       = module.eks.cluster_security_group_id
 }
 
+output "cluster_certificate" {
+  description = "Cluster certificate"
+  value       = module.eks.cluster_certificate_authority_data
+}
+
 output "region" {
   description = "AWS region"
   value       = var.region
@@ -20,5 +25,6 @@ output "region" {
 
 output "cluster_name" {
   description = "Kubernetes Cluster Name"
-  value       = local.vpcAndClusterName
+  value       = var.vpcAndClusterPrefix
 }
+

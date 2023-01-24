@@ -1,5 +1,5 @@
 variable "region" {
-  default = "us-east-2"
+  default = "us-east-1"
 }
 
 variable "vpcAndClusterPrefix" {
@@ -11,11 +11,11 @@ variable "clusterVersion" {
 }
 
 variable "desiredCapacity" {
-  default = 1
+  default = 3
 }
 
 variable "maxCapacity" {
-  default = 10
+  default = 3
 }
 
 variable "minCapacity" {
