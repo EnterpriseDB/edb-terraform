@@ -13,13 +13,15 @@ describing the target cloud infrastructure.
 | AWS      | Security (ports)         |:white_check_mark:|
 | AWS      | RDS                      |:white_check_mark:|
 | AWS      | RDS Aurora               |:white_check_mark:|
+| AWS      | Elastic Kubernetes Service |:white_check_mark:|
 | GCloud   | Compute Engine - VM      |:white_check_mark:|
 | GCloud   | CloudSQL                 |:white_check_mark:|
 | GCloud   | AlloyDB                  |:white_check_mark:|
 | GCloud   | Google Kubernetes Engine |:white_check_mark:|
 | Azure    | VM                       |:white_check_mark:|
 | Azure    | Database - Flexible      |       :x:        |
-| Azure    | CosmosDB                 |       :x:        |
+| Azure    | CosmoDB                 |       :x:        |
+| Azure    | Azure Kubernetes Service |:white_check_mark:|
 
 ## Infrastructure file
 
