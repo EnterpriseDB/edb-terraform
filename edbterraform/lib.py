@@ -250,38 +250,40 @@ def new_project_main():
             '''
     )
     env = parser.parse_args()
+    generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
 
+def generate_terraform(infra_file, project_path, csp, run_validation):
     # Load infrastructure variables from the YAML file that was passed
-    infra_vars = load_yaml_file(env.infra_file)
+    infra_vars = load_yaml_file(infra_file)
 
     # Duplicate terraform code into target project directory
-    create_project_dir(env.project_path, env.csp)
+    create_project_dir(project_path, csp)
 
     # Transform variables extracted from the infrastructure file into
     # terraform and templates variables.
     (terraform_vars, template_vars) = \
-        build_vars(env.csp, infra_vars, env.project_path)
+        build_vars(csp, infra_vars, project_path)
 
     # Save terraform vars file
     save_terraform_vars(
-        env.project_path, 'terraform.tfvars.json', terraform_vars
+        project_path, 'terraform.tfvars.json', terraform_vars
     )
 
     # Generate the main.tf and providers.tf files.
     tpl(
         'main.tf.j2',
-        env.project_path / 'main.tf',
-        env.csp,
+        project_path / 'main.tf',
+        csp,
         template_vars
     )
     tpl(
         'providers.tf.j2',
-        env.project_path / 'providers.tf',
-        env.csp,
+        project_path / 'providers.tf',
+        csp,
         template_vars
     )
 
-    run_terraform(env.project_path, env.run_validation)
+    run_terraform(project_path, run_validation)
 
 def run_terraform(cwd, validate):
     if validate:
