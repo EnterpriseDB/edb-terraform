@@ -11,15 +11,27 @@ output "region_zone_networks" {
   }
 }
 
+locals {
+  # Extend machine's count as of list objects with an index in the name
+  machines_extended = flatten([
+    for name, machine_spec in var.spec.machines: [
+      for index in range(machine_spec.count): {
+        name = "${name}-${index}"
+        spec = machine_spec
+      }
+    ]
+  ])
+}
+
 output "region_machines" {
   value = {
-    for name, machine_spec in var.spec.machines : machine_spec.region => {
-      name = name
-      spec = merge(machine_spec, {
+    for machine in local.machines_extended : machine.spec.region => {
+      name = machine.name
+      spec = merge(machine.spec, {
         # spec project tags
-        tags = merge(var.spec.tags, machine_spec.tags, {
+        tags = merge(var.spec.tags, machine.spec.tags, {
           # machine module specific tags
-          name = format("%s-%s", var.spec.tags.cluster_name, name)
+          name = format("%s-%s", var.spec.tags.cluster_name, machine.name)
         })
       })
     }...
