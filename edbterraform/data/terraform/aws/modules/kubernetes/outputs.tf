@@ -13,7 +13,7 @@ output "cluster_security_group_id" {
   value       = module.eks.cluster_security_group_id
 }
 
-output "ca_certification" {
+output "ca_certificate" {
   description = "Cluster certificate"
   value       = module.eks.cluster_certificate_authority_data
 }
