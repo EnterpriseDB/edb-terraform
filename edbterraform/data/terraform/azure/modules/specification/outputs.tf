@@ -12,11 +12,11 @@ output "region_zone_networks" {
 }
 
 locals {
-  # Extend machine's count as of list objects with an index in the name
+  # Extend machine's count as of list objects, with an index in the name only when count over 1
   machines_extended = flatten([
     for name, machine_spec in var.spec.machines : [
       for index in range(machine_spec.count) : {
-        name = "${name}-${index}"
+        name = machine_spec.count > 1 ? "${name}-${index}" : name
         spec = machine_spec
       }
     ]
