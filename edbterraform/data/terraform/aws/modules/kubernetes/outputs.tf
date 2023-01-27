@@ -3,7 +3,7 @@ output "cluster_id" {
   value       = module.eks.cluster_id
 }
 
-output "cluster_endpoint" {
+output "host" {
   description = "Endpoint for EKS control plane"
   value       = module.eks.cluster_endpoint
 }
@@ -13,7 +13,7 @@ output "cluster_security_group_id" {
   value       = module.eks.cluster_security_group_id
 }
 
-output "cluster_certificate" {
+output "ca_certification" {
   description = "Cluster certificate"
   value       = module.eks.cluster_certificate_authority_data
 }

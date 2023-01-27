@@ -10,11 +10,9 @@
 {%     include "network.tf.j2" %}
 {%   endif %}
 
-{%   if has_machines or has_kubernetes %}
-{%     include "key_pair.tf.j2" %}
-{%   endif %}
-
 {%   if has_machines %}
+{%     include "key_pair.tf.j2" %}
+
 {%     include "machine.tf.j2" %}
 {%   endif %}
 

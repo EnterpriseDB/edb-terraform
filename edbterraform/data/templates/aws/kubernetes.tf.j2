@@ -18,6 +18,7 @@ module "kubernetes_{{ region_ }}" {
 #       Check on any updates that occur to AWS EKS Modules versions.
 #       This bug causes 'terraform plan' to fail since it forces aws k8s modules variable casting issues
 #       Refer to: https://support.hashicorp.com/hc/en-us/articles/4408936406803-Kubernetes-Provider-block-fails-with-connect-connection-refused-
+#       Link to issue being tracked by Terraform Team: https://github.com/hashicorp/terraform/issues/30937
 #  depends_on = [ null_resource.validation ]
 
 }
