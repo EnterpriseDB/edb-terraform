@@ -12,7 +12,7 @@ variable "spec" {
     }))
     regions = map(object({
       cidr_block = string
-      zones      = map(string)
+      zones      = optional(map(string), {})
       service_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
@@ -82,6 +82,12 @@ variable "spec" {
       })), [])
       tags = optional(map(string), {})
     })), {})
+    kubernetes = optional(map(object({
+      region                  = string
+      node_count              = number
+      instance_type           = string
+      tags                    = optional(map(string), {})
+    })), {})    
   })
 
   validation {

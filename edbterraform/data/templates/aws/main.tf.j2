@@ -24,6 +24,10 @@
 {%     include "aurora.tf.j2" %}
 {%   endif %}
 
+{%   if has_kubernetes %}
+{%     include "kubernetes.tf.j2" %}
+{%   endif %}
+
 {% endfor %}
 
 {% if has_region_peering %}
@@ -51,7 +55,12 @@ servers:
     'active': has_aurora,
     'regions': aurora_regions,
     'module_base': "module.aurora_",
-  }
+  },
+  'kubernetes': {
+    'active': has_kubernetes,
+    'regions': kubernetes_regions,
+    'module_base': "module.kubernetes_",
+  }  
 } %}
 {% for type, attributes in boxes.items() if attributes["active"] %}
   {{type}}:

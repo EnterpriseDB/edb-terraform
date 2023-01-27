@@ -63,3 +63,18 @@ output "hex_id" {
 output "pet_name" {
   value = random_pet.name.id
 }
+
+output "region_kubernetes" {
+  value = {
+    for name, spec in var.spec.kubernetes : spec.region => {
+      name = name
+      spec = merge(spec, {
+        # spec project tags
+        tags = merge(var.spec.tags, spec.tags, {
+          # kubernetes module specific tags
+          name = format("%s-%s", var.spec.tags.cluster_name, name)
+        })
+      })
+    }...
+  }
+}

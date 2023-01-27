@@ -1,0 +1,15 @@
+aws:
+  tags:
+    cluster_name: EDB-K8s-CNP
+    created_by: edb-terraform
+  ssh_user: rocky
+  regions:
+    us-west-2:
+      cidr_block: 172.16.0.0/16
+  kubernetes:
+    mydb2:
+      region: us-west-2
+      node_count: 3
+      instance_type: c6a.xlarge
+      tags:
+        foo: bar
