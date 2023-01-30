@@ -11,15 +11,28 @@ output "region_zone_networks" {
   }
 }
 
+locals {
+  # Extend machine's count as of list objects, with an index in the name only when count over 1
+  machines_extended = flatten([
+    for name, machine_spec in var.spec.machines : [
+      for index in range(machine_spec.count) : {
+        name = machine_spec.count > 1 ? "${name}-${index}" : name
+        spec = machine_spec
+      }
+    ]
+  ])
+}
+
 output "region_machines" {
   value = {
-    for name, machine_spec in var.spec.machines : machine_spec.region => {
-      name = name
-      spec = merge(machine_spec, {
+    for machine in local.machines_extended : machine.spec.region => {
+      name = machine.name
+      spec = merge(machine.spec, {
         # spec project tags
-        tags = merge(var.spec.tags, machine_spec.tags, {
+        tags = merge(var.spec.tags, machine.spec.tags, {
           # machine module specific tags
-          name = format("%s-%s", var.spec.tags.cluster_name, name)
+          name = machine.name
+          id   = random_id.apply.hex
         })
       })
     }...
@@ -34,7 +47,8 @@ output "region_databases" {
         # spec project tags
         tags = merge(var.spec.tags, database_spec.tags, {
           # database module specific tags
-          name = format("%s-%s", var.spec.tags.cluster_name, name)
+          name = name
+          id   = random_id.apply.hex
         })
       })
     }...
@@ -49,7 +63,8 @@ output "region_auroras" {
         # spec project tags
         tags = merge(var.spec.tags, aurora_spec.tags, {
           # aurora module specific tags
-          name = format("%s-%s", var.spec.tags.cluster_name, name)
+          name = name
+          id   = random_id.apply.hex
         })
       })
     }...
