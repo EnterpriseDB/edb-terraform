@@ -13,8 +13,12 @@ from jinja2 import Environment, FileSystemLoader
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
-from edbterraform.utils.dict import change_keys
-from edbterraform.utils.files import load_yaml_file
+try:
+    from edbterraform.utils.dict import change_keys
+    from edbterraform.utils.files import load_yaml_file
+except:
+    from utils.dict import change_keys
+    from utils.files import load_yaml_file
 
 
 def tpl(template_name, dest, csp, vars={}):
@@ -212,7 +216,7 @@ def build_vars(csp, infra_vars, project_path):
     
     return (terraform_vars, template_vars)
 
-def new_project_main():
+def new_project_main(args=None):
     # Main function of the edb-terraform script.
 
     parser = argparse.ArgumentParser()
@@ -249,7 +253,7 @@ def new_project_main():
             Default: %(default)s
             '''
     )
-    env = parser.parse_args()
+    env = parser.parse_args(args=args)
     generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
 
 def generate_terraform(infra_file, project_path, csp, run_validation):
