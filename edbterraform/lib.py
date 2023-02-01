@@ -161,7 +161,7 @@ def object_regions(object_type, vars):
 
     return regions
 
-def build_vars(csp, infra_vars, project_path):
+def build_vars(csp, infra_vars, project_path, terraform_output_name):
 
     # Based on the infra variables, returns a tuple composed of (terraform
     # variables as a dist, template variables as a dict)
@@ -181,6 +181,7 @@ def build_vars(csp, infra_vars, project_path):
     # Variables used in the template files
     # Build jinja template variable
     template_vars = dict(
+        output_name = terraform_output_name,
         has_region_peering=(len(infra_vars['regions'].keys()) > 1),
         has_regions=('regions' in infra_vars),
         has_machines=('machines' in infra_vars),
@@ -250,9 +251,26 @@ def new_project_main():
             '''
     )
     env = parser.parse_args()
-    generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
+    output_variable = generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
+    sys.stdout.write(f'''
+    Success!
+    You can use now use terraform and see info about your boxes after creation:
+    * cd {env.project_path}
+    * terraform apply
+    * terraform output -json {output_variable}
+    \n
+    ''')
 
-def generate_terraform(infra_file, project_path, csp, run_validation):
+"""
+Generates the terraform files from jinja templates and terraform modules and
+saves the files into a project_directory for use with 'terraform' commands
+
+Returns terraform_output_name which is used to create a terraform output to the various
+type of boxes (virtual machines/dbaas/kubernetes) outputs after a user uses 'terraform apply' 
+"""
+def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
+
+    TERRAFORM_OUTPUT_NAME = 'servers'
     # Load infrastructure variables from the YAML file that was passed
     infra_vars = load_yaml_file(infra_file)
 
@@ -262,7 +280,7 @@ def generate_terraform(infra_file, project_path, csp, run_validation):
     # Transform variables extracted from the infrastructure file into
     # terraform and templates variables.
     (terraform_vars, template_vars) = \
-        build_vars(csp, infra_vars, project_path)
+        build_vars(csp, infra_vars, project_path, TERRAFORM_OUTPUT_NAME)
 
     # Save terraform vars file
     save_terraform_vars(
@@ -284,6 +302,8 @@ def generate_terraform(infra_file, project_path, csp, run_validation):
     )
 
     run_terraform(project_path, run_validation)
+
+    return TERRAFORM_OUTPUT_NAME
 
 def run_terraform(cwd, validate):
     if validate:

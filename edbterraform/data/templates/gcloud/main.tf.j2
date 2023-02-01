@@ -84,3 +84,36 @@ output "{{type}}" {
   sensitive = true
 }
 {% endfor %}
+
+output "{{output_name}}" {
+  description = <<-EOT
+  Use 'terraform output -json' for the following output and other info such as types:
+  servers:
+    value:
+      machines:
+        machine_name:
+          instance_type: <instance_type>
+      databases:
+        database_name:
+          instance_type: <instance_type>
+
+  Use 'terraform output -json servers' for the following output:
+  machines:
+    machine_name:
+      instance_type: <instance_type>
+  databases:
+    database_name:
+      instance_type: <instance_type>
+  EOT
+  value = {
+{% for type, attributes in boxes.items() if attributes["active"] %}
+    "{{type}}" = merge(
+{%   for region in attributes["regions"] -%}
+{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
+    tomap([for key, values in {{module}}[*]: values]...),
+{%   endfor %}
+    )
+{% endfor %}
+  }
+  sensitive = true
+}

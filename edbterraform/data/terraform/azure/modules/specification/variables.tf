@@ -29,7 +29,7 @@ variable "spec" {
       })), [])
     }))
     machines = optional(map(object({
-      type          = string
+      type          = optional(string)
       count         = optional(number, 1)
       region        = string
       zone          = number
