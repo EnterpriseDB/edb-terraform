@@ -30,7 +30,7 @@ setup(
     url="https://github.com/EnterpriseDB/edb-terraform/",
     entry_points = {
         'console_scripts': [
-            'edb-terraform = edbterraform.lib:new_project_main',
+            'edb-terraform = edbterraform.__main__:main',
         ]
     },
     license="BSD",

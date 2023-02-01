@@ -1,6 +1,5 @@
 # coding: utf-8
 
-import argparse
 import json
 from pathlib import Path, PurePath
 import os
@@ -13,9 +12,12 @@ from jinja2 import Environment, FileSystemLoader
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
-from edbterraform.utils.dict import change_keys
-from edbterraform.utils.files import load_yaml_file
-
+try:
+    from edbterraform.utils.dict import change_keys
+    from edbterraform.utils.files import load_yaml_file
+except:
+    from utils.dict import change_keys
+    from utils.files import load_yaml_file
 
 def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
@@ -161,7 +163,7 @@ def object_regions(object_type, vars):
 
     return regions
 
-def build_vars(csp, infra_vars, project_path):
+def build_vars(csp, infra_vars, project_path, terraform_output_name):
 
     # Based on the infra variables, returns a tuple composed of (terraform
     # variables as a dist, template variables as a dict)
@@ -181,6 +183,7 @@ def build_vars(csp, infra_vars, project_path):
     # Variables used in the template files
     # Build jinja template variable
     template_vars = dict(
+        output_name = terraform_output_name,
         has_region_peering=(len(infra_vars['regions'].keys()) > 1),
         has_regions=('regions' in infra_vars),
         has_machines=('machines' in infra_vars),
@@ -212,47 +215,16 @@ def build_vars(csp, infra_vars, project_path):
     
     return (terraform_vars, template_vars)
 
-def new_project_main():
-    # Main function of the edb-terraform script.
+"""
+Generates the terraform files from jinja templates and terraform modules and
+saves the files into a project_directory for use with 'terraform' commands
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'project_path',
-        metavar='PROJECT_PATH',
-        type=Path,
-        help="Project path.",
-    )
-    parser.add_argument(
-        'infra_file',
-        metavar='INFRA_FILE_YAML',
-        type=Path,
-        help="CSP infrastructure (YAML format) file path."
-    )
-    parser.add_argument(
-        '--cloud-service-provider', '-c',
-        metavar='CLOUD_SERVICE_PROVIDER',
-        dest='csp',
-        choices=['aws', 'gcloud', 'azure'],
-        default='aws',
-        help="Cloud Service Provider. Default: %(default)s"
-    )
-    parser.add_argument(
-        '--validate',
-        dest='run_validation',
-        action='store_true',
-        required=False,
-        help='''
-            Requires terraform >= 1.3.6
-            Validates the generated files by running:
-            `terraform apply -target=null_resource.validation`
-            If invalid, error will be displayed and project directory destroyed
-            Default: %(default)s
-            '''
-    )
-    env = parser.parse_args()
-    generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
+Returns terraform_output_name which is used to create a terraform output to the various
+type of boxes (virtual machines/dbaas/kubernetes) outputs after a user uses 'terraform apply' 
+"""
+def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
 
-def generate_terraform(infra_file, project_path, csp, run_validation):
+    TERRAFORM_OUTPUT_NAME = 'servers'
     # Load infrastructure variables from the YAML file that was passed
     infra_vars = load_yaml_file(infra_file)
 
@@ -262,7 +234,7 @@ def generate_terraform(infra_file, project_path, csp, run_validation):
     # Transform variables extracted from the infrastructure file into
     # terraform and templates variables.
     (terraform_vars, template_vars) = \
-        build_vars(csp, infra_vars, project_path)
+        build_vars(csp, infra_vars, project_path, TERRAFORM_OUTPUT_NAME)
 
     # Save terraform vars file
     save_terraform_vars(
@@ -284,6 +256,8 @@ def generate_terraform(infra_file, project_path, csp, run_validation):
     )
 
     run_terraform(project_path, run_validation)
+
+    return TERRAFORM_OUTPUT_NAME
 
 def run_terraform(cwd, validate):
     if validate:
