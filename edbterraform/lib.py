@@ -1,6 +1,5 @@
 # coding: utf-8
 
-import argparse
 import json
 from pathlib import Path, PurePath
 import os
@@ -13,9 +12,12 @@ from jinja2 import Environment, FileSystemLoader
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
-from edbterraform.utils.dict import change_keys
-from edbterraform.utils.files import load_yaml_file
-
+try:
+    from edbterraform.utils.dict import change_keys
+    from edbterraform.utils.files import load_yaml_file
+except:
+    from utils.dict import change_keys
+    from utils.files import load_yaml_file
 
 def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
@@ -213,9 +215,11 @@ def build_vars(csp, infra_vars, project_path, terraform_output_name):
     
     return (terraform_vars, template_vars)
 
-def new_project_main():
-    # Main function of the edb-terraform script.
+"""
+Generates the terraform files from jinja templates and terraform modules and
+saves the files into a project_directory for use with 'terraform' commands
 
+<<<<<<< HEAD
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'project_path',
@@ -270,6 +274,13 @@ type of boxes (virtual machines/dbaas/kubernetes) outputs after a user uses 'ter
 """
 def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
 
+=======
+Returns terraform_output_name which is used to create a terraform output to the various
+type of boxes (virtual machines/dbaas/kubernetes) outputs after a user uses 'terraform apply' 
+"""
+def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
+
+>>>>>>> main
     TERRAFORM_OUTPUT_NAME = 'servers'
     # Load infrastructure variables from the YAML file that was passed
     infra_vars = load_yaml_file(infra_file)
