@@ -219,68 +219,11 @@ def build_vars(csp, infra_vars, project_path, terraform_output_name):
 Generates the terraform files from jinja templates and terraform modules and
 saves the files into a project_directory for use with 'terraform' commands
 
-<<<<<<< HEAD
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'project_path',
-        metavar='PROJECT_PATH',
-        type=Path,
-        help="Project path.",
-    )
-    parser.add_argument(
-        'infra_file',
-        metavar='INFRA_FILE_YAML',
-        type=Path,
-        help="CSP infrastructure (YAML format) file path."
-    )
-    parser.add_argument(
-        '--cloud-service-provider', '-c',
-        metavar='CLOUD_SERVICE_PROVIDER',
-        dest='csp',
-        choices=['aws', 'gcloud', 'azure'],
-        default='aws',
-        help="Cloud Service Provider. Default: %(default)s"
-    )
-    parser.add_argument(
-        '--validate',
-        dest='run_validation',
-        action='store_true',
-        required=False,
-        help='''
-            Requires terraform >= 1.3.6
-            Validates the generated files by running:
-            `terraform apply -target=null_resource.validation`
-            If invalid, error will be displayed and project directory destroyed
-            Default: %(default)s
-            '''
-    )
-    env = parser.parse_args()
-    output_variable = generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
-    sys.stdout.write(f'''
-    Success!
-    You can use now use terraform and see info about your boxes after creation:
-    * cd {env.project_path}
-    * terraform apply
-    * terraform output -json {output_variable}
-    \n
-    ''')
-
-"""
-Generates the terraform files from jinja templates and terraform modules and
-saves the files into a project_directory for use with 'terraform' commands
-
 Returns terraform_output_name which is used to create a terraform output to the various
 type of boxes (virtual machines/dbaas/kubernetes) outputs after a user uses 'terraform apply' 
 """
 def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
 
-=======
-Returns terraform_output_name which is used to create a terraform output to the various
-type of boxes (virtual machines/dbaas/kubernetes) outputs after a user uses 'terraform apply' 
-"""
-def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
-
->>>>>>> main
     TERRAFORM_OUTPUT_NAME = 'servers'
     # Load infrastructure variables from the YAML file that was passed
     infra_vars = load_yaml_file(infra_file)
