@@ -216,7 +216,7 @@ def build_vars(csp, infra_vars, project_path):
     
     return (terraform_vars, template_vars)
 
-def new_project_main(args=None):
+def new_project_main():
     # Main function of the edb-terraform script.
 
     parser = argparse.ArgumentParser()
@@ -253,7 +253,7 @@ def new_project_main(args=None):
             Default: %(default)s
             '''
     )
-    env = parser.parse_args(args=args)
+    env = parser.parse_args()
     generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
 
 def generate_terraform(infra_file, project_path, csp, run_validation):
