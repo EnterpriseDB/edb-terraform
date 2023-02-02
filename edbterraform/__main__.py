@@ -57,5 +57,11 @@ def main(args=None):
     
     return output_variable
 
-if __name__ == '__main__':
+'''
+Entry point made for setup.py to use
+'''
+def entry_point():
     main()
+
+if __name__ == '__main__':
+    entry_point()
