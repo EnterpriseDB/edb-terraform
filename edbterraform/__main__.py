@@ -58,5 +58,5 @@ def main(args=None):
     return output_variable
 
 if __name__ == '__main__':
-    main()
+    result = main()
     exit(0)
