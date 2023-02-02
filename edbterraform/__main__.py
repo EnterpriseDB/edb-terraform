@@ -57,6 +57,11 @@ def main(args=None):
     
     return output_variable
 
+'''
+Entry point made for setup.py to use
+'''
+def entry_point():
+    main()
+
 if __name__ == '__main__':
-    result = main()
-    exit(0)
+    entry_point()
