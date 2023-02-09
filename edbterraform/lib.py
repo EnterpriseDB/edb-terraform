@@ -44,50 +44,6 @@ def tpl(template_name, dest, csp, vars={}):
         sys.exit("ERROR: could not render template %s (%s)"
                  % (template_name, e))
 
-
-def generate_ssh_key_pair(dir):
-    # Generates and saves a pair of SSH keys.
-    # Returns a tuple composed of the private and public keys file paths.
-
-    # Generate a 2048 bits private key using RSA
-    key = rsa.generate_private_key(
-        backend=default_backend(),
-        public_exponent=65537,
-        key_size=2048
-    )
-
-    b_private_key = key.private_bytes(
-        serialization.Encoding.PEM,
-        serialization.PrivateFormat.TraditionalOpenSSL,
-        serialization.NoEncryption()
-    )
-
-    b_public_key = key.public_key().public_bytes(
-        serialization.Encoding.OpenSSH,
-        serialization.PublicFormat.OpenSSH
-    )
-
-    try:
-        # Save the private key content.
-        priv_key_path = dir / "ssh-id_rsa"
-        with open(priv_key_path, 'wb') as f:
-            f.write(b_private_key)
-        # Make sure the file privileges are ok for SSH.
-        os.chmod(priv_key_path, 0o600)
-    except Exception as e:
-        sys.exit("ERROR: could not write %s (%s)" % (priv_key_path, e))
-
-    try:
-        # Save the public key content.
-        pub_key_path = dir / "ssh-id_rsa.pub"
-        with open(pub_key_path, 'wb') as f:
-            f.write(b_public_key + b'\n')
-    except Exception as e:
-        sys.exit("ERROR: could not write %s (%s)" % (pub_key_path, e))
-
-    return (priv_key_path, pub_key_path)
-
-
 def create_project_dir(dir, csp):
     # Creates a new terraform project (directory) and copy terraform modules
     # into this directory.
@@ -163,7 +119,7 @@ def object_regions(object_type, vars):
 
     return regions
 
-def build_vars(csp, infra_vars, project_path, terraform_output_name):
+def build_vars(csp: str, infra_vars: Path, server_output_name: str):
 
     # Based on the infra variables, returns a tuple composed of (terraform
     # variables as a dist, template variables as a dict)
@@ -171,19 +127,10 @@ def build_vars(csp, infra_vars, project_path, terraform_output_name):
     # Get a spec compatable object
     infra_vars = spec_compatability(infra_vars, csp)
 
-    # Generate SSH keys if ssh_user is set
-    ssh_priv_key = None
-    ssh_pub_key = None
-    if 'ssh_user' in infra_vars:
-        # Generate a new SSH key pair
-        (ssh_priv_key, ssh_pub_key) = generate_ssh_key_pair(project_path)
-        ssh_priv_key = str(ssh_priv_key.resolve())
-        ssh_pub_key = str(ssh_pub_key.resolve())
-
     # Variables used in the template files
     # Build jinja template variable
     template_vars = dict(
-        output_name = terraform_output_name,
+        output_name = server_output_name,
         has_region_peering=(len(infra_vars['regions'].keys()) > 1),
         has_regions=('regions' in infra_vars),
         has_machines=('machines' in infra_vars),
@@ -209,22 +156,30 @@ def build_vars(csp, infra_vars, project_path, terraform_output_name):
     # it needs the the cloud service provider values from the file as a terraform `spec` variable
     terraform_vars = dict(
         spec = infra_vars.copy(),
-        ssh_priv_key = ssh_priv_key,
-        ssh_pub_key = ssh_pub_key,
     )
     
     return (terraform_vars, template_vars)
 
-"""
-Generates the terraform files from jinja templates and terraform modules and
-saves the files into a project_directory for use with 'terraform' commands
+def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_validation: bool) -> dict:
+    """
+    Generates the terraform files from jinja templates and terraform modules and
+    saves the files into a project_directory for use with 'terraform' commands
 
-Returns terraform_output_name which is used to create a terraform output to the various
-type of boxes (virtual machines/dbaas/kubernetes) outputs after a user uses 'terraform apply' 
-"""
-def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
+    Returns a dictionary with the following keys:
+    - terraform_output: usable with terraform outputs command after terraform apply 
+    - ssh_user
+    - ssh_filename
+    """
+    SERVERS_OUTPUT_NAME = 'servers'
+    TERRAFORM_STATE_FILE = project_path / 'terraform.tfstate'
+    PROJECT_PATH_PERMISSIONS = 0o750
+    TERRAFORM_STATE_PERMISSIONS = 0o600
+    OUTPUT = {
+        'terraform_output': '',
+        'ssh_user': '',
+        'ssh_filename': '',
+    }
 
-    TERRAFORM_OUTPUT_NAME = 'servers'
     # Load infrastructure variables from the YAML file that was passed
     infra_vars = load_yaml_file(infra_file)
 
@@ -234,7 +189,7 @@ def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
     # Transform variables extracted from the infrastructure file into
     # terraform and templates variables.
     (terraform_vars, template_vars) = \
-        build_vars(csp, infra_vars, project_path, TERRAFORM_OUTPUT_NAME)
+        build_vars(csp, infra_vars, SERVERS_OUTPUT_NAME)
 
     # Save terraform vars file
     save_terraform_vars(
@@ -255,9 +210,22 @@ def generate_terraform(infra_file, project_path, csp, run_validation) -> str:
         template_vars
     )
 
+    # Create statefile and change file/folder permissions since
+    # it is not-encrypted by default and may contain secrets
+    open(project_path / TERRAFORM_STATE_FILE, 'w').close()
+    os.chmod(project_path, PROJECT_PATH_PERMISSIONS)
+    os.chmod(TERRAFORM_STATE_FILE, TERRAFORM_STATE_PERMISSIONS)
+
+    # terraform_vars holds the spec object for use in terraform
+    OUTPUT['terraform_output'] = SERVERS_OUTPUT_NAME
+    if 'ssh_user' in terraform_vars['spec']:
+        OUTPUT['ssh_user'] = terraform_vars['spec']['ssh_user']
+    if 'ssh_key' in terraform_vars['spec'] and 'output_name' in terraform_vars['spec']['ssh_key']:
+        OUTPUT['ssh_filename'] = terraform_vars['spec']['ssh_key']['output_name']
+
     run_terraform(project_path, run_validation)
 
-    return TERRAFORM_OUTPUT_NAME
+    return OUTPUT
 
 def run_terraform(cwd, validate):
     if validate:
@@ -331,13 +299,13 @@ with the shape of the data it expects
 """
 def spec_compatability(infrastructure_variables, cloud_service_provider):
 
-    if cloud_service_provider not in infrastructure_variables:
-        sys.exit(
-                    "ERROR: key '%s' not present in the infrastructure file."
-                    % cloud_service_provider
-                )
-    
-    spec_variables = infrastructure_variables[cloud_service_provider].copy()
+    SSH_OUT_FILENAME = 'ssh-id_rsa'
+    spec_variables = None
+
+    try:
+        spec_variables = infrastructure_variables[cloud_service_provider].copy()
+    except:
+        raise KeyError("ERROR: key '%s' not present in the infrastructure file." % cloud_service_provider)
     
     # Users were able to use 'cluster_name' at the same level as cloud_service_provider before
     if 'tags' not in spec_variables:
@@ -345,6 +313,15 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
     if 'cluster_name' not in spec_variables['tags'] and \
         'cluster_name' in infrastructure_variables:
         spec_variables['tags']['cluster_name'] = infrastructure_variables['cluster_name']
+
+    # if not provided,
+    # assign default output name for private/public ssh key filename
+    if 'ssh_user' in spec_variables and \
+        'ssh_key' not in spec_variables:
+        spec_variables['ssh_key'] = dict()
+    if 'ssh_key' in spec_variables and 'output_name' in spec_variables['ssh_key']:
+        spec_variables['ssh_key']['output_name'] = SSH_OUT_FILENAME
+
 
     replace_pairs = {
         # Modules used to expect azs and az

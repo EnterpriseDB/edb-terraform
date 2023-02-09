@@ -4,7 +4,7 @@ module "key_pair_{{ region_ }}" {
   name          = "{{ region }}-${module.spec.hex_id}"
   resource_name = module.vpc_{{ region_ }}.resource_name
   region        = module.vpc_{{ region_ }}.region
-  public_key    = var.ssh_pub_key
+  public_key    = module.spec.public_key
 
   depends_on = [module.vpc_{{ region_ }}, null_resource.validation ]
 

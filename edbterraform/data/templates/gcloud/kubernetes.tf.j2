@@ -6,7 +6,7 @@ module "kubernetes_{{ region_ }}" {
       rm.name => rm 
     })
 
-  cluster_name                    = module.spec.value.tags.cluster_name
+  cluster_name                    = module.spec.base.tags.cluster_name
   region                          = each.value.spec.region
   machine                         = each.value
   subnetwork                      = module.network_{{ region_ }}[each.value.spec.zone].name

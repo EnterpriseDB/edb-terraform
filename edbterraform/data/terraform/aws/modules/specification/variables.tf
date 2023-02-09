@@ -5,7 +5,13 @@ variable "spec" {
       cluster_name = optional(string, "AWS-Cluster")
       created_by   = optional(string, "EDB-Terraform-AWS")
     }), {})
-    ssh_user = string
+    ssh_user = optional(string)
+    ssh_key = optional(object({
+      public_path  = optional(string)
+      private_path = optional(string)
+      output_name  = optional(string, "ssh-id_rsa")
+      use_agent    = optional(bool, false)
+    }), {})
     operating_system = optional(object({
       name  = string
       owner = number
@@ -84,11 +90,11 @@ variable "spec" {
       tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({
-      region                  = string
-      node_count              = number
-      instance_type           = string
-      tags                    = optional(map(string), {})
-    })), {})    
+      region        = string
+      node_count    = number
+      instance_type = string
+      tags          = optional(map(string), {})
+    })), {})
   })
 
   validation {
@@ -121,5 +127,4 @@ Region - Machine:
 EOT
     )
   }
-
 }

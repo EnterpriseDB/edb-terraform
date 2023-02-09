@@ -6,6 +6,12 @@ variable "spec" {
       created_by   = optional(string, "edb-terraform")
     }), {})
     ssh_user = optional(string)
+    ssh_key = optional(object({
+      public_path  = optional(string)
+      private_path = optional(string)
+      output_name  = optional(string, "ssh-id_rsa")
+      use_agent    = optional(bool, false)
+    }), {})
     operating_system = optional(object({
       name = string
     }))
@@ -116,5 +122,4 @@ Region - Machine:
 EOT
     )
   }
-
 }

@@ -6,13 +6,13 @@ module "machine_{{ region_ }}" {
       rm.name => rm 
     })
 
-  operating_system                = module.spec.value.operating_system
-  cluster_name                    = module.spec.value.tags.cluster_name
+  operating_system                = module.spec.base.operating_system
+  cluster_name                    = module.spec.base.tags.cluster_name
   zone                            = each.value.spec.zone
   machine                         = each.value
-  ssh_user                        = module.spec.value.ssh_user
-  ssh_pub_key                     = var.ssh_pub_key
-  ssh_priv_key                    = var.ssh_priv_key
+  ssh_user                        = module.spec.base.ssh_user
+  ssh_priv_key                    = module.spec.private_key
+  use_agent                       = module.spec.base.ssh_key.use_agent
   ssh_metadata                    = module.key_pair_{{ region_ }}.keys
   subnet_name                     = module.network_{{ region_ }}[each.value.spec.zone].name
   name_id                         = module.spec.hex_id

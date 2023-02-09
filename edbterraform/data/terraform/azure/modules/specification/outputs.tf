@@ -1,5 +1,13 @@
-output "value" {
+output "base" {
   value = var.spec
+}
+
+output "private_key" {
+  value = var.spec.ssh_key.private_path != null ? file(var.spec.ssh_key.private_path) : tls_private_key.default[0].private_key_openssh
+}
+
+output "public_key" {
+  value = var.spec.ssh_key.public_path != null ? file(var.spec.ssh_key.public_path) : tls_private_key.default[0].public_key_openssh
 }
 
 output "region_zone_networks" {

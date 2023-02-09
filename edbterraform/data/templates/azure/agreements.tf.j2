@@ -1,9 +1,9 @@
 module "agreements" {
   source = "./modules/agreement"
 
-  publisher = module.spec.value.operating_system.publisher
-  offer     = module.spec.value.operating_system.offer
-  plan      = module.spec.value.operating_system.sku
+  publisher = module.spec.base.operating_system.publisher
+  offer     = module.spec.base.operating_system.offer
+  plan      = module.spec.base.operating_system.sku
 
-  depends_on = [module.spec]
+  depends_on = [ null_resource.validation ]
 }

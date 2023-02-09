@@ -2,7 +2,7 @@ module "vpc_{{ region_ }}"{
   source = "./modules/vpc"
 
   name          = "${var.vpc_tag}-{{ region }}-${module.spec.hex_id}"
-  cidr_blocks = [ lookup(lookup(module.spec.value.regions, "{{ region }}"), "cidr_block") ]
+  cidr_blocks = [ lookup(lookup(module.spec.base.regions, "{{ region }}"), "cidr_block") ]
   region = "{{ region }}"
 
   providers = {
@@ -40,12 +40,12 @@ module "security_{{ region_ }}" {
   region            = module.vpc_{{ region_ }}.region
   resource_name     = module.vpc_{{ region_ }}.resource_name
   service_name      = "service-{{ region }}-${each.key}-${module.spec.hex_id}"
-  service_ports     = lookup(lookup(module.spec.value.regions, "{{ region }}", null), "service_ports", [])
+  service_ports     = lookup(lookup(module.spec.base.regions, "{{ region }}", null), "service_ports", [])
   public_cidrblock  = var.public_cidrblock
   region_name       = "region-{{ region }}-${each.key}-${module.spec.hex_id}"
-  region_ports      = lookup(lookup(module.spec.value.regions, "{{ region }}", null), "region_ports", [])
+  region_ports      = lookup(lookup(module.spec.base.regions, "{{ region }}", null), "region_ports", [])
   region_cidrblocks = flatten([
-    for region in try(module.spec.value.regions, []) : [
+    for region in try(module.spec.base.regions, []) : [
       for ip_cidr in try(region.zones, []) : ip_cidr
       ] 
     ])

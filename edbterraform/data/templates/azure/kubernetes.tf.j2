@@ -7,17 +7,17 @@ module "kubernetes_{{ region_ }}" {
     })
 
   nodeCount                       = each.value.spec.node_count
-  cluster_name                    = module.spec.value.tags.cluster_name
+  cluster_name                    = module.spec.base.tags.cluster_name
   logAnalyticsWorkspaceLocation   = each.value.spec.log_analytics_location
-  logAnalyticsWorkspaceName       = "${replace(module.spec.value.tags.cluster_name,"-","")}${module.spec.pet_name}Workspace"
+  logAnalyticsWorkspaceName       = "${replace(module.spec.base.tags.cluster_name,"-","")}${module.spec.pet_name}Workspace"
   logAnalyticsWorkspaceSku        = each.value.spec.log_analytics_sku
   resourceGroupLocation           = each.value.spec.resource_group_location
-  resourceGroupName               = "${module.spec.value.tags.cluster_name}-RG-${module.spec.pet_name}"
+  resourceGroupName               = "${module.spec.base.tags.cluster_name}-RG-${module.spec.pet_name}"
   vmSize                          = each.value.spec.instance_type
   solutionName                    = each.value.spec.solution_name
   publisherName                   = each.value.spec.publisher_name
-  ssh_user                        = module.spec.value.ssh_user
-  sshPublicKey                    = var.ssh_pub_key  
+  ssh_user                        = module.spec.base.ssh_user
+  sshPublicKey                    = module.spec.public_key  
   tags                            = each.value.spec.tags
 
   depends_on = [module.security_{{ region_ }}]
