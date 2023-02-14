@@ -319,7 +319,7 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
     if 'ssh_user' in spec_variables and \
         'ssh_key' not in spec_variables:
         spec_variables['ssh_key'] = dict()
-    if 'ssh_key' in spec_variables and 'output_name' in spec_variables['ssh_key']:
+    if 'ssh_key' in spec_variables and 'output_name' not in spec_variables['ssh_key']:
         spec_variables['ssh_key']['output_name'] = SSH_OUT_FILENAME
 
 
