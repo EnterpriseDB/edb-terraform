@@ -56,11 +56,11 @@ if [ "${#TARGET_NVME_DEVICE}" -eq 0 ]; then
 fi
 
 # Mount point and volume creation
-sudo mkfs.ext4 "${TARGET_NVME_DEVICE}"
+sudo mkfs.xfs "${TARGET_NVME_DEVICE}"
 sudo mkdir -p "${MOUNT_POINT}"
 # Get device UUID with blkid as exported format:
 # UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 echo "Warning: Will be mounted by UUID in /etc/fstab"
 UUID=$(sudo blkid ${TARGET_NVME_DEVICE} -o export | grep -E "^UUID=")
-echo "${UUID} ${MOUNT_POINT} ext4 noatime 0 0" | sudo tee -a /etc/fstab
-sudo mount -t ext4 -o noatime ${TARGET_NVME_DEVICE} ${MOUNT_POINT}
+echo "${UUID} ${MOUNT_POINT} xfs noatime 0 0" | sudo tee -a /etc/fstab
+sudo mount -t xfs -o noatime ${TARGET_NVME_DEVICE} ${MOUNT_POINT}
