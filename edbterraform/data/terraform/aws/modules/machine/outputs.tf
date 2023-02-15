@@ -29,3 +29,7 @@ output "public_dns" {
 output "tags" {
   value = aws_instance.machine.tags_all
 }
+
+output "additional_volumes" {
+  value = var.machine.spec.additional_volumes
+}
