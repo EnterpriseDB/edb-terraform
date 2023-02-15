@@ -144,7 +144,7 @@ resource "null_resource" "setup_volume" {
   provisioner "remote-exec" {
     inline = [
       "chmod a+x /tmp/setup_volume.sh",
-      "/tmp/setup_volume.sh ${element(local.linux_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
+      "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
     ]
 
     # Requires firewall access to ssh port
