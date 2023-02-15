@@ -19,3 +19,7 @@ output "private_ip" {
 output "tags" {
   value = azurerm_linux_virtual_machine.main.tags
 }
+
+output "additional_volumes" {
+  value = var.additional_volumes
+}

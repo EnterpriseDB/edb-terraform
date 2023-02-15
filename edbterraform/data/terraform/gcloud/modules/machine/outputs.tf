@@ -19,3 +19,6 @@ output "private_ip" {
 output "tags" {
   value = google_compute_instance.machine.labels
 }
+output "additional_volumes" {
+  value = var.machine.spec.additional_volumes
+}
