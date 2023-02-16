@@ -32,7 +32,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   name                = format("%s-%s-%s", var.cluster_name, var.name, var.name_id)
   resource_group_name = var.resource_name
   location            = var.machine.region
-  zone                = local.zone
+  zone                = var.machine.zone
   size                = var.machine.instance_type
 
   admin_username = var.operating_system.ssh_user
@@ -77,7 +77,7 @@ resource "azurerm_managed_disk" "volume" {
   name                 = format("%s-%s-%s-%s", var.name, var.cluster_name, var.name_id, each.key)
   resource_group_name  = var.resource_name
   location             = var.machine.region
-  zone                 = local.zone
+  zone                 = var.machine.zone
   storage_account_type = each.value.type
   create_option        = "Empty"
   disk_size_gb         = each.value.size_gb

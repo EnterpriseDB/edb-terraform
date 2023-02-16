@@ -9,11 +9,11 @@ module "kubernetes_{{ region_ }}" {
   cluster_name                    = module.spec.base.tags.cluster_name
   region                          = each.value.spec.region
   machine                         = each.value
-  subnetwork                      = module.network_{{ region_ }}[each.value.spec.zone].name
+  subnetwork                      = module.network_{{ region_ }}[each.value.spec.zone_name].name
   network                         = module.vpc_{{ region_ }}.name
   name_id                         = module.spec.hex_id
   node_count                      = each.value.spec.node_count
-  tags = each.value.spec.tags
+  tags                            = each.value.spec.tags
 
   depends_on = [module.security_{{ region_ }}]
 

@@ -20,8 +20,8 @@ module "network_{{ region_ }}" {
   resource_name   = module.vpc_{{ region_ }}.resource_name
   network_name    = module.vpc_{{ region_ }}.network_name
   region          = module.vpc_{{ region_ }}.region
-  zone            = tostring(each.key) == "0" ? null : each.key
-  ip_cidr_range   = [ each.value ]
+  zone            = each.value.zone
+  ip_cidr_range   = [ each.value.cidr ]
   name            = "{{region}}-${each.key}-${module.spec.hex_id}"
 
   depends_on = [module.vpc_{{ region_ }}]

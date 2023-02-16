@@ -34,7 +34,10 @@ variable "spec" {
     })))
     regions = map(object({
       cidr_block = string
-      zones      = optional(map(string), {})
+      zones      = optional(map(object({
+        zone = optional(string)
+        cidr = optional(string)
+      })), {})
       service_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
@@ -55,7 +58,7 @@ variable "spec" {
       image_name    = string
       count         = optional(number, 1)
       region        = string
-      zone          = string
+      zone_name     = string
       instance_type = string
       ip_forward    = optional(bool)
       volume = object({
@@ -107,7 +110,7 @@ variable "spec" {
     })), {})
     kubernetes = optional(map(object({
       region        = string
-      zone          = string
+      zone_name     = string
       node_count    = number
       instance_type = string
       tags          = optional(map(string), {})
