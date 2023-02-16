@@ -1,9 +1,9 @@
 module "key_pair_{{ region_ }}" {
   source = "./modules/key_pair"
 
-  ssh_user = module.spec.value.ssh_user
+  ssh_user = module.spec.base.ssh_user
   key_name = "ssh-keys-{{ region }}-${module.spec.hex_id}"
-  public_keys  = var.ssh_pub_key
+  public_keys  = module.spec.public_key
 
   providers = {
     google = google.{{ region_ }}

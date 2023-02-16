@@ -128,7 +128,8 @@ resource "null_resource" "copy_setup_volume_script" {
       type        = "ssh"
       user        = var.ssh_user
       host        = azurerm_linux_virtual_machine.main.public_ip_address
-      private_key = file(var.private_key)
+      agent       = var.use_agent # agent and private_key conflict
+      private_key = var.use_agent ? null : var.private_key
     }
   }
 
@@ -152,7 +153,8 @@ resource "null_resource" "setup_volume" {
       type        = "ssh"
       user        = var.ssh_user
       host        = azurerm_linux_virtual_machine.main.public_ip_address
-      private_key = file(var.private_key)
+      agent       = var.use_agent # agent and private_key conflict
+      private_key = var.use_agent ? null : var.private_key
     }
   }
 

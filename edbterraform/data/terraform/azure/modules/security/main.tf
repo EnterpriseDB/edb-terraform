@@ -12,7 +12,8 @@ resource "azurerm_network_security_rule" "services" {
 
   name                       = var.service_ports[count.index].name
   description                = var.service_ports[count.index].description
-  protocol                   = var.service_ports[count.index].protocol
+  # First letter must be uppercase
+  protocol                   = title(var.service_ports[count.index].protocol)
   destination_port_range     = var.service_ports[count.index].port != null ? var.service_ports[count.index].port : "*"
   destination_address_prefix = "*"
   source_port_range          = "*"
@@ -30,7 +31,8 @@ resource "azurerm_network_security_rule" "regions" {
 
   name                         = var.region_ports[count.index].name
   description                  = var.region_ports[count.index].description
-  protocol                     = var.region_ports[count.index].protocol
+  # First letter must be uppercase
+  protocol                     = title(var.region_ports[count.index].protocol)
   destination_port_range       = var.region_ports[count.index].port != null ? var.region_ports[count.index].port : "*"
   destination_address_prefixes = var.region_cidrblocks
   source_port_range            = "*"

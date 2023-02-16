@@ -39,6 +39,9 @@ variable "subnet_id" {}
 variable "ssh_user" {}
 variable "public_key_name" {}
 variable "private_key" {}
+variable "use_agent" {
+  default = false
+}
 variable "additional_volumes" {
   type = list(object({
     mount_point = string

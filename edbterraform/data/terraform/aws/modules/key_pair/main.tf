@@ -13,5 +13,5 @@ terraform {
 
 resource "aws_key_pair" "key_pair" {
   key_name   = "${var.key_name}-${var.name_id}"
-  public_key = file(var.ssh_pub_key)
+  public_key = var.ssh_pub_key
 }

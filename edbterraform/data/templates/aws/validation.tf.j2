@@ -17,7 +17,7 @@ module "validation_{{ region_ }}" {
   source = "./modules/validation"
   
   region = "{{ region }}"
-  zones = module.spec.value.regions["{{ region }}"].zones
+  zones = module.spec.base.regions["{{ region }}"].zones
   
   providers = {
     aws = aws.{{ region_ }}

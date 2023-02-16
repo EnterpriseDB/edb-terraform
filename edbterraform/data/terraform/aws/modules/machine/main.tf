@@ -36,10 +36,6 @@ resource "aws_instance" "machine" {
   }
 
   tags = var.tags
-
-  connection {
-    private_key = file(var.ssh_pub_key)
-  }
 }
 
 resource "aws_ebs_volume" "ebs_volume" {
@@ -80,7 +76,8 @@ resource "null_resource" "copy_setup_volume_script" {
       type        = "ssh"
       user        = var.ssh_user
       host        = aws_instance.machine.public_ip
-      private_key = file(var.ssh_priv_key)
+      agent       = var.use_agent # agent and private_key conflict
+      private_key = var.use_agent ? null : var.ssh_priv_key
     }
   }
 
@@ -106,7 +103,8 @@ resource "null_resource" "setup_volume" {
       type        = "ssh"
       user        = var.ssh_user
       host        = aws_instance.machine.public_ip
-      private_key = file(var.ssh_priv_key)
+      agent       = var.use_agent # agent and private_key conflict
+      private_key = var.use_agent ? null : var.ssh_priv_key
     }
   }
 }

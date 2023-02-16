@@ -5,7 +5,7 @@ module "kubernetes_{{ region_ }}" {
 
   region                  = each.value.spec.region
   desiredCapacity         = each.value.spec.node_count
-  vpcAndClusterPrefix     = "${module.spec.value.tags.cluster_name}-${module.spec.pet_name}"  
+  vpcAndClusterPrefix     = "${module.spec.base.tags.cluster_name}-${module.spec.pet_name}"  
   instanceType            = each.value.spec.instance_type
 
   providers = {
