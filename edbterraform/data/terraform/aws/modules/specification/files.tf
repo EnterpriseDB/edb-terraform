@@ -2,7 +2,7 @@
 # If ssh_key.public_path and ssh_key.private_path are defined,
 # overwrite the default keys.
 locals {
-  ssh_user_count = var.spec.ssh_user != null ? 1 : 0
+  ssh_user_count = var.spec.images != null ? 1 : 0
   ssh_keys_count = (
     var.spec.ssh_key.public_path != null ||
     var.spec.ssh_key.private_path != null ? 1 : 0

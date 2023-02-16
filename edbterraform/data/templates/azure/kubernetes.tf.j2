@@ -16,7 +16,7 @@ module "kubernetes_{{ region_ }}" {
   vmSize                          = each.value.spec.instance_type
   solutionName                    = each.value.spec.solution_name
   publisherName                   = each.value.spec.publisher_name
-  ssh_user                        = module.spec.base.ssh_user
+  ssh_user                        = each.value.spec.ssh_user
   sshPublicKey                    = module.spec.public_key  
   tags                            = each.value.spec.tags
 

@@ -3,13 +3,12 @@ module "machine_{{ region_ }}" {
 
   for_each = { for rm in lookup(module.spec.region_machines, "{{ region }}", []) : rm.name => rm }
 
-  operating_system         = module.spec.base.operating_system
+  operating_system         = each.value.spec.operating_system
   vpc_id                   = module.vpc_{{ region_ }}.vpc_id
   cidr_block               = lookup(lookup(module.spec.region_zone_networks, "{{ region }}", null), each.value.spec.zone, null)
   az                       = each.value.spec.zone
   machine                  = each.value
   custom_security_group_ids = module.security_{{ region_ }}.security_group_ids
-  ssh_user                 = module.spec.base.ssh_user
   ssh_pub_key              = module.spec.public_key
   ssh_priv_key             = module.spec.private_key
   use_agent                = module.spec.base.ssh_key.use_agent

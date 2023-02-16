@@ -1,9 +1,12 @@
 module "agreements" {
   source = "./modules/agreement"
 
-  publisher = module.spec.base.operating_system.publisher
-  offer     = module.spec.base.operating_system.offer
-  plan      = module.spec.base.operating_system.sku
+  for_each = module.spec.base.images
+
+  publisher = each.value.publisher
+  offer     = each.value.offer
+  plan      = each.value.sku
+  accept    = each.value.accept
 
   depends_on = [ null_resource.validation ]
 }

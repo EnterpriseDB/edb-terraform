@@ -20,17 +20,17 @@ variable "spec" {
       cluster_name = optional(string, "AWS-Cluster")
       created_by   = optional(string, "EDB-Terraform-AWS")
     }), {})
-    ssh_user = optional(string)
     ssh_key = optional(object({
       public_path  = optional(string)
       private_path = optional(string)
       output_name  = optional(string, "ssh-id_rsa")
       use_agent    = optional(bool, false)
     }), {})
-    operating_system = optional(object({
-      name  = string
-      owner = number
-    }))
+    images = optional(map(object({
+      name = optional(string)
+      owner = optional(number)
+      ssh_user = optional(string)
+    })))
     regions = map(object({
       cidr_block = string
       zones      = optional(map(string), {})
@@ -51,6 +51,7 @@ variable "spec" {
     }))
     machines = optional(map(object({
       type          = optional(string)
+      image_name    = string
       count         = optional(number, 1)
       region        = string
       zone          = string
@@ -115,13 +116,6 @@ variable "spec" {
       tags          = optional(map(string), {})
     })), {})
   })
-
-  validation {
-    condition     = length(var.spec.machines) == 0 || var.spec.operating_system != null
-    error_message = <<-EOT
-    operating_system key must be defined within spec when machines are used
-    EOT
-  }
 
   validation {
     condition = (

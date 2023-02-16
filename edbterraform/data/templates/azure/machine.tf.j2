@@ -8,17 +8,11 @@ module "machine_{{ region_ }}" {
 
   resource_name                   = module.vpc_{{ region_ }}.resource_name
   subnet_id                       = module.network_{{ region_ }}[each.value.spec.zone].subnet_id
-  operating_system                = module.spec.base.operating_system
+  operating_system                = each.value.spec.operating_system
   cluster_name                    = module.spec.base.tags.cluster_name
-  machine                         = (
-    merge(
-      each.value.spec,
-      {name = each.value.name},
-      {zone = tostring(each.value.spec.zone) == "0" ? null : each.value.spec.zone},
-    )
-  )
+  name                            = each.value.name
+  machine                         = each.value.spec
   additional_volumes              = each.value.spec.additional_volumes
-  ssh_user                        = module.spec.base.ssh_user
   private_key                     = module.spec.private_key
   use_agent                       = module.spec.base.ssh_key.use_agent
   public_key_name                 = module.key_pair_{{ region_ }}.name

@@ -12,6 +12,8 @@ data "google_compute_subnetwork" "selected" {
 # Use 'initialize_params.image' in instance and remove/move data source out of module
 data "google_compute_image" "image" {
   name = var.operating_system.name
+  family = var.operating_system.family
+  project = var.operating_system.project
 }
 
 resource "google_compute_address" "public_ip" {
@@ -26,6 +28,7 @@ resource "google_compute_instance" "machine" {
   machine_type   = var.machine.spec.instance_type
   zone           = var.zone
   can_ip_forward = try(var.machine.spec.ip_forward, var.ip_forward)
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {
@@ -46,7 +49,7 @@ resource "google_compute_instance" "machine" {
     ignore_changes = [attached_disk, ]
   }
 
-  metadata = { ssh-keys = var.ssh_metadata }
+  metadata = { ssh-keys = "${var.operating_system.ssh_user}:${var.ssh_pub_key}" }
   labels   = var.tags
 }
 
@@ -85,7 +88,7 @@ resource "null_resource" "copy_setup_volume_script" {
     # Requires firewall access to ssh port
     connection {
       type        = "ssh"
-      user        = var.ssh_user
+      user        = var.operating_system.ssh_user
       host        = google_compute_instance.machine.network_interface.0.access_config.0.nat_ip
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.ssh_priv_key
@@ -110,7 +113,7 @@ resource "null_resource" "setup_volume" {
     # Requires firewall access to ssh port
     connection {
       type        = "ssh"
-      user        = var.ssh_user
+      user        = var.operating_system.ssh_user
       host        = google_compute_instance.machine.network_interface.0.access_config.0.nat_ip
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.ssh_priv_key

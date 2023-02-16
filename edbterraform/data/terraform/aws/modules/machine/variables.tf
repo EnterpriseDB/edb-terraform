@@ -2,7 +2,6 @@ variable "machine" {}
 variable "vpc_id" {}
 variable "cidr_block" {}
 variable "az" {}
-variable "ssh_user" {}
 variable "ssh_pub_key" {}
 variable "ssh_priv_key" {}
 variable "use_agent" {

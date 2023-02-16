@@ -20,19 +20,20 @@ variable "spec" {
       cluster_name = optional(string, "Azure-Cluster")
       created_by   = optional(string, "EDB-Terraform-Azure")
     }), {})
-    ssh_user = optional(string)
     ssh_key = optional(object({
       public_path  = optional(string)
       private_path = optional(string)
       output_name  = optional(string, "ssh-id_rsa")
       use_agent    = optional(bool, false)
     }), {})
-    operating_system = optional(object({
-      publisher = string
-      offer     = string
-      sku       = string
-      version   = string
-    }))
+    images = optional(map(object({
+      publisher = optional(string)
+      offer     = optional(string)
+      sku       = optional(string)
+      version   = optional(string)
+      accept    = optional(bool)
+      ssh_user  = optional(string)
+    })))
     regions = map(object({
       cidr_block = string
       zones      = optional(map(string), {})
@@ -53,6 +54,7 @@ variable "spec" {
     }))
     machines = optional(map(object({
       type          = optional(string)
+      image_name    = string
       count         = optional(number, 1)
       region        = string
       zone          = number
@@ -71,6 +73,7 @@ variable "spec" {
     })), {})
     kubernetes = optional(map(object({
       region                  = string
+      ssh_user                = optional(string)
       resource_group_location = optional(string)
       log_analytics_location  = optional(string)
       node_count              = number
@@ -81,23 +84,6 @@ variable "spec" {
       tags                    = optional(map(string), {})
     })), {})
   })
-
-  validation {
-    condition     = length(var.spec.machines) == 0 || var.spec.operating_system != null
-    error_message = <<-EOT
-    operating_system key must be defined within spec when machines are used
-    EOT
-  }
-
-  validation {
-    condition = (
-      (length(var.spec.machines) == 0 && length(var.spec.kubernetes) == 0) ||
-      var.spec.ssh_user != null
-    )
-    error_message = <<-EOT
-    ssh_user key must be defined within spec when machines or kubernetes is used
-    EOT
-  }
 
   validation {
     condition = (

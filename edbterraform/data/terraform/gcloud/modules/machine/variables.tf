@@ -1,10 +1,24 @@
 variable "machine" {}
 variable "zone" {}
-variable "ssh_user" {}
 variable "ssh_priv_key" {}
-variable "ssh_metadata" {}
+variable "ssh_pub_key" {}
 variable "cluster_name" {}
-variable "operating_system" {}
+variable "operating_system" {
+  type = object({
+    name = optional(string)
+    family = optional(string)
+    project = optional(string)
+    ssh_user = string
+  })
+
+  validation {
+    condition = (
+      (var.operating_system.name == null ? 0 : 1) + 
+      (var.operating_system.family == null ? 0 : 1) == 1
+    )
+    error_message = "only one, name or family must be defined"
+  }
+}
 variable "subnet_name" {}
 variable "name_id" { default = "0" }
 variable "use_agent" {

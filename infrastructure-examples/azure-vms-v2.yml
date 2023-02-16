@@ -1,0 +1,58 @@
+---
+azure:
+  tags:
+    cluster_name: azure-infra
+    created_by: edb-terraform
+  images:
+    rocky:
+      publisher: erockyenterprisesoftwarefoundationinc1653071250513
+      offer: rockylinux
+      sku: free
+      version: 8.6.0
+      ssh_user: rocky
+    rocky_8_7_0:
+      publisher: erockyenterprisesoftwarefoundationinc1653071250513
+      offer: rockylinux
+      sku: free
+      version: 8.7.0
+      ssh_user: rocky
+  regions:
+    westus:
+      cidr_block: 10.1.0.0/16
+      zones:
+        0: 10.1.20.0/24
+      service_ports:
+        - name: ssh_access
+          port: 22
+          protocol: tcp
+          description: "SSH"
+  machines:
+    dbt2-driver:
+      image_name: rocky_8_7_0
+      region: westus
+      zone: 0
+      instance_type: Standard_D2s_v3
+      volume:
+        type: StandardSSD_LRS
+        size_gb: 50
+      tags:
+        type: dbt2-driver
+    pg1:
+      image_name: rocky
+      region: westus
+      zone: 0
+      instance_type: Standard_D2s_v3
+      volume:
+        type: StandardSSD_LRS
+        size_gb: 50
+      additional_volumes:
+        - mount_point: /opt/pg_data
+          type: UltraSSD_LRS
+          size_gb: 50
+          iops: 1000
+        - mount_point: /opt/pg_wal
+          type: UltraSSD_LRS
+          size_gb: 50
+          iops: 1000
+      tags:
+        type: postgres

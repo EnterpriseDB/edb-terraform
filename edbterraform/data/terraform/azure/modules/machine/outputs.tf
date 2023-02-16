@@ -23,3 +23,7 @@ output "tags" {
 output "additional_volumes" {
   value = var.additional_volumes
 }
+
+output "operating_system" {
+  value = var.operating_system
+}

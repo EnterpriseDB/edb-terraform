@@ -57,7 +57,7 @@ def main(args=None):
     * cd {env.project_path}
     * terraform apply
     * terraform output -json {outputs['terraform_output']}
-    * ssh {outputs['ssh_user']}@<ip-address> -i {outputs['ssh_filename']}
+    * ssh <ssh_user>@<ip-address> -i {outputs['ssh_filename']}
     \n
     ''')
     
