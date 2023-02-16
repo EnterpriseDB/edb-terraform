@@ -1,14 +1,20 @@
+variable "name" {
+  type = string
+  default = "default_name"
+}
 variable "operating_system" {
+  description = "operating system and default user"
   type = object({
     sku       = string
     offer     = string
     publisher = string
     version   = string
+    ssh_user  = string
   })
 }
 variable "machine" {
+  description = "cloud resources needed"
   type = object({
-    name          = string
     type          = string
     region        = string
     zone          = optional(string)
@@ -26,8 +32,10 @@ variable "tags" {
 }
 variable "cluster_name" {}
 locals {
-  zones         = var.machine.zone == null ? null : [var.machine.zone]
-  public_ip_sku = var.machine.zone == null ? "Basic" : "Standard"
+  # 0 is used to represent no zone but azure expects null
+  zone = tostring(var.machine.zone) == "0" ? null : var.machine.zone
+  zones         = local.zone == null ? null : [local.zone]
+  public_ip_sku = local.zone == null ? "Basic" : "Standard"
 }
 variable "resource_name" {
   type = string
@@ -36,7 +44,6 @@ variable "name_id" {
   type = string
 }
 variable "subnet_id" {}
-variable "ssh_user" {}
 variable "public_key_name" {}
 variable "private_key" {}
 variable "use_agent" {

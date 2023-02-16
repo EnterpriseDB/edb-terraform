@@ -25,7 +25,16 @@ locals {
     for name, machine_spec in var.spec.machines : [
       for index in range(machine_spec.count) : {
         name = machine_spec.count > 1 ? "${name}-${index}" : name
-        spec = machine_spec
+        spec = merge(machine_spec, {
+          # spec project tags
+          tags = merge(var.spec.tags, machine_spec.tags, {
+            # machine module specific tags
+            name = machine_spec.count > 1 ? "${name}-${index}" : name
+            id   = random_id.apply.hex
+          })
+          # assign operating system from mapped names
+          operating_system = var.spec.images[machine_spec.image_name]
+        })
       }
     ]
   ])
@@ -33,17 +42,8 @@ locals {
 
 output "region_machines" {
   value = {
-    for machine in local.machines_extended : machine.spec.region => {
-      name = machine.name
-      spec = merge(machine.spec, {
-        # spec project tags
-        tags = merge(var.spec.tags, machine.spec.tags, {
-          # machine module specific tags
-          name = machine.name
-          id   = random_id.apply.hex
-        })
-      })
-    }...
+    for machine in local.machines_extended : 
+      machine.spec.region => machine...
   }
 }
 

@@ -74,7 +74,7 @@ resource "null_resource" "copy_setup_volume_script" {
 
     connection {
       type        = "ssh"
-      user        = var.ssh_user
+      user        = var.operating_system.ssh_user
       host        = aws_instance.machine.public_ip
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.ssh_priv_key
@@ -101,7 +101,7 @@ resource "null_resource" "setup_volume" {
 
     connection {
       type        = "ssh"
-      user        = var.ssh_user
+      user        = var.operating_system.ssh_user
       host        = aws_instance.machine.public_ip
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.ssh_priv_key

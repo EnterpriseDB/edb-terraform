@@ -4,7 +4,7 @@ data "azurerm_ssh_public_key" "main" {
 }
 
 resource "azurerm_public_ip" "main" {
-  name                = "ip-${var.machine.name}-${var.name_id}"
+  name                = "ip-${var.name}-${var.name_id}"
   resource_group_name = var.resource_name
   location            = var.machine.region
   allocation_method   = "Static"
@@ -13,7 +13,7 @@ resource "azurerm_public_ip" "main" {
 }
 
 resource "azurerm_network_interface" "internal" {
-  name                = "internal-${var.machine.name}-${var.name_id}"
+  name                = "internal-${var.name}-${var.name_id}"
   resource_group_name = var.resource_name
   location            = var.machine.region
 
@@ -29,15 +29,15 @@ resource "azurerm_network_interface" "internal" {
 }
 
 resource "azurerm_linux_virtual_machine" "main" {
-  name                = format("%s-%s-%s", var.cluster_name, var.machine.name, var.name_id)
+  name                = format("%s-%s-%s", var.cluster_name, var.name, var.name_id)
   resource_group_name = var.resource_name
   location            = var.machine.region
-  zone                = var.machine.zone
+  zone                = local.zone
   size                = var.machine.instance_type
 
-  admin_username = var.ssh_user
+  admin_username = var.operating_system.ssh_user
   admin_ssh_key {
-    username   = var.ssh_user
+    username   = var.operating_system.ssh_user
     public_key = data.azurerm_ssh_public_key.main.public_key
   }
   disable_password_authentication = true
@@ -74,10 +74,10 @@ resource "azurerm_linux_virtual_machine" "main" {
 resource "azurerm_managed_disk" "volume" {
   for_each = local.additional_volumes
 
-  name                 = format("%s-%s-%s-%s", var.machine.name, var.cluster_name, var.name_id, each.key)
+  name                 = format("%s-%s-%s-%s", var.name, var.cluster_name, var.name_id, each.key)
   resource_group_name  = var.resource_name
   location             = var.machine.region
-  zone                 = var.machine.zone
+  zone                 = local.zone
   storage_account_type = each.value.type
   create_option        = "Empty"
   disk_size_gb         = each.value.size_gb
@@ -90,7 +90,7 @@ resource "azurerm_managed_disk" "volume" {
         contains(local.premium_ssd.regions, var.machine.region)
       )
       error_message = <<-EOT
-      ${var.machine.name} not a valid configuration.
+      ${var.name} not a valid configuration.
       Premium SSD v2 only availiable in: ${jsonencode(local.premium_ssd.regions)}
       For more information visit:
       https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types#regional-availability
@@ -126,7 +126,7 @@ resource "null_resource" "copy_setup_volume_script" {
     # Requires firewall access to ssh port
     connection {
       type        = "ssh"
-      user        = var.ssh_user
+      user        = var.operating_system.ssh_user
       host        = azurerm_linux_virtual_machine.main.public_ip_address
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.private_key
@@ -151,7 +151,7 @@ resource "null_resource" "setup_volume" {
     # Requires firewall access to ssh port
     connection {
       type        = "ssh"
-      user        = var.ssh_user
+      user        = var.operating_system.ssh_user
       host        = azurerm_linux_virtual_machine.main.public_ip_address
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.private_key

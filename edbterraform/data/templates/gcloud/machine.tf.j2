@@ -6,19 +6,18 @@ module "machine_{{ region_ }}" {
       rm.name => rm 
     })
 
-  operating_system                = module.spec.base.operating_system
+  operating_system                = each.value.spec.operating_system
   cluster_name                    = module.spec.base.tags.cluster_name
   zone                            = each.value.spec.zone
   machine                         = each.value
-  ssh_user                        = module.spec.base.ssh_user
   ssh_priv_key                    = module.spec.private_key
+  ssh_pub_key                     = module.spec.public_key
   use_agent                       = module.spec.base.ssh_key.use_agent
-  ssh_metadata                    = module.key_pair_{{ region_ }}.keys
   subnet_name                     = module.network_{{ region_ }}[each.value.spec.zone].name
   name_id                         = module.spec.hex_id
-  tags = each.value.spec.tags
+  tags                            = each.value.spec.tags
 
-  depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
+  depends_on = [module.security_{{ region_ }}]
 
   providers = {
     google = google.{{ region_ }}

@@ -167,7 +167,6 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
 
     Returns a dictionary with the following keys:
     - terraform_output: usable with terraform outputs command after terraform apply 
-    - ssh_user
     - ssh_filename
     """
     SERVERS_OUTPUT_NAME = 'servers'
@@ -176,7 +175,6 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
     TERRAFORM_STATE_PERMISSIONS = 0o600
     OUTPUT = {
         'terraform_output': '',
-        'ssh_user': '',
         'ssh_filename': '',
     }
 
@@ -218,8 +216,6 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
 
     # terraform_vars holds the spec object for use in terraform
     OUTPUT['terraform_output'] = SERVERS_OUTPUT_NAME
-    if 'ssh_user' in terraform_vars['spec']:
-        OUTPUT['ssh_user'] = terraform_vars['spec']['ssh_user']
     if 'ssh_key' in terraform_vars['spec'] and 'output_name' in terraform_vars['spec']['ssh_key']:
         OUTPUT['ssh_filename'] = terraform_vars['spec']['ssh_key']['output_name']
 
@@ -296,6 +292,7 @@ def run_terraform(cwd, validate):
 Support backwards compatability to older specs 
 since each collection of modules should implement a specification module
 with the shape of the data it expects
+Anything defined here is depreciated and might be removed in future releases
 """
 def spec_compatability(infrastructure_variables, cloud_service_provider):
 
@@ -316,11 +313,33 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
 
     # if not provided,
     # assign default output name for private/public ssh key filename
-    if 'ssh_user' in spec_variables and \
-        'ssh_key' not in spec_variables:
+    if 'ssh_key' not in spec_variables:
         spec_variables['ssh_key'] = dict()
     if 'ssh_key' in spec_variables and 'output_name' not in spec_variables['ssh_key']:
         spec_variables['ssh_key']['output_name'] = SSH_OUT_FILENAME
+
+    # use 'image_name' to assign an os per instance,
+    # which references an operating system from 'images' and includes 'ssh_user' 
+    os_default = 'depreciated_default'
+    if 'operating_system' in spec_variables:
+        if 'images' not in spec_variables:
+            spec_variables['images'] = {}
+        spec_variables['images'][os_default] = spec_variables['operating_system']
+        # 'ssh_user' can vary by image or use case and has been depreciated at the top level
+        if 'ssh_user' in spec_variables:
+            spec_variables['images'][os_default]['ssh_user'] = spec_variables['ssh_user']
+
+        # update machines with depreciated default, if needed
+        for name in spec_variables['machines']:
+            if 'image_name' not in spec_variables['machines'][name]:
+                spec_variables['machines'][name]['image_name'] = os_default
+
+    # azure allows for an ssh_user, discarded in terraform spec for aws and gcloud
+    # use 'ssh_user' per kubernetes cluster
+    if 'ssh_user' in spec_variables and 'kubernetes' in spec_variables:
+        for name in spec_variables['kubernetes']:
+            if 'ssh_user' not in spec_variables['kubernetes'][name]:
+                spec_variables['kubernetes'][name]['ssh_user'] = spec_variables['ssh_user']
 
 
     replace_pairs = {

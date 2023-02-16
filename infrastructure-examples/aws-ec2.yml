@@ -1,0 +1,61 @@
+aws:
+  tags:
+    cluster_name: Demo-Infra
+    created_by: edb-terraform
+  ssh_user: rocky
+  operating_system:
+    name: Rocky-8-ec2-8.6-20220515.0.x86_64
+    owner: 679593333241
+  regions:
+    us-east-1:
+      cidr_block: 10.0.0.0/16
+      zones:
+        us-east-1b: 10.0.0.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+  machines:
+    dbt2-client:
+      type: dbt2-client
+      region: us-east-1
+      zone: us-east-1b
+      instance_type: c5.4xlarge
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+      tags:
+        foo: bar
+    dbt2-driver:
+      type: dbt2-driver
+      region: us-east-1
+      zone: us-east-1b
+      instance_type: c5.4xlarge
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+    pg1:
+      type: postgres
+      region: us-east-1
+      zone: us-east-1b
+      instance_type: c5.4xlarge
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+      additional_volumes:
+        - mount_point: /opt/pg_data
+          size_gb: 20
+          type: io2
+          iops: 5000
+          encrypted: false
+        - mount_point: /opt/pg_wal
+          size_gb: 20
+          type: io2
+          iops: 5000
+          encrypted: false

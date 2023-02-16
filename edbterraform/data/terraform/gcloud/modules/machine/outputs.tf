@@ -22,3 +22,6 @@ output "tags" {
 output "additional_volumes" {
   value = var.machine.spec.additional_volumes
 }
+output "operating_system" {
+  value = var.operating_system
+}
