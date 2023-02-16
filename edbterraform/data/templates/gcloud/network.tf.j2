@@ -59,13 +59,13 @@ module "security_{{ region_ }}" {
   network_name  = module.vpc_{{ region_ }}.vpc_id
 
   service_name = "service-{{ region }}-${module.spec.hex_id}"
-  service_ports    = lookup(lookup(module.spec.value.regions, "{{ region }}", null), "service_ports", [])
+  service_ports    = lookup(lookup(module.spec.base.regions, "{{ region }}", null), "service_ports", [])
   public_cidrblock = var.public_cidrblock
 
   region_name = "region-{{ region }}-${module.spec.hex_id}"
-  region_ports = lookup(lookup(module.spec.value.regions, "{{ region }}", null), "region_ports", [])
+  region_ports = lookup(lookup(module.spec.base.regions, "{{ region }}", null), "region_ports", [])
   region_cidrblocks = flatten([
-    for region in try(module.spec.value.regions, []) : [
+    for region in try(module.spec.base.regions, []) : [
       for ip_cidr in try(region.zones, []) : ip_cidr
       ] 
     ])

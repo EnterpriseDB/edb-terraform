@@ -7,7 +7,7 @@ module "aurora_{{ region_ }}" {
   aurora                   = each.value
   custom_security_group_id = module.security_{{ region_ }}.aws_security_group_id
   name_id                  = module.spec.hex_id
-  cluster_name             = module.spec.value.tags.cluster_name
+  cluster_name             = module.spec.base.tags.cluster_name
   tags                     = each.value.spec.tags
 
   depends_on = [module.security_{{ region_ }}]

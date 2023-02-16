@@ -1,4 +1,4 @@
-# All modules should reference module.spec.value.<attribute> as it will hold all the values from the yaml file
+# All modules should reference module.spec.base.<attribute> as it will hold all the values from the yaml file
 # All modules should depend_on null_resource.validation to ensure all validations complete before continuing
 # Run directly by using terraform apply -target null_resource.validation
 {% include "validation.tf.j2" %}

@@ -44,18 +44,24 @@ class Arguments:
         )
 
 def main(args=None):
+    """ 
+    args: can either be None or a list of arguments to be passed into parse_args
+
+    Returns the dictionary from generate_terraform()
+    """
     env = Arguments().parser.parse_args(args)
-    output_variable = generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
+    outputs = generate_terraform(env.infra_file, env.project_path, env.csp, env.run_validation)
     sys.stdout.write(f'''
     Success!
     You can use now use terraform and see info about your boxes after creation:
     * cd {env.project_path}
     * terraform apply
-    * terraform output -json {output_variable}
+    * terraform output -json {outputs['terraform_output']}
+    * ssh {outputs['ssh_user']}@<ip-address> -i {outputs['ssh_filename']}
     \n
     ''')
     
-    return output_variable
+    return outputs
 
 '''
 Entry point made for setup.py to use
