@@ -8,7 +8,7 @@ module "machine_{{ region_ }}" {
   cidr_block               = lookup(lookup(module.spec.region_zone_networks, "{{ region }}", null), each.value.spec.zone, null)
   az                       = each.value.spec.zone
   machine                  = each.value
-  custom_security_group_id = module.security_{{ region_ }}.aws_security_group_id
+  custom_security_group_ids = module.security_{{ region_ }}.security_group_ids
   ssh_user                 = module.spec.base.ssh_user
   ssh_pub_key              = module.spec.public_key
   ssh_priv_key             = module.spec.private_key

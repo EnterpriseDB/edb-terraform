@@ -26,7 +26,7 @@ resource "aws_instance" "machine" {
   instance_type          = var.machine.spec.instance_type
   key_name               = var.key_name
   subnet_id              = data.aws_subnet.selected.id
-  vpc_security_group_ids = [var.custom_security_group_id]
+  vpc_security_group_ids = var.custom_security_group_ids
 
   root_block_device {
     delete_on_termination = "true"

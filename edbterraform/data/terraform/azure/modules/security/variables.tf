@@ -1,9 +1,16 @@
 variable "subnet_id" {}
+variable "zone" {}
 variable "resource_name" {}
 variable "region" {}
-variable "service_name" {}
-variable "service_ports" {}
-variable "region_name" {}
-variable "public_cidrblock" {}
-variable "region_ports" {}
-variable "region_cidrblocks" {}
+variable "ports" {
+    type = list
+}
+variable "ingress_cidrs" {
+    type = list(string)
+}
+variable "egress_cidrs" {
+    type = list(string)
+}
+variable "name_id" {
+    type = string
+}
