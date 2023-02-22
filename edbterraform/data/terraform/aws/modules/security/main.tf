@@ -1,60 +1,27 @@
-variable "vpc_id" {}
-variable "public_cidrblock" {}
-variable "project_tag" {}
-variable "service_ports" {}
-variable "cluster_name" {}
-variable "region_cidrblocks" {}
-variable "region_ports" {}
-
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 2.7.0"
-    }
-  }
-}
-
 resource "aws_security_group" "rules" {
+  for_each = {
+    # preserve ordering
+    for index, values in var.ports:
+      format("0%.3d",index) => values
+  }
+  name = format("%s_%s_%s_%s", var.project_tag, var.cluster_name, each.value.protocol, each.key)
+  description = each.value.description
   vpc_id = var.vpc_id
+  ingress {
+      from_port   = each.value.protocol == "icmp" ? 8 : -1
+      to_port     = each.value.port != null && each.value.protocol != "icmp"  ? each.value.port : -1
+      protocol    = each.value.protocol
+      cidr_blocks = each.value.ingress_cidrs != null ? each.value.ingress_cidrs : var.ingress_cidrs
+  }
 
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = -1
-    cidr_blocks = [var.public_cidrblock]
-  }
-
-  dynamic "ingress" {
-    for_each = var.service_ports
-    iterator = service_port
-    content {
-      from_port   = service_port.value.port
-      to_port     = service_port.value.port
-      protocol    = service_port.value.protocol
-      description = service_port.value.description
-      // This means, all ip address are allowed !
-      // Not recommended for production. 
-      // Limit IP Addresses in a Production Environment !
-      cidr_blocks = [var.public_cidrblock]
-    }
-  }
-
-  // Allow connections from regions cidr block to specific ports
-  // Reduced exposure compared to service ports
-  dynamic "ingress" {
-    for_each = var.region_ports
-    iterator = region_ports
-    content {
-      from_port   = region_ports.value.port
-      to_port     = region_ports.value.port
-      protocol    = region_ports.value.protocol
-      description = region_ports.value.description
-      cidr_blocks = var.region_cidrblocks
-    }
+    cidr_blocks = each.value.egress_cidrs != null ? each.value.egress_cidrs : var.egress_cidrs
   }
 
   tags = {
-    Name = format("%s_%s_%s", var.project_tag, var.cluster_name, "security_rules")
+    Name = format("%s_%s_%s_%s", var.project_tag, var.cluster_name, each.value.protocol, each.key)
   }
 }

@@ -37,18 +37,13 @@ module "security_{{ region_ }}" {
   for_each = lookup(module.spec.region_zone_networks, "{{ region }}", null)
 
   subnet_id         = module.network_{{ region_ }}[each.key].subnet_id
+  zone              = each.key
+  name_id           = module.spec.hex_id
   region            = module.vpc_{{ region_ }}.region
   resource_name     = module.vpc_{{ region_ }}.resource_name
-  service_name      = "service-{{ region }}-${each.key}-${module.spec.hex_id}"
-  service_ports     = lookup(lookup(module.spec.base.regions, "{{ region }}", null), "service_ports", [])
-  public_cidrblock  = var.public_cidrblock
-  region_name       = "region-{{ region }}-${each.key}-${module.spec.hex_id}"
-  region_ports      = lookup(lookup(module.spec.base.regions, "{{ region }}", null), "region_ports", [])
-  region_cidrblocks = flatten([
-    for region in try(module.spec.base.regions, []) : [
-      for ip_cidr in try(region.zones, []) : ip_cidr
-      ] 
-    ])
+  ports             = try(module.spec.region_ports["{{ region }}"], [])
+  ingress_cidrs     = module.spec.region_cidrblocks
+  egress_cidrs      = module.spec.region_cidrblocks
 
   depends_on = [module.network_{{ region_ }}]
 

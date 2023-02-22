@@ -101,3 +101,21 @@ output "region_kubernetes" {
     }...
   }
 }
+
+output "region_cidrblocks" {
+  description = "list of all cidrs from each defined zone"
+  value = flatten([
+    for region, values in var.spec.regions: [
+      for zone, cidr in values.zones:
+        cidr
+    ]
+  ])
+}
+
+output "region_ports" {
+  description = "mapping of region to its list of port rules"
+  value = {
+    for region, values in var.spec.regions:
+      region => flatten([values.service_ports, values.region_ports])
+  }
+}

@@ -117,3 +117,8 @@ output "{{output_name}}" {
   }
   sensitive = true
 }
+
+output "spec" {
+  value = module.spec[*]
+  sensitive = true
+}

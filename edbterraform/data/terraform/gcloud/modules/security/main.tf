@@ -1,37 +1,15 @@
-resource "google_compute_firewall" "services" {
-  count = length(var.service_ports) > 0 ? 1 : 0
-
-  name    = var.service_name
-  network = var.network_name
-
-  dynamic "allow" {
-    for_each = var.service_ports
-    iterator = service_port
-
-    content {
-      protocol = service_port.value.protocol
-      ports    = service_port.value.port != null ? [service_port.value.port] : []
-    }
+resource "google_compute_firewall" "rules" {
+  for_each = {
+    # preserve ordering
+    for index, values in var.ports:
+      format("0%.3d",index) => values
   }
-
-  source_ranges = [var.public_cidrblock]
-}
-
-resource "google_compute_firewall" "regions" {
-  count = length(var.region_ports) > 0 ? 1 : 0
-
-  name    = var.region_name
+  name    = "${each.value.protocol}-${var.region}-${var.name_id}-${each.key}"
   network = var.network_name
-
-  dynamic "allow" {
-    for_each = var.region_ports
-    iterator = region_port
-
-    content {
-      protocol = region_port.value.protocol
-      ports    = region_port.value.port != null ? [region_port.value.port] : []
-    }
+  allow {
+    protocol = each.value.protocol
+    ports    = each.value.port != null ? [each.value.port] : []
   }
-
-  source_ranges = var.region_cidrblocks
+  source_ranges = each.value.ingress_cidrs != null ? each.value.ingress_cidrs : var.ingress_cidrs
+  destination_ranges = each.value.egress_cidrs != null ? each.value.egress_cidrs : var.egress_cidrs
 }

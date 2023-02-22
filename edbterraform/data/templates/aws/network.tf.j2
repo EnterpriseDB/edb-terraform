@@ -49,15 +49,12 @@ module "security_{{ region_ }}" {
   source = "./modules/security"
 
   vpc_id           = module.vpc_{{ region_ }}.vpc_id
-  public_cidrblock = var.public_cidrblock
   project_tag      = var.project_tag
-  service_ports    = lookup(lookup(module.spec.base.regions, "{{ region }}", null), "service_ports", [])
   cluster_name     = module.spec.base.tags.cluster_name
-  region_cidrblocks = ([ for k, v 
-                      in lookup(lookup(module.spec.base.regions, "{{ region }}", null), "azs", [])
-                      : v ])
-  region_ports = lookup(lookup(module.spec.base.regions, "{{ region }}", null), "region_ports", [])
-  
+  ports            = try(module.spec.region_ports["{{ region }}"], [])
+  ingress_cidrs    = module.spec.region_cidrblocks
+  egress_cidrs     = module.spec.region_cidrblocks
+
   depends_on = [module.routes_{{ region_ }}]
 
   providers = {
