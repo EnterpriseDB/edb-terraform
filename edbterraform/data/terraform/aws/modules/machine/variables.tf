@@ -5,7 +5,10 @@ variable "az" {}
 variable "ssh_user" {}
 variable "ssh_pub_key" {}
 variable "ssh_priv_key" {}
-variable "custom_security_group_id" {}
+variable "use_agent" {
+  default = false
+}
+variable "custom_security_group_ids" {}
 variable "key_name" {}
 variable "operating_system" {}
 variable "tags" {
