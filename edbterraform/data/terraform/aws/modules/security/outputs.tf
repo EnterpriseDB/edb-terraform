@@ -1,6 +1,6 @@
 output "security_group_ids" {
-  value = flatten([
-    for key, values in merge(aws_security_group.rules):
+  value = flatten([aws_security_group.OUTBOUND_ACCESS.id ,[
+    for key, values in aws_security_group.rules:
       values.id
-  ])
+  ]])
 }
