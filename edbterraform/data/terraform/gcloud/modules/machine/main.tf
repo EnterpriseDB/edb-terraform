@@ -60,22 +60,10 @@ resource "google_compute_disk" "volumes" {
 
 }
 
-locals {
-  linux_device_names = [
-    "sdf",
-    "sdg",
-    "sdh",
-    "sdi",
-    "sdj",
-    "sdk",
-    "sdl"
-  ]
-}
-
 resource "google_compute_attached_disk" "attached_volumes" {
   for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
 
-  device_name = element(local.linux_device_names, tonumber(each.key))
+  device_name = trimprefix(element(local.linux_device_names, tonumber(each.key))[0], local.prefix)
   disk        = google_compute_disk.volumes[each.key].id
   instance    = google_compute_instance.machine.id
 
@@ -113,7 +101,7 @@ resource "null_resource" "setup_volume" {
   provisioner "remote-exec" {
     inline = [
       "chmod a+x /tmp/setup_volume.sh",
-      "/tmp/setup_volume.sh \"/dev/disk/by-id/google-${element(local.linux_device_names, tonumber(each.key))}\" ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
+      "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
     ]
 
     # Requires firewall access to ssh port

@@ -1,29 +1,3 @@
-variable "machine" {}
-variable "vpc_id" {}
-variable "cidr_block" {}
-variable "az" {}
-variable "ssh_user" {}
-variable "ssh_pub_key" {}
-variable "ssh_priv_key" {}
-variable "use_agent" {
-  default = false
-}
-variable "custom_security_group_id" {}
-variable "key_name" {}
-variable "operating_system" {}
-variable "tags" {
-  type    = map(string)
-  default = {}
-}
-
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 2.7.0"
-    }
-  }
-}
 data "aws_ami" "default" {
   most_recent = true
 
@@ -76,24 +50,13 @@ resource "aws_ebs_volume" "ebs_volume" {
   tags = var.tags
 }
 
-locals {
-  linux_ebs_device_names = [
-    "/dev/sdf",
-    "/dev/sdg",
-    "/dev/sdh",
-    "/dev/sdi",
-    "/dev/sdj",
-    "/dev/sdk",
-    "/dev/sdl"
-  ]
-}
-
 resource "aws_volume_attachment" "attached_volume" {
   for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
 
-  device_name = element(local.linux_ebs_device_names, tonumber(each.key))
+  device_name = element(local.linux_device_names, tonumber(each.key))[0]
   volume_id   = aws_ebs_volume.ebs_volume[each.key].id
   instance_id = aws_instance.machine.id
+  stop_instance_before_detaching = true
 
   depends_on = [
     aws_instance.machine,
@@ -133,7 +96,7 @@ resource "null_resource" "setup_volume" {
   provisioner "remote-exec" {
     inline = [
       "chmod a+x /tmp/setup_volume.sh",
-      "/tmp/setup_volume.sh ${element(local.linux_ebs_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
+      "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
     ]
 
     connection {

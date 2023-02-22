@@ -98,15 +98,25 @@ locals {
   ])
 
   # /dev/sda /dev/sdb are mounted by default
-  # azure automatically sets additional mount points starting with /dev/sdc
+  # device name start: /dev/sdc
+  prefix = "/dev/"
+  base = ["sd"]
+  letters = [
+    "c", "d", "e", "f", 
+    "g", "h", "i", "j", 
+    "k", "l", "m", "n",
+    "o", "p", "q", "r"
+  ]
+  # List(List(String))
+  # [[ "/dev/sdc" ], ]
   linux_device_names = [
-    "/dev/sdc",
-    "/dev/sdd",
-    "/dev/sde",
-    "/dev/sdf",
-    "/dev/sdg",
-    "/dev/sdh",
-    "/dev/sdi",
-    "/dev/sdj",
+    for letter in local.letters:
+      formatlist("${local.prefix}%s${letter}", local.base)
+  ]
+  # List(String) with comma delimiter
+  # [ "/dev/sdc" , ]
+  string_device_names = [
+    for names in local.linux_device_names:
+      format("%s", names...)
   ]
 }
