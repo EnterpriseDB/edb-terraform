@@ -18,17 +18,17 @@ data "aws_availability_zones" "zone_check" {
   lifecycle {
     postcondition {
       condition = alltrue([
-        for zone in keys(var.zones) :
-        contains(self.names, zone)
+        for name, values in var.zones :
+        contains(self.names, values.zone)
       ])
       error_message = (
         <<-EOT
 Region:
   ${var.region}
 Invalid Zones:
-%{for zone in keys(var.zones)~}
-%{if !contains(self.names, zone)~}
-  ${zone}
+%{for name, values in var.zones~}
+%{if !contains(self.names, values.zone)~}
+  ${values.zone}
 %{endif~}
 %{endfor~}
 Valid Zone options:

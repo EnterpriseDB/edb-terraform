@@ -40,7 +40,7 @@ variable "zone" {
       try(contains(["1", "2", "3", ], var.zone), false)
     )
     error_message = <<-EOT
-    Zone must be: 1 - 3
+    Zone must be: null, 1 - 3
     EOT
   }
 }

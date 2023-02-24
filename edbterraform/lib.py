@@ -304,6 +304,13 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
     except:
         raise KeyError("ERROR: key '%s' not present in the infrastructure file." % cloud_service_provider)
     
+    replace_pairs = {
+        # Modules used to expect azs and az
+        "azs": "zones",
+        "az": "zone",
+    }
+    spec_variables = change_keys(spec_variables, replace_pairs)
+
     # Users were able to use 'cluster_name' at the same level as cloud_service_provider before
     if 'tags' not in spec_variables:
         spec_variables['tags'] = dict()
@@ -330,9 +337,10 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
             spec_variables['images'][os_default]['ssh_user'] = spec_variables['ssh_user']
 
         # update machines with depreciated default, if needed
-        for name in spec_variables['machines']:
-            if 'image_name' not in spec_variables['machines'][name]:
-                spec_variables['machines'][name]['image_name'] = os_default
+        if 'machines' in spec_variables:
+            for name in spec_variables['machines']:
+                if 'image_name' not in spec_variables['machines'][name]:
+                    spec_variables['machines'][name]['image_name'] = os_default
 
     # azure allows for an ssh_user, discarded in terraform spec for aws and gcloud
     # use 'ssh_user' per kubernetes cluster
@@ -341,12 +349,33 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
             if 'ssh_user' not in spec_variables['kubernetes'][name]:
                 spec_variables['kubernetes'][name]['ssh_user'] = spec_variables['ssh_user']
 
+    # change to each region zones to handle the same zone defined multple times
+    # previously the mappings were defined as zones, ex. us-west-2a: 10.0.0.0/24
+    # terraform variable: optional(map(string)) -> optional(map(object))
+    # use 'zone_name' with machines and google kubernetes to track the zone wanted for use
+    if 'regions' in spec_variables:
+        for region in spec_variables['regions']:
+            # check if all zones defined with a string
+            # compatability skipped otherwise
+            if 'zones' in spec_variables['regions'][region] and \
+                isinstance(spec_variables['regions'][region]['zones'], dict) and \
+                all([isinstance(item, str) for _, item in spec_variables['regions'][region]['zones'].items()]):
+                temp = {}
+                for zone, cidr in spec_variables['regions'][region]['zones'].items():
+                    temp[f'depreciated-{zone}'] = {
+                        'zone': zone,
+                        'cidr': cidr,
+                    }
+                spec_variables['regions'][region]['zones'] = temp
 
-    replace_pairs = {
-        # Modules used to expect azs and az
-        "azs": "zones",
-        "az": "zone",
-    }
-    spec_variables = change_keys(spec_variables, replace_pairs)
+    if 'machines' in spec_variables:
+        for machine in spec_variables['machines']:
+            if 'zone_name' not in spec_variables['machines'][machine] and 'zone' in spec_variables['machines'][machine]:
+                spec_variables['machines'][machine]['zone_name'] = f'depreciated-{spec_variables["machines"][machine]["zone"]}'
+
+    if 'kubernetes' in spec_variables:
+        for cluster in spec_variables['kuberenetes']:
+            if 'zone_name' not in spec_variables['kubernetes'][cluster] and 'zone' in spec_variables['kubernetes'][cluster]:
+                spec_variables['kubernetes'][cluster]['zone_name'] = f'depreciated-{spec_variables["kubernetes"][machine]["zone"]}'
 
     return spec_variables

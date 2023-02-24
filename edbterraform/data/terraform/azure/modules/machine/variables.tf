@@ -32,10 +32,8 @@ variable "tags" {
 }
 variable "cluster_name" {}
 locals {
-  # 0 is used to represent no zone but azure expects null
-  zone = tostring(var.machine.zone) == "0" ? null : var.machine.zone
-  zones         = local.zone == null ? null : [local.zone]
-  public_ip_sku = local.zone == null ? "Basic" : "Standard"
+  zones         = var.machine.zone == null ? null : [var.machine.zone]
+  public_ip_sku = var.machine.zone == null ? "Basic" : "Standard"
 }
 variable "resource_name" {
   type = string

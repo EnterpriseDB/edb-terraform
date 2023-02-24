@@ -29,7 +29,7 @@ data "google_compute_regions" "unavailable" {
     postcondition {
       # Check if any region is an unavailable region
       condition = alltrue([
-        for region in keys(var.spec.regions) :
+        for region in keys(var.spec.regions):
         !contains(self.names, region)
       ])
       error_message = <<-EOT
@@ -55,16 +55,16 @@ data "google_compute_zones" "region" {
     postcondition {
       # Check for all zones in a region to be valid options
       condition = alltrue([
-        for zone in keys(each.value.zones) :
-        contains(self.names, zone)
+        for name, values in each.value.zones:
+        contains(self.names, values.zone)
       ])
       error_message = <<-EOT
 Region:
     ${each.key}
 Invalid Zones Set:
-%{for zone in keys(each.value.zones)~}
-%{if !contains(self.names, zone)~}
-    ${zone}
+%{for name, values in each.value.zones~}
+%{if !contains(self.names, values.zone)~}
+    ${name}: ${values.zone}
 %{endif~}
 %{endfor~}
 Valid Zone Options:
@@ -84,16 +84,16 @@ data "google_compute_zones" "unavailable" {
     postcondition {
       # Check if any zone is an unavailable zone
       condition = alltrue([
-        for zone in keys(each.value.zones) :
-        !contains(self.names, zone)
+        for name, values in each.value.zones:
+        !contains(self.names, values.zone)
       ])
       error_message = <<-EOT
 Region:
     ${each.key}
 Unavailable Zones Set:
-%{for zone in keys(each.value.zones)~}
-%{if contains(self.names, zone)~}
-    ${zone}
+%{for name, values in each.value.zones~}
+%{if contains(self.names, values.zone)~}
+    ${values.zone}
 %{endif~}
 %{endfor~}
 Available Zone Options:

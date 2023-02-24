@@ -13,18 +13,26 @@ aws:
       ssh_user: admin
   regions:
     us-east-1:
-      cidr_block: 10.0.0.0/16
+      cidr_block: 10.2.0.0/16
       zones:
-        us-east-1b: 10.0.0.0/24
+        proxy:
+          zone: us-east-1b
+          cidr: 10.2.20.0/24
+        main:
+          zone: us-east-1b
+          cidr: 10.2.30.0/24
       service_ports:
         - port: 22
           protocol: tcp
           description: "SSH"
+      region_ports:
+        - protocol: icmp
+          description: "ping"
   machines:
     dbt2-driver:
       image_name: debian
       region: us-east-1
-      zone: us-east-1b
+      zone_name: proxy
       instance_type: c5.4xlarge
       volume:
         type: gp2
@@ -36,7 +44,7 @@ aws:
     pg1:
       image_name: rocky
       region: us-east-1
-      zone: us-east-1b
+      zone_name: main
       instance_type: c5.4xlarge
       volume:
         type: gp2

@@ -16,7 +16,7 @@ module "network_{{ region_ }}" {
   for_each = lookup(module.spec.region_zone_networks, "{{ region }}", null)
 
   network_name    = module.vpc_{{ region_ }}.vpc_id
-  ip_cidr_range   = each.value
+  ip_cidr_range   = each.value.cidr
   name            = "{{region}}-${each.key}-${module.spec.hex_id}"
 
   depends_on = [module.vpc_{{ region_ }}]

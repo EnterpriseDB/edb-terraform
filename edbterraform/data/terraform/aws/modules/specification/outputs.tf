@@ -10,15 +10,6 @@ output "public_key" {
   value = var.spec.ssh_key.public_path != null ? file(var.spec.ssh_key.public_path) : tls_private_key.default[0].public_key_openssh
 }
 
-output "region_zone_networks" {
-  value = {
-    for region, spec in var.spec.regions : region => {
-      for zone, network in spec.zones :
-      zone => network
-    }
-  }
-}
-
 locals {
   # Extend machine's count as of list objects, with an index in the name only when count over 1
   machines_extended = flatten([
@@ -34,6 +25,9 @@ locals {
           })
           # assign operating system from mapped names
           operating_system = var.spec.images[machine_spec.image_name]
+          # assign zone from mapped names
+          zone = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
+          cidr = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].cidr
         })
       }
     ]
@@ -102,13 +96,20 @@ output "region_kubernetes" {
   }
 }
 
+output "region_zone_networks" {
+  value = {
+    for region, region_spec in var.spec.regions : region => {
+      for name, values in region_spec.zones:
+        name => values
+    }
+  }
+}
+
 output "region_cidrblocks" {
   description = "list of all cidrs from each defined zone"
   value = flatten([
-    for region, values in var.spec.regions: [
-      for zone, cidr in values.zones:
-        cidr
-    ]
+    for region, values in var.spec.regions:
+      values.cidr_block
   ])
 }
 
