@@ -210,7 +210,7 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
 
     # Create statefile and change file/folder permissions since
     # it is not-encrypted by default and may contain secrets
-    open(project_path / TERRAFORM_STATE_FILE, 'w').close()
+    open(TERRAFORM_STATE_FILE, 'w').close()
     os.chmod(project_path, PROJECT_PATH_PERMISSIONS)
     os.chmod(TERRAFORM_STATE_FILE, TERRAFORM_STATE_PERMISSIONS)
 

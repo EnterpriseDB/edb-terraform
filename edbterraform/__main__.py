@@ -55,7 +55,8 @@ def main(args=None):
     Success!
     You can use now use terraform and see info about your boxes after creation:
     * cd {env.project_path}
-    * terraform apply
+    * terraform init
+    * terraform apply -auto-approve
     * terraform output -json {outputs['terraform_output']}
     * ssh <ssh_user>@<ip-address> -i {outputs['ssh_filename']}
     \n
