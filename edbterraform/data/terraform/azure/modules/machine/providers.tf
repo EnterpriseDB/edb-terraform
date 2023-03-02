@@ -4,6 +4,9 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 3.37.0"
     }
+    toolbox = {
+      source  = "bryan-bar/toolbox"
+    }
   }
   required_version = ">= 1.3.6"
 }

@@ -27,6 +27,7 @@ locals {
           operating_system = var.spec.images[machine_spec.image_name]
           # assign zone from mapped names
           zone = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
+          private_key_path = local.private_filename
         })
       }
     ]

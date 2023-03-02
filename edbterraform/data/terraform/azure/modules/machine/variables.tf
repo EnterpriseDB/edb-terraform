@@ -24,6 +24,7 @@ variable "machine" {
       size_gb = number
       type    = string
     })
+    private_key_path = string
   })
 }
 variable "tags" {
@@ -88,7 +89,10 @@ locals {
     for key, value in var.additional_volumes :
     key => value
   }
-
+  mapped_volumes = {
+    for volume in var.additional_volumes:
+      volume.mount_point => { for k,v in volume: k=>v }
+  }
   volume_script_count = length(var.additional_volumes) > 0 ? 1 : 0
 
   premium_ssd = {

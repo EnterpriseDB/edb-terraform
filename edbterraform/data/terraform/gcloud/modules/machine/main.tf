@@ -54,7 +54,7 @@ resource "google_compute_instance" "machine" {
 }
 
 resource "google_compute_disk" "volumes" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+  for_each = local.additional_volumes
 
   name             = lower(format("%s-%s-%s-%s", var.machine.name, var.cluster_name, var.name_id, each.key))
   type             = each.value.type
@@ -67,7 +67,7 @@ resource "google_compute_disk" "volumes" {
 }
 
 resource "google_compute_attached_disk" "attached_volumes" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+  for_each = local.additional_volumes
 
   device_name = trimprefix(element(local.linux_device_names, tonumber(each.key))[0], local.prefix)
   disk        = google_compute_disk.volumes[each.key].id
@@ -79,7 +79,7 @@ resource "google_compute_attached_disk" "attached_volumes" {
 
 resource "null_resource" "copy_setup_volume_script" {
 
-  count = length(lookup(var.machine.spec, "additional_volumes", [])) > 0 ? 1 : 0
+  count = local.volume_script_count
 
   provisioner "file" {
     content     = file("${abspath(path.module)}/setup_volume.sh")
@@ -102,7 +102,7 @@ resource "null_resource" "copy_setup_volume_script" {
 }
 
 resource "null_resource" "setup_volume" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+  for_each = local.additional_volumes
 
   provisioner "remote-exec" {
     inline = [
@@ -123,4 +123,20 @@ resource "null_resource" "setup_volume" {
   depends_on = [
     null_resource.copy_setup_volume_script
   ]
+}
+
+resource "toolbox_external" "get_uuid" {
+  count = local.volume_script_count
+  program = split(" ",
+  "bash ${path.module}/get_uuid.sh"
+  )
+
+  query = {
+    "mount_points" = base64encode(jsonencode(var.machine.spec.additional_volumes[*].mount_point))
+    "ssh_user"     = base64encode(var.operating_system.ssh_user)
+    "ip_address"   = base64encode(google_compute_instance.machine.network_interface.0.access_config.0.nat_ip)
+    "key_path"     = base64encode(var.machine.spec.private_key_path)
+  }
+
+  depends_on = [ null_resource.setup_volume ]
 }

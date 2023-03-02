@@ -7,6 +7,8 @@ locals {
     var.spec.ssh_key.public_path != null ||
     var.spec.ssh_key.private_path != null ? 1 : 0
   )
+  private_filename = "${abspath(path.root)}/${var.spec.ssh_key.output_name}"
+  public_filename = "${abspath(path.root)}/${var.spec.ssh_key.output_name}.pub"
 }
 
 resource "tls_private_key" "default" {
@@ -18,7 +20,7 @@ resource "tls_private_key" "default" {
 resource "local_sensitive_file" "default_private" {
   count = local.ssh_user_count
 
-  filename        = "${abspath(path.root)}/${var.spec.ssh_key.output_name}"
+  filename        = local.private_filename
   file_permission = "0600"
   content         = tls_private_key.default[0].private_key_openssh
 }
@@ -26,7 +28,7 @@ resource "local_sensitive_file" "default_private" {
 resource "local_file" "default_public" {
   count = local.ssh_user_count
 
-  filename        = "${abspath(path.root)}/${var.spec.ssh_key.output_name}.pub"
+  filename        = local.public_filename
   file_permission = "0644"
   content         = tls_private_key.default[0].public_key_openssh
 }
@@ -34,7 +36,7 @@ resource "local_file" "default_public" {
 resource "local_sensitive_file" "private_key" {
   count = local.ssh_keys_count
 
-  filename        = "${abspath(path.root)}/${var.spec.ssh_key.output_name}"
+  filename        = local.private_filename
   file_permission = "0600"
   source          = var.spec.ssh_key.private_path
 
@@ -59,7 +61,7 @@ resource "local_sensitive_file" "private_key" {
 resource "local_file" "public_key" {
   count = local.ssh_keys_count
 
-  filename        = "${abspath(path.root)}/${var.spec.ssh_key.output_name}.pub"
+  filename        = local.public_filename
   file_permission = "0644"
   source          = var.spec.ssh_key.public_path
 

@@ -39,7 +39,7 @@ resource "aws_instance" "machine" {
 }
 
 resource "aws_ebs_volume" "ebs_volume" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+  for_each = local.additional_volumes
 
   availability_zone = var.az
   size              = each.value.size_gb
@@ -51,7 +51,7 @@ resource "aws_ebs_volume" "ebs_volume" {
 }
 
 resource "aws_volume_attachment" "attached_volume" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+  for_each = local.additional_volumes
 
   device_name = element(local.linux_device_names, tonumber(each.key))[0]
   volume_id   = aws_ebs_volume.ebs_volume[each.key].id
@@ -66,7 +66,7 @@ resource "aws_volume_attachment" "attached_volume" {
 
 resource "null_resource" "copy_setup_volume_script" {
 
-  count = length(lookup(var.machine.spec, "additional_volumes", [])) > 0 ? 1 : 0
+  count = local.volume_script_count
 
   provisioner "file" {
     content     = file("${abspath(path.module)}/setup_volume.sh")
@@ -87,7 +87,7 @@ resource "null_resource" "copy_setup_volume_script" {
 }
 
 resource "null_resource" "setup_volume" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+  for_each = local.additional_volumes
 
   depends_on = [
     null_resource.copy_setup_volume_script
@@ -108,3 +108,20 @@ resource "null_resource" "setup_volume" {
     }
   }
 }
+
+resource "toolbox_external" "get_uuid" {
+  count = local.volume_script_count
+  program = split(" ",
+  "bash ${path.module}/get_uuid.sh"
+  )
+
+  query = {
+    "mount_points" = base64encode(jsonencode(var.machine.spec.additional_volumes[*].mount_point))
+    "ssh_user"     = base64encode(var.operating_system.ssh_user)
+    "ip_address"   = base64encode(aws_instance.machine.public_ip)
+    "key_path"     = base64encode(var.machine.spec.private_key_path)
+  }
+
+  depends_on = [ null_resource.setup_volume ]
+}
+

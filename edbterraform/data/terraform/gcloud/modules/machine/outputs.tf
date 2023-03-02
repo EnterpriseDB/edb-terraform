@@ -20,7 +20,10 @@ output "tags" {
   value = google_compute_instance.machine.labels
 }
 output "additional_volumes" {
-  value = var.machine.spec.additional_volumes
+  value = {
+    for k,v in local.mapped_volumes:
+      k=>length(toolbox_external.get_uuid) > 0 ? merge(v,{"uuid":toolbox_external.get_uuid.0.result[k]}) : v
+  }
 }
 output "operating_system" {
   value = var.operating_system

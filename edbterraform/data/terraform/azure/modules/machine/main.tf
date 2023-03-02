@@ -162,3 +162,19 @@ resource "null_resource" "setup_volume" {
     null_resource.copy_setup_volume_script
   ]
 }
+
+resource "toolbox_external" "get_uuid" {
+  count = local.volume_script_count
+  program = split(" ",
+  "bash ${path.module}/get_uuid.sh"
+  )
+
+  query = {
+    "mount_points" = base64encode(jsonencode(var.additional_volumes[*].mount_point))
+    "ssh_user"     = base64encode(var.operating_system.ssh_user)
+    "ip_address"   = base64encode(azurerm_linux_virtual_machine.main.public_ip_address)
+    "key_path"     = base64encode(var.machine.private_key_path)
+  }
+
+  depends_on = [ null_resource.setup_volume ]
+}

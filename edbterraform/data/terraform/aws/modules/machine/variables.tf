@@ -16,6 +16,16 @@ variable "tags" {
 }
 
 locals {
+  additional_volumes = {
+    for key, value in lookup(var.machine.spec, "additional_volumes", []) :
+      key => value
+  }
+  mapped_volumes = {
+    for volume in lookup(var.machine.spec, "additional_volumes", []):
+      volume.mount_point => { for k,v in volume: k=>v }
+  }
+  volume_script_count = length(lookup(var.machine.spec, "additional_volumes", [])) > 0 ? 1 : 0
+
   # Create a list of possible device names
   prefix = "/dev/"
   base = ["sd", "xvd", "hd"]

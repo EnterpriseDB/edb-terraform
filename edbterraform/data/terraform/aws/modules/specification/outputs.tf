@@ -28,6 +28,7 @@ locals {
           # assign zone from mapped names
           zone = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
           cidr = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].cidr
+          private_key_path = local.private_filename
         })
       }
     ]

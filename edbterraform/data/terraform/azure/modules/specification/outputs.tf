@@ -28,6 +28,7 @@ locals {
           # assign zone from mapped names
           # Handle 0 as null to represent a region with no zones available
           zone = tostring(var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone) == "0" ? null : var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
+          private_key_path = local.private_filename
         })
       }
     ]
