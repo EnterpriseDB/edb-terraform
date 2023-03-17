@@ -44,7 +44,7 @@ variable "vpc_id" {
   default     = ""
 }
 
-variable "custom_security_group_id" {
+variable "custom_security_group_ids" {
   description = "Security Group assign to the instances. Example: 'sg-12345'."
   type        = string
   default     = ""
