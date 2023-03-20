@@ -15,7 +15,7 @@ from cryptography.hazmat.backends import default_backend
 try:
     from edbterraform.utils.dict import change_keys
     from edbterraform.utils.files import load_yaml_file
-except:
+except ImportError:
     from utils.dict import change_keys
     from utils.files import load_yaml_file
 
