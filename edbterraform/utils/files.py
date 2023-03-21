@@ -9,7 +9,7 @@ def load_yaml_file(file_path):
 
     try:
         with open(file_path) as f:
-            vars = yaml.safe_load(f.read())
+            vars = yaml.load(f.read(), Loader=yaml.CLoader)
             return vars
 
     except Exception as e:
