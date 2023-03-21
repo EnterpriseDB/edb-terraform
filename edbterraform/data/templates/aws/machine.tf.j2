@@ -5,6 +5,7 @@ module "machine_{{ region_ }}" {
 
   operating_system         = each.value.spec.operating_system
   vpc_id                   = module.vpc_{{ region_ }}.vpc_id
+  subnet_id                = module.network_{{ region_ }}[each.value.spec.zone_name].subnet_id
   cidr_block               = each.value.spec.cidr
   az                       = each.value.spec.zone
   machine                  = each.value

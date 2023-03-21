@@ -37,7 +37,7 @@ resource "aws_db_subnet_group" "aurora" {
 }
 
 resource "aws_rds_cluster" "aurora_cluster" {
-  cluster_identifier     = "${lower(var.cluster_name)}-${var.name_id}"
+  cluster_identifier_prefix = "${lower(var.cluster_name)}-${var.name_id}"
   engine                 = var.aurora.spec.engine
   engine_version         = var.aurora.spec.engine_version
   engine_mode            = "provisioned"
@@ -52,11 +52,21 @@ resource "aws_rds_cluster" "aurora_cluster" {
   vpc_security_group_ids = var.custom_security_group_ids
 
   tags = var.tags
+
+  lifecycle {
+    # availability_zones - RDS automatically assigns 3 AZs if less than 3 AZs are configured, 
+    # which will show as a difference requiring resource recreation next Terraform apply.
+    # We recommend specifying 3 AZs or using the lifecycle configuration block ignore_changes argument if necessary.
+    # cluster_identifier_prefix - (Optional, Forces new resources)
+    # Source: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster
+    ignore_changes = [availability_zones, cluster_identifier_prefix]
+  }
 }
 
 resource "aws_rds_cluster_instance" "aurora_instance" {
   count = var.aurora.spec.count
 
+  identifier_prefix       = "${lower(var.cluster_name)}-${count.index}-${var.name_id}"
   cluster_identifier      = aws_rds_cluster.aurora_cluster.id
   instance_class          = var.aurora.spec.instance_type
   engine                  = aws_rds_cluster.aurora_cluster.engine
@@ -67,6 +77,12 @@ resource "aws_rds_cluster_instance" "aurora_instance" {
   publicly_accessible     = var.publicly_accessible
 
   tags = var.tags
+  lifecycle {
+    # identifier_prefix - (Optional, Forces new resource)
+    # cluster_identifier - (Required, Forces new resource)
+    # Source: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster_instance
+    ignore_changes = [identifier_prefix, cluster_identifier]   
+  }
 }
 
 resource "aws_db_parameter_group" "aurora_db_params" {
