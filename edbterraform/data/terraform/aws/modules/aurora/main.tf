@@ -1,6 +1,6 @@
 variable "aurora" {}
 variable "vpc_id" {}
-variable "custom_security_group_ids" {}
+variable "custom_security_group_id" {}
 variable "cluster_name" {}
 variable "name_id" { default = "0" }
 variable "publicly_accessible" {
@@ -49,7 +49,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   availability_zones     = var.aurora.spec.zones
   apply_immediately      = true
   skip_final_snapshot    = true
-  vpc_security_group_ids = var.custom_security_group_ids
+  vpc_security_group_ids = [var.custom_security_group_id]
 
   tags = var.tags
 }

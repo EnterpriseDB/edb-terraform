@@ -1,6 +1,6 @@
 variable "database" {}
 variable "vpc_id" {}
-variable "custom_security_group_ids" {}
+variable "custom_security_group_id" {}
 variable "name_id" { default = "0" }
 variable "publicly_accessible" {
   type     = bool
@@ -53,7 +53,7 @@ resource "aws_db_instance" "rds_server" {
   storage_encrypted       = var.database.spec.volume.encrypted
   storage_type            = var.database.spec.volume.type
   iops                    = var.database.spec.volume.type == "io1" ? var.database.spec.volume.iops : null
-  vpc_security_group_ids  = var.custom_security_group_ids
+  vpc_security_group_ids  = [var.custom_security_group_id]
   skip_final_snapshot     = true
 
   tags = var.tags
