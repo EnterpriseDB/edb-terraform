@@ -22,3 +22,7 @@ resource "aws_subnet" "public_subnets" {
     Name = format("%s_%s_%s", var.public_subnet_tag, var.availability_zone, var.cidr_block)
   }
 }
+
+output "subnet_id" {
+  value = aws_subnet.public_subnets.id
+}

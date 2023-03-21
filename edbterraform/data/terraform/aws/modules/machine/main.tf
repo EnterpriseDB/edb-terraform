@@ -14,18 +14,11 @@ data "aws_ami" "default" {
   owners = ["${var.operating_system.owner}"]
 }
 
-
-data "aws_subnet" "selected" {
-  vpc_id            = var.vpc_id
-  availability_zone = var.az
-  cidr_block        = var.cidr_block
-}
-
 resource "aws_instance" "machine" {
   ami                    = data.aws_ami.default.id
   instance_type          = var.machine.spec.instance_type
   key_name               = var.key_name
-  subnet_id              = data.aws_subnet.selected.id
+  subnet_id              = var.subnet_id
   vpc_security_group_ids = var.custom_security_group_ids
 
   root_block_device {
@@ -36,6 +29,12 @@ resource "aws_instance" "machine" {
   }
 
   tags = var.tags
+
+  lifecycle {
+    # AMI is ignored because the data source
+    # forces the resource to be re-created when apply is used again
+    ignore_changes = [ami]
+  }
 }
 
 resource "aws_ebs_volume" "ebs_volume" {

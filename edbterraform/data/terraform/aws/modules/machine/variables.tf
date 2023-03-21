@@ -1,5 +1,6 @@
 variable "machine" {}
 variable "vpc_id" {}
+variable "subnet_id" {}
 variable "cidr_block" {}
 variable "az" {}
 variable "ssh_pub_key" {}
