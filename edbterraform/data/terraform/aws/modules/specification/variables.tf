@@ -53,7 +53,6 @@ variable "spec" {
       })), [])
     }))
     machines = optional(map(object({
-      skip_ssh_check = optional(bool, false)
       type          = optional(string)
       image_name    = string
       count         = optional(number, 1)
@@ -125,7 +124,6 @@ variable "spec" {
     condition = (
       alltrue([
         for machine in var.spec.machines :
-        machine.skip_ssh_check ||
         length(machine.additional_volumes) == 0 ||
         anytrue([for service_port in var.spec.regions[machine.region].service_ports :
           service_port.port == 22
@@ -136,11 +134,9 @@ variable "spec" {
       <<-EOT
 When using machines with additional volumes, SSH must be open.
 Ensure each region listed below has port 22 open under service_ports.
-This check can be skipped by setting 'skip_ssh_check' to true under each machine with additional volumes.
 Region - Machine:
 %{for name, spec in var.spec.machines~}
 %{if length(spec.additional_volumes) != 0~}
-skip_ssh_check: ${spec.skip_ssh_check}
   ${spec.region} - ${name}
 %{endif~}
 %{endfor~}
