@@ -8,11 +8,7 @@ resource "aws_security_group" "rules" {
 }
 
 resource "aws_security_group_rule" "ingress" {
-  for_each = {
-    # preserve ordering
-    for index, values in var.ports:
-      format("0%.3d",index) => values
-  }
+  for_each = local.merged_rules
   security_group_id = aws_security_group.rules.id
   description = each.value.description
   type = "ingress"
