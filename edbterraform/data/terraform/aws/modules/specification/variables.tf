@@ -38,7 +38,6 @@ variable "spec" {
         cidr = optional(string)
       })), {})
       service_ports = optional(list(object({
-        for_ssh     = optional(bool, false)
         port        = optional(number)
         protocol    = string
         description = optional(string)
@@ -46,7 +45,6 @@ variable "spec" {
         egress_cidrs = optional(list(string))
       })), [])
       region_ports = optional(list(object({
-        for_ssh     = optional(bool, false)
         port        = optional(number)
         protocol    = string
         description = optional(string)
@@ -59,9 +57,8 @@ variable "spec" {
       image_name    = string
       count         = optional(number, 1)
       region        = string
-      ssh_port      = optional(number)
+      ssh_port      = optional(number, 22)
       ports         = optional(list(object({
-        for_ssh     = optional(bool, false)
         port        = optional(number)
         protocol    = string
         description = optional(string)

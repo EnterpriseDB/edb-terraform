@@ -28,20 +28,6 @@ locals {
           # assign zone from mapped names
           zone = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
           cidr = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].cidr
-          
-          # SSH will be set based on first valid port seen with the use of coalesce, which finds the first non-null value.
-          ssh_port = coalesce(
-            # Priority:
-            # 1. Grab machines set ssh_port
-            # 2. Grab first port with for_ssh=true from machine ports
-            # 3. Grab first port with for_ssh=true from service ports
-            # 4. Default to 22
-            machine_spec.ssh_port,
-            try([for port in machine_spec.ports: port.port if port.for_ssh][0], null),
-            try([for port in var.spec.regions[machine_spec.region].service_ports: port.port if port.for_ssh][0], null),
-            try([for port in var.spec.regions[machine_spec.region].region_ports: port.port if port.for_ssh][0], null),
-            22,
-          )
         })
       }
     ]
