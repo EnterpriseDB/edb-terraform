@@ -21,10 +21,7 @@ aws:
         main:
           zone: us-east-1b
           cidr: 10.2.30.0/24
-      service_ports:
-        - port: 22
-          protocol: tcp
-          description: "SSH"
+      service_ports: []
       region_ports:
         - protocol: icmp
           description: "ping"
@@ -45,6 +42,10 @@ aws:
       image_name: rocky
       region: us-east-1
       zone_name: main
+      ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
       instance_type: c5.4xlarge
       volume:
         type: gp2

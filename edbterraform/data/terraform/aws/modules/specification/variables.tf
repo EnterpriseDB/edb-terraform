@@ -64,12 +64,7 @@ variable "spec" {
         description = optional(string)
         type = optional(string, "ingress")
         cidrs = optional(list(string))
-        })), [{
-        protocol = "-1",
-        description="OUTBOUND_ACCESS_DEFAULT",
-        type="egress",
-        cidrs=["0.0.0.0/0"]
-        }]
+        })), []
       )
       zone_name     = string
       instance_type = string
