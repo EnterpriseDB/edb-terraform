@@ -17,6 +17,9 @@ variable "tags" {
 }
 
 locals {
+  additional_volumes_length = length(lookup(var.machine.spec, "additional_volumes", []))
+  additional_volumes_count = local.additional_volumes_length > 0 ? 1 : 0
+  additional_volumes_map = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
   # Create a list of possible device names
   prefix = "/dev/"
   base = ["sd", "xvd", "hd"]

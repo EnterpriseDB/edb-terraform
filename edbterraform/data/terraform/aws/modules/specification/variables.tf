@@ -40,24 +40,31 @@ variable "spec" {
       service_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
-        description = string
+        description = optional(string)
         ingress_cidrs = optional(list(string), ["0.0.0.0/0"])
         egress_cidrs = optional(list(string))
       })), [])
       region_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
-        description = string
+        description = optional(string)
         ingress_cidrs = optional(list(string))
         egress_cidrs = optional(list(string))
       })), [])
     }))
     machines = optional(map(object({
-      skip_ssh_check = optional(bool, false)
       type          = optional(string)
       image_name    = string
       count         = optional(number, 1)
       region        = string
+      ssh_port      = optional(number, 22)
+      ports         = optional(list(object({
+        port        = optional(number)
+        protocol    = string
+        description = optional(string)
+        ingress_cidrs = optional(list(string))
+        egress_cidrs = optional(list(string))
+      })), [])
       zone_name     = string
       instance_type = string
       volume = object({
@@ -120,31 +127,4 @@ variable "spec" {
       tags          = optional(map(string), {})
     })), {})
   })
-
-  validation {
-    condition = (
-      alltrue([
-        for machine in var.spec.machines :
-        machine.skip_ssh_check ||
-        length(machine.additional_volumes) == 0 ||
-        anytrue([for service_port in var.spec.regions[machine.region].service_ports :
-          service_port.port == 22
-        ])
-      ])
-    )
-    error_message = (
-      <<-EOT
-When using machines with additional volumes, SSH must be open.
-Ensure each region listed below has port 22 open under service_ports.
-This check can be skipped by setting 'skip_ssh_check' to true under each machine with additional volumes.
-Region - Machine:
-%{for name, spec in var.spec.machines~}
-%{if length(spec.additional_volumes) != 0~}
-skip_ssh_check: ${spec.skip_ssh_check}
-  ${spec.region} - ${name}
-%{endif~}
-%{endfor~}
-EOT
-    )
-  }
 }
