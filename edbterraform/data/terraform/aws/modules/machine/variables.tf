@@ -1,4 +1,12 @@
 variable "machine" {}
+locals {
+  # Allow machine default outbound access if no egress is defined
+  egress_defined = anytrue([for port in var.machine.spec.ports: port.type=="egress"])
+  machine_ports = concat(var.machine.spec.ports, 
+      (local.egress_defined ? [] : [{"type"="egress", "cidrs"=["0.0.0.0/0"], "protocol"="-1", "port": null, "description": "Default Egress if not defined"}])
+    )
+}
+
 variable "vpc_id" {}
 variable "subnet_id" {}
 variable "cidr_block" {}

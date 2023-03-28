@@ -20,7 +20,7 @@ module "machine_ports" {
   vpc_id           = var.vpc_id
   project_tag      = "machine_rules"
   cluster_name     = var.machine.name
-  ports            = var.machine.spec.ports
+  ports            = local.machine_ports
 }
 
 resource "aws_instance" "machine" {

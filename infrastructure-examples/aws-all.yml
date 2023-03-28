@@ -33,7 +33,7 @@ aws:
       type: dbt2-client
       region: us-east-1
       zone: us-east-1b
-      instance_type: c5.18xlarge
+      instance_type: c5.4xlarge
       volume:
         type: gp2
         size_gb: 50
@@ -44,8 +44,8 @@ aws:
     dbt2-driver:
       type: dbt2-driver
       region: us-east-1
-      zone: us-east-1b
-      instance_type: c5.18xlarge
+      zone: us-east-1c
+      instance_type: c5.4xlarge
       volume:
         type: gp2
         size_gb: 50
@@ -54,7 +54,7 @@ aws:
     pg1:
       type: postgres
       region: us-east-1
-      zone: us-east-1b
+      zone: us-east-1c
       instance_type: c5.4xlarge
       volume:
         type: gp2
