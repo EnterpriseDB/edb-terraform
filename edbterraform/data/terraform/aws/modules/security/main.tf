@@ -21,7 +21,7 @@ resource "aws_security_group_rule" "rule" {
   lifecycle {
     precondition {
       condition     = each.value.type == "ingress" || each.value.type == "egress"
-      error_message = "${each.key} has type ${each.type}. Must be ingress or egress."
+      error_message = "${each.key} has type ${each.value.type}. Must be ingress or egress."
     }
   }
 }
