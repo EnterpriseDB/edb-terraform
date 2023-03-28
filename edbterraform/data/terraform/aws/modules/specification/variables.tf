@@ -41,15 +41,15 @@ variable "spec" {
         port        = optional(number)
         protocol    = string
         description = optional(string)
-        ingress_cidrs = optional(list(string), ["0.0.0.0/0"])
-        egress_cidrs = optional(list(string))
+        type = optional(string, "ingress")
+        cidrs = optional(list(string), ["0.0.0.0/0"])
       })), [])
       region_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
         description = optional(string)
-        ingress_cidrs = optional(list(string))
-        egress_cidrs = optional(list(string))
+        type = optional(string, "ingress")
+        cidrs = optional(list(string))
       })), [])
     }))
     machines = optional(map(object({
@@ -62,9 +62,15 @@ variable "spec" {
         port        = optional(number)
         protocol    = string
         description = optional(string)
-        ingress_cidrs = optional(list(string))
-        egress_cidrs = optional(list(string))
-      })), [])
+        type = optional(string, "ingress")
+        cidrs = optional(list(string))
+        })), [{
+        protocol = "-1",
+        description="OUTBOUND_ACCESS_DEFAULT",
+        type="egress",
+        cidrs=["0.0.0.0/0"]
+        }]
+      )
       zone_name     = string
       instance_type = string
       volume = object({
