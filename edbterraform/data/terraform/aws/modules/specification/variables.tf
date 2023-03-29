@@ -28,7 +28,7 @@ variable "spec" {
     }), {})
     images = optional(map(object({
       name = optional(string)
-      owner = optional(number)
+      owner = optional(string)
       ssh_user = optional(string)
     })))
     regions = map(object({
