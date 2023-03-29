@@ -8,7 +8,7 @@ variable "spec" {
     ssh_user = string
     operating_system = optional(object({
       name  = string
-      owner = number
+      owner = string
     }))
     regions = map(object({
       cidr_block = string
