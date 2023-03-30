@@ -19,7 +19,7 @@ output "region_machines" {
         # spec project tags
         tags = merge(var.spec.tags, machine_spec.tags, {
           # machine module specific tags
-          name = format("%s-%s", var.spec.tags.cluster_name, name)
+          Name = format("%s-%s", var.spec.tags.cluster_name, name)
         })
       })
     }...
@@ -34,7 +34,7 @@ output "region_databases" {
         # spec project tags
         tags = merge(var.spec.tags, database_spec.tags, {
           # database module specific tags
-          name = format("%s-%s", var.spec.tags.cluster_name, name)
+          Name = format("%s-%s", var.spec.tags.cluster_name, name)
         })
       })
     }...
@@ -49,7 +49,7 @@ output "region_auroras" {
         # spec project tags
         tags = merge(var.spec.tags, aurora_spec.tags, {
           # aurora module specific tags
-          name = format("%s-%s", var.spec.tags.cluster_name, name)
+          Name = format("%s-%s", var.spec.tags.cluster_name, name)
         })
       })
     }...
