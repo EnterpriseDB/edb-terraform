@@ -19,9 +19,10 @@ locals {
         spec = merge(machine_spec, {
           # spec project tags
           tags = merge(var.spec.tags, machine_spec.tags, {
-            # machine module specific tags
-            name = machine_spec.count > 1 ? "${name}-${index}" : name
-            id   = random_id.apply.hex
+          # machine module specific tags
+          # Use 'Name' tag to have instance name set for AWS UI
+          Name = format("%s-%s-%s", (machine_spec.count > 1 ? "${name}-${index}" : name), var.spec.tags.cluster_name, random_id.apply.hex)
+          id   = random_id.apply.hex
           })
           # assign operating system from mapped names
           operating_system = var.spec.images[machine_spec.image_name]
@@ -49,7 +50,7 @@ output "region_databases" {
         # spec project tags
         tags = merge(var.spec.tags, database_spec.tags, {
           # database module specific tags
-          name = name
+          Name = format("%s-%s-%s", name, var.spec.tags.cluster_name, random_id.apply.hex)
           id   = random_id.apply.hex
         })
       })
@@ -65,7 +66,7 @@ output "region_auroras" {
         # spec project tags
         tags = merge(var.spec.tags, aurora_spec.tags, {
           # aurora module specific tags
-          name = name
+          Name = format("%s-%s-%s", name, var.spec.tags.cluster_name, random_id.apply.hex)
           id   = random_id.apply.hex
         })
       })
@@ -89,7 +90,8 @@ output "region_kubernetes" {
         # spec project tags
         tags = merge(var.spec.tags, spec.tags, {
           # kubernetes module specific tags
-          name = format("%s-%s", var.spec.tags.cluster_name, name)
+          Name = format("%s-%s-%s", name, var.spec.tags.cluster_name, random_id.apply.hex)
+          id   = random_id.apply.hex
         })
       })
     }...
