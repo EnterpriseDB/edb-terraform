@@ -97,6 +97,7 @@ variable "spec" {
         value = number
       })), [])
       tags = optional(map(string), {})
+      public_access = optional(bool, false)
     })), {})
     alloy = optional(map(object({
       region    = string
