@@ -1,0 +1,35 @@
+module "database_{{ region_ }}" {
+  source = "./modules/database"
+
+  for_each = {
+    for rm in lookup(module.spec.region_databases, "{{ region }}", []) : 
+      rm.name => rm 
+    }
+
+  resource_name                   = module.vpc_{{ region_ }}.resource_name
+  region                          = each.value.spec.region
+  zone                            = each.value.spec.zone
+  engine                          = each.value.spec.engine
+  engine_version                  = each.value.spec.engine_version
+  instance_type                   = each.value.spec.instance_type
+  dbname                          = each.value.spec.dbname
+  settings                        = each.value.spec.settings
+  size_gb                         = each.value.spec.volume.size_gb
+  username                        = each.value.spec.username
+  password                        = each.value.spec.password
+  cluster_name                    = module.spec.base.tags.cluster_name
+  name                            = each.value.name
+  name_id                         = module.spec.hex_id
+  tags                            = each.value.spec.tags
+  public_access                   = each.value.spec.public_access
+
+  depends_on = [
+    module.security_{{ region_ }},
+    null_resource.validation,
+  ]
+
+  providers = {
+    azurerm = azurerm.{{ region_ }}
+  }
+
+}
