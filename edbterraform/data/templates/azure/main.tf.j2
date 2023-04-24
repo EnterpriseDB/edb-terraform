@@ -19,6 +19,10 @@
 {%     include "machine.tf.j2" %}
 {%   endif %}
 
+{%   if has_databases %}
+{%     include "database.tf.j2" %}
+{%   endif %}
+
 {%   if has_kubernetes %}
 {%     include "kubernetes.tf.j2" %}
 {%   endif %}
@@ -40,6 +44,11 @@ servers:
     'active': has_machines,
     'regions': machine_regions,
     'module_base': 'module.machine_',
+  },
+  'databases': {
+    'active': has_databases,
+    'regions': database_regions,
+    'module_base': "module.database_",
   },
   'kubernetes': {
     'active': has_kubernetes,

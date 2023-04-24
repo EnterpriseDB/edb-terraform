@@ -41,6 +41,25 @@ output "region_machines" {
   }
 }
 
+output "region_databases" {
+  value = {
+    for name, database_spec in var.spec.databases : database_spec.region => {
+      name = name
+      spec = merge(database_spec, {
+        # spec project tags
+        tags = merge(var.spec.tags, database_spec.tags, {
+          # databases module specific tags
+          name = name
+          id   = random_id.apply.hex
+        })
+        # assign zone from mapped names
+        # Handle 0 as null to represent a region with no zones available
+        zone = tostring(database_spec.zone) == "0" ? null : database_spec.zone
+      })
+    }...
+  }
+}
+
 output "region_kubernetes" {
   value = {
     for name, spec in var.spec.kubernetes : spec.region => {

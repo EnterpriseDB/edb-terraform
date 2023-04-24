@@ -19,8 +19,8 @@ describing the target cloud infrastructure.
 | GCloud   | AlloyDB                  |:white_check_mark:|
 | GCloud   | Google Kubernetes Engine |:white_check_mark:|
 | Azure    | VM                       |:white_check_mark:|
-| Azure    | Database - Flexible      |       :x:        |
-| Azure    | CosmoDB                 |       :x:        |
+| Azure    | Database - Flexible      |:white_check_mark:|
+| Azure    | CosmoDB                  |       :x:        |
 | Azure    | Azure Kubernetes Service |:white_check_mark:|
 
 ## Prerequisites and installation

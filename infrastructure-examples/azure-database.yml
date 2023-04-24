@@ -1,0 +1,50 @@
+---
+azure:
+  tags:
+    cluster_name: flexible-servers
+    created_by: edb-terraform
+  regions:
+    westus:
+      cidr_block: 10.2.0.0/16
+      zones:
+        main:
+          zone: 0
+          cidr: 10.2.20.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+      region_ports:
+        - protocol: icmp
+          description: "ping"
+  images:
+    rocky_8_7_0:
+      publisher: erockyenterprisesoftwarefoundationinc1653071250513
+      offer: rockylinux
+      sku: free
+      version: 8.7.0
+      ssh_user: rocky
+  machines:
+    dbt2-driver:
+      image_name: rocky_8_7_0
+      region: westus
+      zone_name: main
+      instance_type: Standard_D2as_v4
+      volume:
+        type: StandardSSD_LRS
+        size_gb: 50
+      tags:
+        type: dbt2-driver
+  databases:
+    postgres:
+      region: westus
+      engine: postgresql
+      engine_version: 14
+      username: postgres
+      password: asdfavu899fnvoabnsviob
+      instance_type: GP_Standard_D4s_v3
+      volume:
+        size_gb: 32
+      tags:
+        environment: Sandbox
+        type: postgres

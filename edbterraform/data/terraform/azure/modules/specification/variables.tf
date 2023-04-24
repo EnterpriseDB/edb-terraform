@@ -74,6 +74,25 @@ variable "spec" {
       })), [])
       tags = optional(map(string), {})
     })), {})
+    databases = optional(map(object({
+      region         = string
+      zone           = optional(string)
+      dbname         = optional(string)
+      engine         = string
+      engine_version = number
+      instance_type  = string
+      username       = string
+      password       = string
+      volume = object({
+        size_gb   = optional(number)
+      })
+      settings = optional(list(object({
+        name  = string
+        value = number
+      })), [])
+      tags = optional(map(string), {})
+      public_access = optional(bool, false)
+    })), {})
     kubernetes = optional(map(object({
       region                  = string
       ssh_user                = optional(string)
