@@ -1,8 +1,10 @@
+/*
+https://github.com/hashicorp/terraform-provider-azurerm/issues/10167
 data "azurerm_ssh_public_key" "main" {
   name                = var.public_key_name
   resource_group_name = var.resource_name
 }
-
+*/
 resource "azurerm_public_ip" "main" {
   name                = "ip-${var.name}-${var.name_id}"
   resource_group_name = var.resource_name
@@ -38,7 +40,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   admin_username = var.operating_system.ssh_user
   admin_ssh_key {
     username   = var.operating_system.ssh_user
-    public_key = data.azurerm_ssh_public_key.main.public_key
+    public_key = var.public_key
   }
   disable_password_authentication = true
   network_interface_ids           = [azurerm_network_interface.internal.id]

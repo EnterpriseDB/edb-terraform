@@ -42,8 +42,8 @@ variable "name_id" {
   type = string
 }
 variable "subnet_id" {}
-variable "public_key_name" {}
 variable "private_key" {}
+variable "public_key" {}
 variable "use_agent" {
   default = false
 }
