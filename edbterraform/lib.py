@@ -6,18 +6,17 @@ import os
 import sys
 import shutil
 import subprocess
-import logging
 from jinja2 import Environment, FileSystemLoader
+import textwrap
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
-try:
-    from edbterraform.utils.dict import change_keys
-    from edbterraform.utils.files import load_yaml_file
-except ImportError:
-    from utils.dict import change_keys
-    from utils.files import load_yaml_file
+
+from edbterraform.utils.dict import change_keys
+from edbterraform.utils.files import load_yaml_file
+from edbterraform.CLI import TerraformCLI
+from edbterraform.Logger import logger
 
 def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
@@ -53,7 +52,7 @@ def create_project_dir(dir, csp):
 
     script_dir = Path(__file__).parent.resolve()
     try:
-        logging.info(f'Creating directory: {dir}')
+        logger.info(f'Creating directory: {dir}')
         shutil.copytree(script_dir / 'data' / 'terraform' / csp, dir)
     except Exception as e:
         sys.exit("ERROR: cannot create project directory %s (%s)" % (dir, e))
@@ -63,7 +62,7 @@ def destroy_project_dir(dir):
         return
 
     try:
-        logging.info(f'Destroying directory: {dir}')
+        logger.info(f'Destroying directory: {dir}')
         shutil.rmtree(dir)
     except Exception as e:
         raise("Error: unable to delete project directory %s (%s)" % (dir, e))
@@ -160,7 +159,7 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
     
     return (terraform_vars, template_vars)
 
-def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_validation: bool) -> dict:
+def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_validation: bool, bin_path: Path) -> dict:
     """
     Generates the terraform files from jinja templates and terraform modules and
     saves the files into a project_directory for use with 'terraform' commands
@@ -219,72 +218,31 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
     if 'ssh_key' in terraform_vars['spec'] and 'output_name' in terraform_vars['spec']['ssh_key']:
         OUTPUT['ssh_filename'] = terraform_vars['spec']['ssh_key']['output_name']
 
-    run_terraform(project_path, run_validation)
+    run_terraform(project_path, run_validation, bin_path)
 
     return OUTPUT
 
-def run_terraform(cwd, validate):
+def run_terraform(cwd, validate, bin_path):
     if validate:
         try:
-            command = 'command -v terraform'
-            logging.info(f'Executing command: {command}')
-            subprocess.check_output(
-                command,
-                shell=True,
-                cwd=cwd,
-                stderr=subprocess.STDOUT,
-                text=True
-            )
+            terraform = TerraformCLI(bin_path)
+            terraform.init_command(cwd)
+            terraform.plan_command(cwd)
+            terraform.apply_target_command(cwd)
         except subprocess.CalledProcessError as e:
-            logging.warning(f'''
-            Validation skipped, terraform not found.
-            Remove --validate option or install terraform >= 1.3.6
+            logger.warning(textwrap.dedent('''
+            Validation skipped, check {bin_path}.
+            Remove --validate option or install terraform >= {min_version}
             and rerun edb-terraform
             Install and manually run:
             1. `terraform init`
             2. `terraform plan`
             3. `terraform apply -target=null_resource.validation`
-            ''')
-            destroy_project_dir(cwd)
-            sys.exit(e.returncode)
-    
-        try:
-            command = 'terraform init'
-            logging.info(f'Executing command: {command}')
-            subprocess.check_output(
-                command,
-                shell=True,
-                cwd=cwd,
-                stderr=subprocess.STDOUT,
-                text=True
-            )
-        except subprocess.CalledProcessError as e:
-            logging.error(f'Error: ({e.output})')
-            destroy_project_dir(cwd)
-            sys.exit(e.returncode)
-    
-        try:
-            command = 'terraform plan -input=false'    
-            logging.info(f'Executing command: {command}')
-            subprocess.check_output(
-                command,
-                shell=True,
-                cwd=cwd,
-                stderr=subprocess.STDOUT,
-                text=True
-            )
-
-            command = 'terraform apply -input=false -target=null_resource.validation -auto-approve'
-            logging.info(f'Executing command: {command}')
-            subprocess.check_output(
-                command,
-                shell=True,
-                cwd=cwd,
-                stderr=subprocess.STDOUT,
-                text=True
-            )
-        except subprocess.CalledProcessError as e:
-            logging.error(f'Error: unable to validate terraform files.\n({e.output})')
+            ''').format(
+                bin_path=bin_path,
+                min_version=terraform.min_version,
+            ))
+            logger.error(f'Error: ({e.output})')
             destroy_project_dir(cwd)
             sys.exit(e.returncode)
 
@@ -378,4 +336,4 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
             if 'zone_name' not in spec_variables['kubernetes'][cluster] and 'zone' in spec_variables['kubernetes'][cluster]:
                 spec_variables['kubernetes'][cluster]['zone_name'] = f'depreciated-{spec_variables["kubernetes"][machine]["zone"]}'
 
-    return spec_variables
+    return spec_variables    
