@@ -88,11 +88,13 @@ Once the infrastructure file has been created we can to proceed with cloud
 resources creation:
 
   1. We can attempt to setup a compatable version of Terraform.
-    This directory will be inside of ~/.edb-terraform/bin
-    Logs can be found inside of ~/.edb-terraform/logs
-    ```shell
-    $ edb-terraform setup
-    ```
+     This directory will be inside of `~/.edb-terraform/bin`
+     Logs can be found inside of `~/.edb-terraform/logs`
+    
+     ```shell
+     $ edb-terraform setup
+     ```
+
   2. A new Terraform *project* must be created with the help of the
      `edb-terraform` script. This script is in charge of creating a dedicated
      directory for the *project*, generating SSH keys, building Terraform
