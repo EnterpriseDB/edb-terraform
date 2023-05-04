@@ -87,7 +87,13 @@ $ pip3 install . --upgrade
 Once the infrastructure file has been created we can to proceed with cloud
 resources creation:
 
-  1. A new Terraform *project* must be created with the help of the
+  1. We can attempt to setup a compatable version of Terraform.
+    This directory will be inside of ~/.edb-terraform/bin
+    Logs can be found inside of ~/.edb-terraform/logs
+    ```shell
+    $ edb-terraform setup
+    ```
+  2. A new Terraform *project* must be created with the help of the
      `edb-terraform` script. This script is in charge of creating a dedicated
      directory for the *project*, generating SSH keys, building Terraform
      configuration based on the infrastructure file, copying Terraform modules
@@ -100,7 +106,7 @@ resources creation:
      
      Defaults to `aws` if not used
      ```shell
-     $ edb-terraform ~/my_project -c aws my_infrastructure.yml
+     $ edb-terraform generate ~/my_project -c aws my_infrastructure.yml
      ```
 
       b. Step 2 can be skipped if using option `--validate`,
@@ -110,7 +116,7 @@ resources creation:
       * terraform `>= 1.3.6` 
       * CLI from chosen provider setup already (authenticated, export needed variables/files)
      ```shell
-     $ edb-terraform ~/my_project -c aws my_infrastructure.yml --validate
+     $ edb-terraform generate ~/my_project -c aws my_infrastructure.yml --validate
      ```
 
 <p align="center">
