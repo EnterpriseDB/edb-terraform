@@ -1,84 +1,157 @@
 import sys
+import os
 import argparse
 from pathlib import Path
 import textwrap
+from dataclasses import dataclass, field
+from collections import OrderedDict
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
 from edbterraform import __project_name__
 from edbterraform.Logger import logger
 
+ENVIRONMENT_PREFIX = 'ET_' # Appended to allow overrides of defaults
+
+@dataclass
+class ArgumentConfig:
+    '''
+    Dataclass meant to represent an object for argparse arguments.
+    Ex:
+    config = ArgumentConfig(names=['--test'], dest='test', required=False)
+    subparser.add_argument(
+        *(config.get_names()),
+        **(config.get_args())
+    )
+    '''
+    names: tuple = None
+    metavar: str = None
+    dest: str = None
+    type: type = None
+    help: str = None
+    default: str = None
+    choices: list = None
+    required: bool = None
+    action: str = None
+
+    def __post_init__(self) -> None:
+        # Allow overriding of defaults with environment variables
+        if self.default is not None:
+            self.default = os.getenv(self.default_env_var(), self.default)
+            if self.help:
+                self.help += f'''
+                | Default Environment variable: {self.default_env_var()}'''
+        tempdict = self.__dict__.items()
+        # dictionary with non-None values
+        self.filtered_dict = {k: v for k, v in tempdict if k != 'names' and v is not None}
+
+    def default_env_var(self) -> str:
+        '''
+        Get a default environment variable to check for overrides.
+        Priority:
+        1. dest variable
+        2. Uses longest command to create environment variable
+
+        Returns ET_{command_name}
+        '''
+        name = ''
+        if self.dest:
+            name = self.dest
+        else:
+            name = max(self.names, key=len)
+
+        return ENVIRONMENT_PREFIX + name.lstrip('-').replace('-', '_').upper()
+
+    def get_args(self):
+        return self.filtered_dict
+
+    def get_names(self):
+        return self.names
+
+    def __getitem__(self, key):
+        return self.filtered_dict.get(key, None)
+
+BinPath = ArgumentConfig(
+    names = ['--bin_path'],
+    dest  = 'bin_path',
+    default = TerraformCLI.DEFAULT_PATH,
+    required = False,
+    help = '''
+            Default location to install binaries.
+            It will default to users home directory.
+            Default: %(default)s
+           ''',
+)
+
+ProjectPath = ArgumentConfig(
+    names = ['project_path',],
+    metavar='PROJECT_PATH',
+    type=Path,
+    help="Project path. %(default)s",
+)
+
+InfraFile = ArgumentConfig(
+    names = ['infra_file',],
+    metavar='INFRA_FILE_YAML',
+    type=Path,
+    help="CSP infrastructure (YAML format) file path. %(default)s"
+)
+
+CloudServiceProvider = ArgumentConfig(
+    names = ['--cloud-service-provider', '-c',],
+    metavar='CLOUD_SERVICE_PROVIDER',
+    dest='csp',
+    choices=['aws', 'gcloud', 'azure'],
+    default='aws',
+    help="Cloud Service Provider. Default: %(default)s"
+)
+
+Validation = ArgumentConfig(
+    names = ['--validate',],
+    dest='run_validation',
+    action='store_true',
+    required=False,
+    default=False,
+    help='''
+        Requires terraform >= 1.3.6
+        Validates the generated files by running:
+        `terraform apply -target=null_resource.validation`
+        If invalid, error will be displayed and project directory destroyed
+        Default: %(default)s
+        '''
+)
+
+
 class Arguments:
 
-    COMMANDS = ['generate', 'setup']
-    DEFAULT_COMMAND = COMMANDS[0]
+    COMMANDS = OrderedDict({
+        'generate': [
+            ProjectPath,
+            InfraFile,
+            CloudServiceProvider,
+            Validation,
+            BinPath,
+        ],
+        'setup': [
+            BinPath,
+        ],
+    })
+    DEFAULT_COMMAND = next(iter(COMMANDS))
 
     def __init__(self, args:list[str]=sys.argv, parser=argparse.ArgumentParser()):
         self.parser = parser
         self.subparsers = self.parser.add_subparsers()
         self.command = self.override_sys_argv(args)
-
-        for command in Arguments.COMMANDS:
-            self.subparsers.add_parser(command)
         self.subparsers.default = Arguments.DEFAULT_COMMAND
 
-        generate = self.subparsers.choices['generate']
-        generate.add_argument(
-            'project_path',
-            metavar='PROJECT_PATH',
-            type=Path,
-            help="Project path.",
-        )
-        generate.add_argument(
-            'infra_file',
-            metavar='INFRA_FILE_YAML',
-            type=Path,
-            help="CSP infrastructure (YAML format) file path."
-        )
-        generate.add_argument(
-            '--cloud-service-provider', '-c',
-            metavar='CLOUD_SERVICE_PROVIDER',
-            dest='csp',
-            choices=['aws', 'gcloud', 'azure'],
-            default='aws',
-            help="Cloud Service Provider. Default: %(default)s"
-        )
-        generate.add_argument(
-            '--validate',
-            dest='run_validation',
-            action='store_true',
-            required=False,
-            help='''
-                Requires terraform >= 1.3.6
-                Validates the generated files by running:
-                `terraform apply -target=null_resource.validation`
-                If invalid, error will be displayed and project directory destroyed
-                Default: %(default)s
-                '''
-        )
-        generate.add_argument(
-            '--bin_path',
-            dest='bin_path',
-            default=TerraformCLI.DEFAULT_PATH,
-            required=False,
-            help='''
-                Default location to install binaries.
-                It will default to users home directory.
-                Default: %(default)s
-                '''
-        )
-        setup = self.subparsers.choices['setup']
-        setup.add_argument(
-            '--bin_path',
-            dest='bin_path',
-            default=TerraformCLI.DEFAULT_PATH,
-            required=False,
-            help='''
-                Default location to install binaries.
-                It will default to users home directory.
-                Default: %(default)s
-                '''
-        )
+        for name, arg_configs in self.COMMANDS.items():
+            self.subparsers.add_parser(name)
+            subparser = self.subparsers.choices[name]
+            for config in arg_configs:
+                subparser.add_argument(
+                    *(config.get_names()),
+                    **(config.get_args())
+                )
 
         self.env = self.parser.parse_args()
 
@@ -124,19 +197,6 @@ class Arguments:
                 self.env.run_validation,
                 self.env.bin_path,
             )
-            logger.info(textwrap.dedent('''
-            Success!
-            You can use now use terraform and see info about your boxes after creation:
-            * cd {project_path}
-            * terraform init
-            * terraform apply -auto-approve
-            * terraform output -json {output_key}
-            * ssh <ssh_user>@<ip-address> -i {ssh_file}
-            ''').format(
-                project_path = self.env.project_path,
-                output_key = outputs['terraform_output'],
-                ssh_file = outputs['ssh_filename'],
-            ))
             return outputs
 
         if self.command == 'setup':

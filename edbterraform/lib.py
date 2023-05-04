@@ -220,6 +220,20 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
 
     run_terraform(project_path, run_validation, bin_path)
 
+    logger.info(textwrap.dedent('''
+    Success!
+    You can use now use terraform and see info about your boxes after creation:
+    * cd {project_path}
+    * terraform init
+    * terraform apply -auto-approve
+    * terraform output -json {output_key}
+    * ssh <ssh_user>@<ip-address> -i {ssh_file}
+    ''').format(
+        project_path = project_path,
+        output_key = OUTPUT['terraform_output'],
+        ssh_file = OUTPUT['ssh_filename'],
+    ))
+
     return OUTPUT
 
 def run_terraform(cwd, validate, bin_path):
