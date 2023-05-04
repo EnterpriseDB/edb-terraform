@@ -5,6 +5,7 @@ from pathlib import Path
 import textwrap
 from dataclasses import dataclass, field
 from collections import OrderedDict
+from typing import NoReturn
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
@@ -124,17 +125,18 @@ Validation = ArgumentConfig(
 
 class Arguments:
 
+    # Command, description, and its options
     COMMANDS = OrderedDict({
-        'generate': [
+        'generate': ['Generate terraform files based on a yaml infrastructure file\n',[
             ProjectPath,
             InfraFile,
             CloudServiceProvider,
             Validation,
             BinPath,
-        ],
-        'setup': [
+        ]],
+        'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
-        ],
+        ]],
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
 
@@ -147,11 +149,12 @@ class Arguments:
         for name, arg_configs in self.COMMANDS.items():
             self.subparsers.add_parser(name)
             subparser = self.subparsers.choices[name]
-            for config in arg_configs:
+            for config in arg_configs[1]:
                 subparser.add_argument(
                     *(config.get_names()),
                     **(config.get_args())
                 )
+            subparser.usage = arg_configs[0]+subparser.format_usage()
 
         self.env = self.parser.parse_args()
 
