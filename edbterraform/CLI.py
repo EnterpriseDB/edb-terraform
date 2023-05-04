@@ -129,7 +129,7 @@ def binary_path(name, bin_path=None):
 class TerraformCLI:
     binary_name = 'terraform'
     min_version = Version(1, 3, 6)
-    max_version = Version(1, 4, 0)
+    max_version = Version(1, 4, 6)
     arch_alias = {
         'x86_64': 'amd64',
     }
