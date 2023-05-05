@@ -5,6 +5,7 @@ resource "google_compute_global_address" "sql_private_ip" {
   address_type  = "INTERNAL"
   prefix_length = 16
   network       = var.network
+  # TODO: Add labels once they are out of beta. 2023-05-05
 }
 
 resource "google_service_networking_connection" "vpc_connection" {
