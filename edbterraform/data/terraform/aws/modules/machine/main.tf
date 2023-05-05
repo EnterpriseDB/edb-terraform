@@ -21,6 +21,7 @@ module "machine_ports" {
   project_tag      = "machine_rules"
   cluster_name     = var.machine.name
   ports            = local.machine_ports
+  tags             = var.tags
 }
 
 resource "aws_instance" "machine" {
