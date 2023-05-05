@@ -4,7 +4,7 @@ module "vpc_{{ region_ }}" {
   vpc_cidr_block = try(module.spec.base.regions["{{ region }}"].cidr_block, null)
   vpc_tag        = var.vpc_tag
   name_id        = module.spec.hex_id
-  tags             = module.spec.base.tags
+  tags           = module.spec.tags
 
   providers = {
     aws = aws.{{ region_ }}
@@ -22,7 +22,7 @@ module "network_{{ region_ }}" {
   public_subnet_tag  = var.public_subnet_tag
   cidr_block         = each.value.cidr
   availability_zone  = each.value.zone
-  tags               = module.spec.base.tags
+  tags               = module.spec.tags
 
   depends_on = [module.vpc_{{ region_ }}]
 
@@ -39,7 +39,7 @@ module "routes_{{ region_ }}" {
   project_tag        = var.project_tag
   public_cidrblock   = var.public_cidrblock
   cluster_name       = module.spec.base.tags.cluster_name
-  tags               = module.spec.base.tags
+  tags               = module.spec.tags
 
   depends_on = [module.network_{{ region_ }}]
 
@@ -57,7 +57,7 @@ module "security_{{ region_ }}" {
   ports            = try(module.spec.region_ports["{{ region }}"], [])
   ingress_cidrs    = module.spec.region_cidrblocks
   egress_cidrs     = module.spec.region_cidrblocks
-  tags             = module.spec.base.tags
+  tags             = module.spec.tags
 
   depends_on = [module.routes_{{ region_ }}]
 
