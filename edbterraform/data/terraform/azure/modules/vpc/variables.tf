@@ -5,3 +5,4 @@ variable "cidr_blocks" {
   nullable = true
 }
 variable "name" {}
+variable "tags" {}

@@ -14,3 +14,4 @@ variable "egress_cidrs" {
 variable "name_id" {
     type = string
 }
+variable "tags" {}

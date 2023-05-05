@@ -12,13 +12,14 @@ resource "azurerm_public_ip" "main" {
   allocation_method   = "Static"
   zones               = local.zones
   sku                 = local.public_ip_sku
+  tags                = var.tags
 }
 
 resource "azurerm_network_interface" "internal" {
   name                = "internal-${var.name}-${var.name_id}"
   resource_group_name = var.resource_name
   location            = var.machine.region
-
+  tags                = var.tags
   ip_configuration {
     name                          = "internal"
     private_ip_address_version    = "IPv4"
@@ -84,7 +85,7 @@ resource "azurerm_managed_disk" "volume" {
   create_option        = "Empty"
   disk_size_gb         = each.value.size_gb
   disk_iops_read_write = each.value.iops
-
+  tags                 = var.tags
   lifecycle {
     precondition {
       condition = (
