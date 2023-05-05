@@ -16,10 +16,10 @@ variable "spec" {
   EOT
   type = object({
     # Project Level Tags to be merged with other tags
-    tags = optional(object({
+    tags = optional(map(string), {
       cluster_name = optional(string, "AWS-Cluster")
       created_by   = optional(string, "EDB-Terraform-AWS")
-    }), {})
+    })
     ssh_key = optional(object({
       public_path  = optional(string)
       private_path = optional(string)
