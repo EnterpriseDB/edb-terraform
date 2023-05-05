@@ -2,9 +2,9 @@ resource "aws_security_group" "rules" {
   name = format("%s_%s", var.project_tag, var.cluster_name)
   vpc_id = var.vpc_id
 
-  tags = {
+  tags = merge({
     Name = format("%s_%s", var.project_tag, var.cluster_name)
-  }
+  }, var.tags)
 }
 
 resource "aws_security_group_rule" "rule" {

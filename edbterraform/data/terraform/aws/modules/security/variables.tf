@@ -1,5 +1,6 @@
 variable "vpc_id" {}
 variable "project_tag" {}
+variable "tags" {}
 variable "ports" {}
 variable "cluster_name" {}
 variable "ingress_cidrs" {
