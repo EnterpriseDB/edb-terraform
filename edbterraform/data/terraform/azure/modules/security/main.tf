@@ -2,6 +2,7 @@ resource "azurerm_network_security_group" "firewall" {
   name                = "${var.region}-${var.zone}-${var.name_id}"
   resource_group_name = var.resource_name
   location            = var.region
+  tags                = var.tags
 }
 
 resource "azurerm_subnet_network_security_group_association" "firewall" {

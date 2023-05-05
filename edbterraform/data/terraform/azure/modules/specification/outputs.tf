@@ -2,6 +2,19 @@ output "base" {
   value = var.spec
 }
 
+locals {
+  tags = merge(var.spec.tags, {
+    # add ids for tracking
+    terraform_hex   = random_id.apply.hex
+    terraform_id    = random_id.apply.id
+    terraform_time  = time_static.first_created.id
+  })
+}
+
+output "tags" {
+  value = local.tags
+}
+
 output "private_key" {
   value = var.spec.ssh_key.private_path != null ? file(var.spec.ssh_key.private_path) : tls_private_key.default[0].private_key_openssh
 }
@@ -18,10 +31,9 @@ locals {
         name = machine_spec.count > 1 ? "${name}-${index}" : name
         spec = merge(machine_spec, {
           # spec project tags
-          tags = merge(var.spec.tags, machine_spec.tags, {
+          tags = merge(local.tags, machine_spec.tags, {
             # machine module specific tags
             name = machine_spec.count > 1 ? "${name}-${index}" : name
-            id   = random_id.apply.hex
           })
           # assign operating system from mapped names
           operating_system = var.spec.images[machine_spec.image_name]
@@ -47,10 +59,9 @@ output "region_databases" {
       name = name
       spec = merge(database_spec, {
         # spec project tags
-        tags = merge(var.spec.tags, database_spec.tags, {
+        tags = merge(local.tags, database_spec.tags, {
           # databases module specific tags
           name = name
-          id   = random_id.apply.hex
         })
         # assign zone from mapped names
         # Handle 0 as null to represent a region with no zones available
@@ -66,10 +77,9 @@ output "region_kubernetes" {
       name = name
       spec = merge(spec, {
         # spec project tags
-        tags = merge(var.spec.tags, spec.tags, {
+        tags = merge(local.tags, spec.tags, {
           # kubernetes module specific tags
           name = name
-          id   = random_id.apply.hex
         })
       })
     }...
