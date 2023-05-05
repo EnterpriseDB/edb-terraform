@@ -3,6 +3,7 @@ variable "subnet_count" {}
 variable "vpc_id" {}
 variable "project_tag" {}
 variable "public_cidrblock" {}
+variable "tags" {}
 
 terraform {
   required_providers {
@@ -23,9 +24,9 @@ data "aws_subnets" "ids" {
 resource "aws_internet_gateway" "igw" {
   vpc_id = var.vpc_id
 
-  tags = {
+  tags = merge({
     Name = format("%s_%s_%s", var.project_tag, var.cluster_name, "igw")
-  }
+  }, var.tags)
 }
 
 resource "aws_route_table" "custom_route_table" {
@@ -38,9 +39,9 @@ resource "aws_route_table" "custom_route_table" {
     gateway_id = aws_internet_gateway.igw.id
   }
 
-  tags = {
+  tags = merge({
     Name = format("%s_%s_%s", var.project_tag, var.cluster_name, "route_table")
-  }
+  }, var.tags)
 }
 
 resource "aws_route_table_association" "rt_associations" {

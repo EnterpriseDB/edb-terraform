@@ -1,6 +1,7 @@
 variable "vpc_cidr_block" {}
 variable "vpc_tag" {}
 variable "name_id" { default = "0" }
+variable "tags" {}
 
 terraform {
   required_providers {
@@ -17,8 +18,8 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags = {
+  tags = merge({
     Name = "${var.vpc_tag}-${var.name_id}"
-  }
+  }, var.tags)
 }
 
