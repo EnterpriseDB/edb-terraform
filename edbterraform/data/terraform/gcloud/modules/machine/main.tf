@@ -20,6 +20,7 @@ resource "google_compute_address" "public_ip" {
   name         = format("public-ip-%s-%s", var.machine.name, var.name_id)
   region       = var.machine.spec.region
   address_type = "EXTERNAL"
+  # TODO: Add labels once they are out of beta. 2023-05-05
 }
 
 resource "google_compute_instance" "machine" {
@@ -61,6 +62,7 @@ resource "google_compute_disk" "volumes" {
   size             = each.value.size_gb
   zone             = var.machine.spec.zone
   provisioned_iops = try(each.value.iops, null)
+  labels           = var.tags
 
   depends_on = [google_compute_instance.machine]
 

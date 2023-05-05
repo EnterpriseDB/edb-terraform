@@ -16,10 +16,10 @@ variable "spec" {
   EOT
   type = object({
     # Project Level Tags to be merged with other tags
-    tags = optional(object({
-      cluster_name = optional(string, "gcp-cluster")
-      created_by   = optional(string, "edb-terraform")
-    }), {})
+    tags = optional(map(string), {
+      cluster_name = "GCloud-Cluster-default"
+      created_by   = "EDB-Terraform-GCloud"
+    })
     ssh_key = optional(object({
       public_path  = optional(string)
       private_path = optional(string)
