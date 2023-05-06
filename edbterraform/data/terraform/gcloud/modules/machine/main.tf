@@ -7,9 +7,6 @@ data "google_compute_subnetwork" "selected" {
   name   = var.subnet_name
 }
 
-# TODO: Data source is causes instance to be replaced
-# due to terraform thinking the image has changed
-# Use 'initialize_params.image' in instance and remove/move data source out of module
 data "google_compute_image" "image" {
   name = var.operating_system.name
   family = var.operating_system.family
@@ -47,7 +44,12 @@ resource "google_compute_instance" "machine" {
   }
 
   lifecycle {
-    ignore_changes = [attached_disk, ]
+    ignore_changes = [
+      # VM recreated on re-apply if not ignored
+      boot_disk,
+      # Disks de-tach on re-apply if not ignored
+      attached_disk,
+    ]
   }
 
   metadata = { ssh-keys = "${var.operating_system.ssh_user}:${var.ssh_pub_key}" }
