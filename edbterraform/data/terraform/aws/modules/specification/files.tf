@@ -20,7 +20,7 @@ resource "local_sensitive_file" "default_private" {
 
   filename        = "${abspath(path.root)}/${var.spec.ssh_key.output_name}"
   file_permission = "0600"
-  content         = tls_private_key.default[0].private_key_openssh
+  content         = try(tls_private_key.default[0].private_key_openssh, "")
 }
 
 resource "local_file" "default_public" {
@@ -28,7 +28,7 @@ resource "local_file" "default_public" {
 
   filename        = "${abspath(path.root)}/${var.spec.ssh_key.output_name}.pub"
   file_permission = "0644"
-  content         = tls_private_key.default[0].public_key_openssh
+  content         = try(tls_private_key.default[0].public_key_openssh, "")
 }
 
 resource "local_sensitive_file" "private_key" {

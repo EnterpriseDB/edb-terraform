@@ -20,11 +20,11 @@ output "tags" {
 }
 
 output "private_key" {
-  value = var.spec.ssh_key.private_path != null ? file(var.spec.ssh_key.private_path) : tls_private_key.default[0].private_key_openssh
+  value = var.spec.ssh_key.private_path != null ? file(var.spec.ssh_key.private_path) : try(tls_private_key.default[0].private_key_openssh, "")
 }
 
 output "public_key" {
-  value = var.spec.ssh_key.public_path != null ? file(var.spec.ssh_key.public_path) : tls_private_key.default[0].public_key_openssh
+  value = var.spec.ssh_key.public_path != null ? file(var.spec.ssh_key.public_path) : try(tls_private_key.default[0].public_key_openssh, "")
 }
 
 locals {
@@ -81,6 +81,20 @@ output "region_auroras" {
         # spec project tags
         tags = merge(local.tags, aurora_spec.tags, {
           # aurora module specific tags
+          Name = format("%s-%s-%s", name, var.spec.tags.cluster_name, random_id.apply.id)
+        })
+      })
+    }...
+  }
+}
+
+output "region_biganimals" {
+  value = {
+    for name, biganimal_spec in var.spec.biganimal : biganimal_spec.region => {
+      name = name
+      spec = merge(biganimal_spec, {
+        # spec project tags
+        tags = merge(local.tags, biganimal_spec.tags, {
           Name = format("%s-%s-%s", name, var.spec.tags.cluster_name, random_id.apply.id)
         })
       })

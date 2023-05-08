@@ -130,22 +130,22 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
     # Build jinja template variable
     template_vars = dict(
         output_name = server_output_name,
-        has_region_peering=(len(infra_vars['regions'].keys()) > 1),
+        has_region_peering=(infra_vars.get('regions') and len(infra_vars['regions'].keys()) > 1),
         has_regions=('regions' in infra_vars),
         has_machines=('machines' in infra_vars),
         has_databases=('databases' in infra_vars),
+        has_biganimal=('biganimal' in infra_vars),
         has_kubernetes=('kubernetes' in infra_vars),        
-        regions=infra_vars['regions'].copy(),
-        peers=regions_to_peers(infra_vars['regions']),
+        regions=infra_vars.get('regions',{}).copy(),
+        peers=regions_to_peers(infra_vars.get('regions',{})),
         machine_regions=object_regions('machines', infra_vars),
         database_regions=object_regions('databases', infra_vars),
+        biganimal_regions=object_regions('biganimal', infra_vars),
         kubernetes_regions=object_regions('kubernetes', infra_vars),
 
         # AWS Specific
         has_aurora=('aurora' in infra_vars),
         aurora_regions=object_regions('aurora', infra_vars),
-        has_biganimal=('biganimal' in infra_vars),
-        biganimal_regions=object_regions('biganimal', infra_vars),
 
         # GCloud Specific
         has_alloy=('alloy' in infra_vars),
