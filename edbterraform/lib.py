@@ -144,6 +144,8 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
         # AWS Specific
         has_aurora=('aurora' in infra_vars),
         aurora_regions=object_regions('aurora', infra_vars),
+        has_biganimal=('biganimal' in infra_vars),
+        biganimal_regions=object_regions('biganimal', infra_vars),
 
         # GCloud Specific
         has_alloy=('alloy' in infra_vars),
