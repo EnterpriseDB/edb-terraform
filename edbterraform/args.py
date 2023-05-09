@@ -36,12 +36,12 @@ class ArgumentConfig:
     action: str = None
 
     def __post_init__(self) -> None:
-        # Allow overriding of defaults with environment variables
-        if self.default is not None:
-            self.default = os.getenv(self.default_env_var(), self.default)
-            if self.help:
-                self.help += f'''
-                | Default Environment variable: {self.default_env_var()}'''
+        # Allow overriding of variables with environment variables
+        self.default = os.getenv(self.default_env_var(), self.default)
+        if self.help:
+            self.help += f'''
+            | Default Environment variable: {self.default_env_var()}'''
+
         tempdict = self.__dict__.items()
         # dictionary with non-None values
         self.filtered_dict = {k: v for k, v in tempdict if k != 'names' and v is not None}
@@ -84,18 +84,48 @@ BinPath = ArgumentConfig(
            ''',
 )
 
-ProjectPath = ArgumentConfig(
+ProjectPathDepreciated = ArgumentConfig(
     names = ['project_path',],
     metavar='PROJECT_PATH',
     type=Path,
-    help="Project path. %(default)s",
+    help="Project path. Default: %(default)s",
 )
 
-InfraFile = ArgumentConfig(
+InfraFileDepreciated = ArgumentConfig(
     names = ['infra_file',],
     metavar='INFRA_FILE_YAML',
     type=Path,
-    help="CSP infrastructure (YAML format) file path. %(default)s"
+    help="CSP infrastructure (YAML format) file path. Default: %(default)s"
+)
+
+WorkPath = ArgumentConfig(
+    names = ['--work_path',],
+    metavar='WORK_PATH',
+    dest='work_path',
+    type=Path,
+    default=Path.cwd(),
+    required=False,
+    help="Project path. Default: %(default)s",
+)
+
+InfrastructureFilePath = ArgumentConfig(
+    names = ['--infra_file',],
+    metavar='INFRA_FILE_YAML',
+    dest='infra_file',
+    type=Path,
+    required=True,
+    help="cloud service provider infrastructure file path (YAML format). Default: %(default)s"
+)
+
+ProjectName = ArgumentConfig(
+    names = ['--project_name',],
+    metavar='PROJECT_NAME',
+    dest='project_name',
+    required=True,
+    help='''
+        Creates a directory with PROJECT_NAME for generated files in the WORK_PATH
+        %(default)s
+        '''
 )
 
 CloudServiceProvider = ArgumentConfig(
@@ -122,14 +152,21 @@ Validation = ArgumentConfig(
         '''
 )
 
-
 class Arguments:
 
     # Command, description, and its options
     COMMANDS = OrderedDict({
+        'depreciated': ['Depreciated call for generating terraform files\n', [
+            ProjectPathDepreciated,
+            InfraFileDepreciated,
+            CloudServiceProvider,
+            Validation,
+            BinPath,
+        ]],
         'generate': ['Generate terraform files based on a yaml infrastructure file\n',[
-            ProjectPath,
-            InfraFile,
+            ProjectName,
+            InfrastructureFilePath,
+            WorkPath,
             CloudServiceProvider,
             Validation,
             BinPath,
@@ -191,18 +228,33 @@ class Arguments:
 
         return sys.argv[program_index]
 
+    def get_env(self, key, default=None):
+        '''
+        Get environment variables which are available after parse_args() is called
+        '''
+        return getattr(self.env, key, default)
+
     def process_args(self):
+        if self.command == 'depreciated':
+            outputs = generate_terraform(
+                self.get_env('infra_file'),
+                self.get_env('project_path'),
+                self.get_env('csp'),
+                self.get_env('run_validation'),
+                self.get_env('bin_path'),
+            )
+
         if self.command == 'generate':
             outputs = generate_terraform(
-                self.env.infra_file,
-                self.env.project_path,
-                self.env.csp,
-                self.env.run_validation,
-                self.env.bin_path,
+                self.get_env('infra_file'),
+                self.get_env('work_path') / self.get_env('project_name'),
+                self.get_env('csp'),
+                self.get_env('run_validation'),
+                self.get_env('bin_path'),
             )
             return outputs
 
         if self.command == 'setup':
-            terraform = TerraformCLI(self.env.bin_path)
+            terraform = TerraformCLI(self.get_env('bin_path'))
             terraform.install()
             return terraform.bin_path
