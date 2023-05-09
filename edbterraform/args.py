@@ -29,7 +29,7 @@ class ArgumentConfig:
     metavar: str = None
     dest: str = None
     type: type = None
-    help: str = None
+    help: str = ''
     default: str = None
     choices: list = None
     required: bool = None
@@ -38,9 +38,9 @@ class ArgumentConfig:
     def __post_init__(self) -> None:
         # Allow overriding of variables with environment variables
         self.default = os.getenv(self.default_env_var(), self.default)
-        if self.help:
-            self.help += f'''
-            | Default Environment variable: {self.default_env_var()}'''
+        self.help += f'''
+        | Default Environment variable: {self.default_env_var()}
+        '''
 
         tempdict = self.__dict__.items()
         # dictionary with non-None values
