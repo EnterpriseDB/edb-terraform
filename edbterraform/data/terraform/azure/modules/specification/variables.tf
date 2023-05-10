@@ -134,6 +134,6 @@ EOT
 }
 
 locals {
-  cluster_name = can(var.spec.tags.cluster_name) && length(var.spec.tags.cluster_name) > 0 ? var.spec.tags.cluster_name : "Azure-Cluster-default"
-  created_by = can(var.spec.tags.created_by) && length(var.spec.tags.created_by) > 0 ? var.spec.tags.created_by : "EDB-Terraform-Azure"
+  cluster_name = can(var.spec.tags.cluster_name) ? var.spec.tags.cluster_name : "Azure-Cluster-default"
+  created_by = can(var.spec.tags.created_by) ? var.spec.tags.created_by : "EDB-Terraform-Azure"
 }
