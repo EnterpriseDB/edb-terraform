@@ -7,7 +7,7 @@ module "vpc_peering_{{ requester_ }}_{{ accepter_ }}" {
   vpc_id      = module.vpc_{{ requester_ }}.vpc_id
   peer_vpc_id = module.vpc_{{ accepter_ }}.vpc_id
   peer_region = "{{ accepter }}"
-  tags        = module.spec.tags
+  tags        = module.spec.base.tags
 
   depends_on = [module.vpc_{{ requester_ }}, module.vpc_{{ accepter_ }}]
 
@@ -20,7 +20,7 @@ module "vpc_peering_accepter_{{ requester_}}_{{ accepter_ }}" {
   source = "./modules/vpc_peering_accepter"
 
   connection_id = module.vpc_peering_{{ requester_ }}_{{ accepter_ }}.id
-  tags          = module.spec.tags
+  tags          = module.spec.base.tags
 
   depends_on = [module.vpc_peering_{{ requester_ }}_{{ accepter_ }}]
 
