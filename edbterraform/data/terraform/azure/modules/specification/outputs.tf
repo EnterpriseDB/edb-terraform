@@ -1,13 +1,17 @@
-output "base" {
-  value = var.spec
-}
-
 locals {
   tags = merge(var.spec.tags, {
     # add ids for tracking
     terraform_hex   = random_id.apply.hex
     terraform_id    = random_id.apply.id
     terraform_time  = time_static.first_created.id
+    created_by      = local.created_by
+    cluster_name    = local.cluster_name
+  })
+}
+
+output "base" {
+  value = merge(var.spec, {
+    "tags" = local.tags
   })
 }
 
