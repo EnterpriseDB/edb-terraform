@@ -4,7 +4,7 @@ module "vpc_{{ region_ }}"{
   name          = "${var.vpc_tag}-{{ region }}-${module.spec.hex_id}"
   cidr_blocks = [ lookup(lookup(module.spec.base.regions, "{{ region }}"), "cidr_block") ]
   region = "{{ region }}"
-  tags          = module.spec.tags
+  tags          = module.spec.base.tags
 
   providers = {
     azurerm = azurerm.{{ region_ }}
@@ -45,7 +45,7 @@ module "security_{{ region_ }}" {
   ports             = try(module.spec.region_ports["{{ region }}"], [])
   ingress_cidrs     = module.spec.region_cidrblocks
   egress_cidrs      = module.spec.region_cidrblocks
-  tags              = module.spec.tags
+  tags              = module.spec.base.tags
 
   depends_on = [module.network_{{ region_ }}]
 

@@ -129,11 +129,9 @@ variable "spec" {
     })), {})
   })
 
-  validation {
-    condition = can(var.spec.tags.cluster_name) && can(var.spec.tags.created_by)
-    error_message = <<-EOT
-    cluster_name and created_by need to be defined under tags
-    Tags: ${jsonencode(var.spec.tags)}
-    EOT
-  }
+}
+
+locals {
+  cluster_name = can(var.spec.tags.cluster_name) ? var.spec.tags.cluster_name : "AWS-Cluster-default"
+  created_by = can(var.spec.tags.created_by) ? var.spec.tags.created_by : "EDB-Terraform-AWS"
 }

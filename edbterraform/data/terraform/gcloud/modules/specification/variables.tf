@@ -142,3 +142,8 @@ EOT
     )
   }
 }
+
+locals {
+  cluster_name = can(var.spec.tags.cluster_name) ? var.spec.tags.cluster_name : "GCloud-Cluster-default"
+  created_by = can(var.spec.tags.created_by) ? var.spec.tags.created_by : "EDB-Terraform-GCloud"
+}
