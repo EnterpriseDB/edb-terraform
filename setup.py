@@ -19,6 +19,13 @@ def get_long_description():
     with open(os.path.join(cur_dir, "README.md")) as f:
         return f.read()
 
+def get_requirements():
+    cur_dir = os.path.dirname(__file__)
+    requirements_path = os.path.join(cur_dir, "requirements.txt")
+
+    with open(requirements_path) as f:
+        return f.read().splitlines()
+
 setup(
     name="edb-terraform",
     version=get_version(),
@@ -49,7 +56,7 @@ setup(
     ],
     keywords="terraform cloud yaml edb cli aws rds aurora azure aks gcloud gke kubernetes k8s",
     python_requires=">=3.6",
-    install_requires=["PyYAML>=5.1", "cryptography", "jinja2"],
+    install_requires=get_requirements(),
     extras_require={},
     data_files=[],
     package_data={
