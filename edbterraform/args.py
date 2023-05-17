@@ -5,7 +5,7 @@ from pathlib import Path
 import textwrap
 from dataclasses import dataclass, field
 from collections import OrderedDict
-from typing import NoReturn
+from typing import List
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
@@ -177,7 +177,7 @@ class Arguments:
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
 
-    def __init__(self, args:list[str]=sys.argv, parser=argparse.ArgumentParser()):
+    def __init__(self, args:List[str]=sys.argv, parser=argparse.ArgumentParser()):
         self.parser = parser
         self.subparsers = self.parser.add_subparsers()
         self.command = self.override_sys_argv(args)
@@ -195,7 +195,7 @@ class Arguments:
 
         self.env = self.parser.parse_args()
 
-    def override_sys_argv(self, args: list[str]):
+    def override_sys_argv(self, args: List[str]):
         '''
         Override sys.argv and return the default command
         This is needed for backwards compatability,
