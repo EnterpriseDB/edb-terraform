@@ -14,3 +14,21 @@ provider "azurerm" {
 }
 
 {% endfor %}
+
+{% if has_biganimal %}
+provider "biganimal" {
+  # BA_BEARER_TOKEN environment variable
+  # BA_API_URI environment variable, optional
+  alias = "default"
+}
+
+terraform {
+  required_providers {
+    biganimal = {
+      source  = "EnterpriseDB/biganimal"
+      version = ">= 0.4.1"
+    }
+  }
+}
+
+{% endif %}

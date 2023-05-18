@@ -1,0 +1,33 @@
+aws:
+  tags:
+    cluster_name: Demo-Infra
+    created_by: edb-terraform
+  regions:
+    us-east-1:
+      cidr_block: 10.2.0.0/16
+  biganimal:
+    mydb2:
+      project:
+        id: prj_ziJPLQw3XxpR7nxV
+      region: us-east-1
+      type: ha
+      node_count: 3
+      engine: epas
+      engine_version: 14
+      instance_type: c5.large
+      password: "ndslniv&03ind**vDdjfnjv"
+      volume:
+        type: gp3
+        properties: gp3
+        size_gb: 4
+      settings:
+        - name: max_connections
+          value: 300
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
+      allowed_ip_ranges:
+        - cidr_block: 10.0.0.0/24
+        - cidr_block: 127.0.0.1/32
+          description: localhost

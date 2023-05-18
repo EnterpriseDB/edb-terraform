@@ -7,6 +7,7 @@ describing the target cloud infrastructure.
 
 | Provider | Component                | Supported        |
 |----------|--------------------------|------------------|
+| EDB      | BigAnimal - AWS          |:white_check_mark:|
 | AWS      | EC2 - VM                 |:white_check_mark:|
 | AWS      | EC2 - additional EBS vol.|:white_check_mark:|
 | AWS      | multi-region VPC peering |:white_check_mark:|
@@ -18,6 +19,7 @@ describing the target cloud infrastructure.
 | GCloud   | CloudSQL                 |:white_check_mark:|
 | GCloud   | AlloyDB                  |:white_check_mark:|
 | GCloud   | Google Kubernetes Engine |:white_check_mark:|
+| EDB      | BigAnimal - Azure        |:white_check_mark:|
 | Azure    | VM                       |:white_check_mark:|
 | Azure    | Database - Flexible      |:white_check_mark:|
 | Azure    | CosmoDB                  |       :x:        |
@@ -30,6 +32,7 @@ The following components must be installed on the system:
 - AWS CLI
 - GCloud CLI
 - Azure CLI
+- BigAnimal token (CLI currently optional)
 - Terraform >= 1.3.6
 
 ## Infrastructure file examples
@@ -46,6 +49,39 @@ can be found inside of the [infrastructure-examples directory](./infrastructure-
 $ sudo apt install python3 python3-pip -y
 $ sudo pip3 install pip --upgrade
 ```
+
+#### BigAnimal Token by API
+[Getting an API token](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/terraform_provider/#getting-an-api-token)
+
+- `access_token` - expires in 24 hours
+- `refresh_token`
+  - expires
+    - 30 days
+    - when refreshed
+    - expired refresh_tokens reused
+  - changes after every refresh with a new access_token
+```console
+wget https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh
+sh get-token.sh
+# Visit the biganimal link to activate the device
+# ex. Please login to https://auth.biganimal.com/activate?user_code=JWPL-RCXL with your BigAnimal account
+#     Have you finished the login successfully. (y/n)
+# Save the refresh token, if needed
+export BA_BEARER_TOKEN=<access_token>
+```
+
+Refresh the token
+```console
+sh get-token.sh --refresh <refresh_token>
+# Save the new refresh token, if needed again
+export BA_BEARER_TOKEN=<access_token>
+```
+
+#### BigAnimal CLI
+[Using the BigAnimal CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/)
+
+The CLI currently requires users to visit a link during when using `biganimal reset-credential` .
+The token directly from the API is preferred to avoid needing to revisit the link. 
 
 #### AWS CLI
 
