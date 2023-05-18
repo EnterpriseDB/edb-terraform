@@ -23,6 +23,10 @@
 {%     include "database.tf.j2" %}
 {%   endif %}
 
+{%   if has_biganimal %}
+{%     include "biganimal.tf.j2" %}
+{%   endif %}
+
 {%   if has_kubernetes %}
 {%     include "kubernetes.tf.j2" %}
 {%   endif %}
@@ -49,6 +53,11 @@ servers:
     'active': has_databases,
     'regions': database_regions,
     'module_base': "module.database_",
+  },
+  'biganimal': {
+    'active': has_biganimal,
+    'regions': biganimal_regions,
+    'module_base': "module.biganimal_",
   },
   'kubernetes': {
     'active': has_kubernetes,

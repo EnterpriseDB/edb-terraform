@@ -93,6 +93,34 @@ variable "spec" {
       tags = optional(map(string), {})
       public_access = optional(bool, false)
     })), {})
+    biganimal = optional(map(object({
+      type           = string
+      project        = object({
+        id = optional(string)
+      })
+      region         = string
+      node_count     = number
+      engine         = string
+      engine_version = number
+      instance_type  = string
+      volume = object({
+        size_gb   = number
+        type      = string
+        properties = string
+        iops      = optional(number)
+        throughput = optional(number)
+      })
+      password       = string
+      settings = optional(list(object({
+        name  = string
+        value = string
+      })), [])
+      allowed_ip_ranges = optional(list(object({
+        cidr_block = string
+        description = optional(string, "default description")
+      })))
+      tags = optional(map(string), {})
+    })), {})
     kubernetes = optional(map(object({
       region                  = string
       ssh_user                = optional(string)
