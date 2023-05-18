@@ -70,6 +70,8 @@ locals {
   # resource expects a cloud provider prefix infront of its instance type
   instance_type = !startswith("azure:", var.instance_type) ? format("azure:%s",var.instance_type) : var.instance_type
 
+  volume_size = "${var.volume.size_gb} Gi"
+
   cloud_provider = "aws"
   cluster_name = format("%s-%s", var.name, var.name_id)
 }

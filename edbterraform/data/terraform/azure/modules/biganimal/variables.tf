@@ -72,6 +72,7 @@ locals {
 
   # resource expects a cloud provider prefix infront of volume type when using premiumstorage
   volume_type = !startswith("azure", var.volume.type) && endswith("premiumstorage", var.volume.type) ? format("azure%s", var.volume.type) : var.volume.type
+  volume_size = "${var.volume.size_gb} Gi"
 
   cloud_provider = "azure"
   cluster_name = format("%s-%s", var.name, var.name_id)

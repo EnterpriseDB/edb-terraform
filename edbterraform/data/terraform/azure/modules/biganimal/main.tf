@@ -16,7 +16,7 @@ resource "biganimal_cluster" "instance" {
     storage {
         volume_type = local.volume_type
         volume_properties = var.volume.properties
-        size = var.volume.size_gb
+        size = local.volume_size
         # optional
         iops = var.volume.iops
         throughput = var.volume.throughput
