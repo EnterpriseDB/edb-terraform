@@ -1,3 +1,5 @@
 cryptography
 dataclasses==0.8;python_version~="3.6.0"
 PyYaml>=5.1
+jinja2
+
