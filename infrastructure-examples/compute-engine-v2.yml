@@ -36,7 +36,7 @@ gcloud:
         type: pd-standard
         size_gb: 50
       tags:
-        type: dbt-driver
+        type: dbt2-driver
     pg1:
       image_name: rocky
       region: us-west4
@@ -56,3 +56,5 @@ gcloud:
           iops: null
       tags:
         type: postgres
+  templates:
+    - ./edb-terraform/infrastructure-examples/v2_inventory.yml.tftpl

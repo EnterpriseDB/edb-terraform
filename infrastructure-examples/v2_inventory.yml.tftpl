@@ -1,0 +1,23 @@
+---
+all:
+  children:
+    benchmarkers:
+      hosts:
+%{ for name, values in machines ~}
+%{   if values.tags.type == "dbt2-driver" ~}
+        ${ name }:
+          ansible_host: ${ values.public_ip }
+          private_ip: ${ values.private_ip }
+          ansible_user: ${ values.operating_system.ssh_user }
+%{   endif ~}
+%{ endfor ~}
+    targets:
+      hosts:
+%{ for name, values in machines ~}
+%{   if values.tags.type == "postgres" ~}
+        ${ name }:
+          ansible_host: ${ values.public_ip }
+          private_ip: ${ values.private_ip }
+          ansible_user: ${ values.operating_system.ssh_user }
+%{   endif ~}
+%{ endfor ~}
