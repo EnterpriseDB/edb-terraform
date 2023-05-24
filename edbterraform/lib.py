@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from jinja2 import Environment, FileSystemLoader
 import textwrap
+from typing import List
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -73,10 +74,38 @@ def save_terraform_vars(dir, filename, vars):
     dest = dir / filename
     try:
         with open(dest, 'w') as f:
-            f.write(json.dumps(vars, indent=2, sort_keys=True))
+            content = json.dumps(vars, indent=2, sort_keys=True)
+            f.write(content)
     except Exception as e:
-        sys.exit("ERROR: could not write %s (%s)" % (dest, e))
+        logger.error("ERROR: could not write %s (%s)" % (dest, e))
+        sys.exit()
 
+def save_user_templates(project_path: Path, template_files: List[str|Path]) -> List[str]:
+    '''
+    Save any user templates into a template directory
+    for reuse during terraform execution and portability of directory
+    
+    Return a list of template/<basename>
+    '''
+    new_files = []
+    directory = "templates"
+    basepath = project_path / directory
+    for file in template_files:
+        if not os.path.exists(file):
+            logger.error("ERROR: templates %s does not exist" % file)
+            sys.exit()
+        if not os.path.exists(basepath):
+            logger.info(f'Creating template directory: {basepath}')
+            basepath.mkdir(parents=True, exist_ok=True)
+        try:
+            full_path = basepath / os.path.basename(file)
+            logger.info(f'Copying file {file} into {full_path}')
+            final_path = shutil.copy(file, full_path)
+            new_files.append(f'{directory}/{os.path.basename(final_path)}')
+        except Exception as e:
+            logger.error("ERROR: cannot create template %s (%s)" % (file, e))
+            sys.exit()
+    return new_files
 
 def regions_to_peers(regions):
     # Build a list of peer regions, based on a given list of regions.
@@ -184,6 +213,12 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
 
     # Duplicate terraform code into target project directory
     create_project_dir(project_path, csp)
+
+    # Allow for user supplied templates
+    # Terraform does not allow us to copy a template and then reference it within the same run when using templatefile()
+    # To get past this, we will need to copy over all the user passed templates into the project directory
+    # and update the template variable passed in by the user
+    infra_vars[csp]["templates"] = save_user_templates(project_path, infra_vars.get(csp,{}).get('templates',[]))
 
     # Transform variables extracted from the infrastructure file into
     # terraform and templates variables.
