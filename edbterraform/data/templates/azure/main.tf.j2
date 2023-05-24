@@ -92,10 +92,25 @@ output "{{type}}" {
 }
 {% endfor %}
 
+locals {
+  # outputs set with the help of jinja2 in edb-terraform
+  outputs = {
+{% for type, attributes in boxes.items() if attributes["active"] %}
+    "{{type}}" = merge(
+{%   for region in attributes["regions"] -%}
+{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
+    tomap([for key, values in {{module}}[*]: values]...),
+{%   endfor %}
+    )
+{% endfor %}
+  }
+}
+
 output "{{output_name}}" {
   description = <<-EOT
+  toplevel default made through jinja2 templating with edb-terraform: set to servers
   Use 'terraform output -json' for the following output and other info such as types:
-  servers:
+  {{output_name}}:
     value:
       machines:
         machine_name:
@@ -112,20 +127,24 @@ output "{{output_name}}" {
     database_name:
       instance_type: <instance_type>
   EOT
-  value = {
-{% for type, attributes in boxes.items() if attributes["active"] %}
-    "{{type}}" = merge(
-{%   for region in attributes["regions"] -%}
-{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
-    tomap([for key, values in {{module}}[*]: values]...),
-{%   endfor %}
-    )
-{% endfor %}
-  }
+  value = local.outputs
   sensitive = true
 }
 
 output "spec" {
   value = module.spec[*]
   sensitive = true
+}
+
+resource "local_file" "user_templates" {
+  /*
+  User custom templates based on local.outputs and .tftpl stripped
+
+    output_name default made through jinja2 templating with edb-terraform: 'servers'
+    terraform output -json <output_name>
+  */
+  for_each   = toset(module.spec.base.templates)
+  content    = templatefile(each.value, local.outputs)
+  filename   = "${abspath(path.root)}/${trimsuffix(basename(each.value), ".tftpl")}"
+  file_permission = "0600"
 }

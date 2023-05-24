@@ -155,8 +155,8 @@ variable "spec" {
       instance_type = string
       tags          = optional(map(string), {})
     })), {})
+    templates = optional(list(string), [])
   })
-
 }
 
 locals {
