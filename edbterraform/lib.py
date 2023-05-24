@@ -41,8 +41,8 @@ def tpl(template_name, dest, csp, vars={}):
             f.write(content)
 
     except Exception as e:
-        sys.exit("ERROR: could not render template %s (%s)"
-                 % (template_name, e))
+        logger.error("ERROR: could not render template %s (%s)" % (template_name, e))
+        sys.exit(1)
 
 def create_project_dir(dir, csp):
     # Creates a new terraform project (directory) and copy terraform modules
@@ -56,7 +56,8 @@ def create_project_dir(dir, csp):
         logger.info(f'Creating directory: {dir}')
         shutil.copytree(script_dir / 'data' / 'terraform' / csp, dir)
     except Exception as e:
-        sys.exit("ERROR: cannot create project directory %s (%s)" % (dir, e))
+        logger.error("ERROR: cannot create project directory %s (%s)" % (dir, e))
+        sys.exit(1)
 
 def destroy_project_dir(dir):
     if not os.path.exists(dir):
@@ -78,7 +79,7 @@ def save_terraform_vars(dir, filename, vars):
             f.write(content)
     except Exception as e:
         logger.error("ERROR: could not write %s (%s)" % (dest, e))
-        sys.exit()
+        sys.exit(1)
 
 def save_user_templates(project_path: Path, template_files: List[str|Path]) -> List[str]:
     '''
@@ -93,7 +94,7 @@ def save_user_templates(project_path: Path, template_files: List[str|Path]) -> L
     for file in template_files:
         if not os.path.exists(file):
             logger.error("ERROR: templates %s does not exist" % file)
-            sys.exit()
+            sys.exit(1)
         if not os.path.exists(basepath):
             logger.info(f'Creating template directory: {basepath}')
             basepath.mkdir(parents=True, exist_ok=True)
@@ -104,7 +105,7 @@ def save_user_templates(project_path: Path, template_files: List[str|Path]) -> L
             new_files.append(f'{directory}/{os.path.basename(final_path)}')
         except Exception as e:
             logger.error("ERROR: cannot create template %s (%s)" % (file, e))
-            sys.exit()
+            sys.exit(1)
     return new_files
 
 def regions_to_peers(regions):
