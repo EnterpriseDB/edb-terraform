@@ -10,7 +10,7 @@ import json
 import textwrap
 
 from edbterraform import __project_name__
-from edbterraform.Logger import logger
+from edbterraform.utils.logs import logger
 
 Version = namedtuple('Version', ['major', 'minor', 'patch'])
 

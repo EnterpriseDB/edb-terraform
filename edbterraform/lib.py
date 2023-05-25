@@ -16,8 +16,8 @@ from cryptography.hazmat.backends import default_backend
 
 from edbterraform.utils.dict import change_keys
 from edbterraform.utils.files import load_yaml_file
+from edbterraform.utils.logs import logger
 from edbterraform.CLI import TerraformCLI
-from edbterraform.Logger import logger
 
 def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
