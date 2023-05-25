@@ -3,7 +3,7 @@ all:
   children:
     benchmarkers:
       hosts:
-%{ for name, values in machines ~}
+%{ for name, values in servers.machines ~}
 %{   if values.tags.type == "dbt2-driver" ~}
         ${ name }:
           ansible_host: ${ values.public_ip }
@@ -13,7 +13,7 @@ all:
 %{ endfor ~}
     targets:
       hosts:
-%{ for name, values in machines ~}
+%{ for name, values in servers.machines ~}
 %{   if values.tags.type == "postgres" ~}
         ${ name }:
           ansible_host: ${ values.public_ip }

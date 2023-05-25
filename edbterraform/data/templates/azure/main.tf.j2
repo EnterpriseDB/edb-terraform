@@ -71,6 +71,7 @@ locals {
     )
 {% endfor %}
   }
+  servers = { "servers" = local.outputs }
 }
 
 resource "local_file" "servers_yml" {
@@ -132,7 +133,7 @@ resource "local_file" "user_templates" {
     terraform output -json <output_name>
   */
   for_each   = toset(module.spec.base.templates)
-  content    = templatefile(each.value, local.outputs)
+  content    = templatefile(each.value, local.servers)
   filename   = "${abspath(path.root)}/${trimsuffix(basename(each.value), ".tftpl")}"
   file_permission = "0600"
 }
