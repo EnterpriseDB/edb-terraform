@@ -91,21 +91,25 @@ def save_user_templates(project_path: Path, template_files: List[str|Path]) -> L
     new_files = []
     directory = "templates"
     basepath = project_path / directory
-    for file in template_files:
-        if not os.path.exists(file):
-            logger.error("ERROR: templates %s does not exist" % file)
-            sys.exit(1)
-        if not os.path.exists(basepath):
-            logger.info(f'Creating template directory: {basepath}')
-            basepath.mkdir(parents=True, exist_ok=True)
-        try:
+    try:
+        for file in template_files:
+
+            if not os.path.exists(file):
+                raise Exception("templates %s does not exist" % file)
+
+            if not os.path.exists(basepath):
+                logger.info(f'Creating template directory: {basepath}')
+                basepath.mkdir(parents=True, exist_ok=True)
+
             full_path = basepath / os.path.basename(file)
             logger.info(f'Copying file {file} into {full_path}')
             final_path = shutil.copy(file, full_path)
             new_files.append(f'{directory}/{os.path.basename(final_path)}')
-        except Exception as e:
-            logger.error("ERROR: cannot create template %s (%s)" % (file, e))
-            sys.exit(1)
+    except Exception as e:
+        logger.error("Cannot create template %s (%s)" % (file, e))
+        logger.error("Current working directory: %s" % (Path.cwd()))
+        logger.error("List of templates: %s" % (template_files))
+        sys.exit(1)
     return new_files
 
 def regions_to_peers(regions):
