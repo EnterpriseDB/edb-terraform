@@ -28,12 +28,6 @@
 {%   include "region_peering.tf.j2" %}
 {% endif %}
 
-resource "local_file" "servers_yml" {
-  filename        = "${abspath(path.root)}/servers.yml"
-  file_permission = "0600"
-  content         = <<-EOT
----
-servers:
 {% set boxes = {
   'machines': { 
     'active': has_machines,
@@ -56,33 +50,6 @@ servers:
     'module_base': "module.kubernetes_",
   }  
 } %}
-{% for type, attributes in boxes.items() if attributes["active"] %}
-  {{type}}:
-{%   for region in attributes["regions"] -%}
-{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
-%{ for key, value in {{ module }} ~}
-    ${key}:
-%{   for name, item in value ~}
-      ${name}: ${try(jsonencode(item), "Error, unsupported type",)}
-%{   endfor ~}
-%{ endfor ~}
-{%   endfor %}
-{% endfor %}
-    EOT
-}
-
-{% for type, attributes in boxes.items() if attributes["active"] %}
-output "{{type}}" {
-  value = [
-{%   for region in attributes["regions"] -%}
-{%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
-    {{ module }}[*],
-{%   endfor %}
-  ]
-  sensitive = true
-}
-{% endfor %}
-
 locals {
   # outputs set with the help of jinja2 in edb-terraform
   outputs = {
@@ -95,6 +62,28 @@ locals {
     )
 {% endfor %}
   }
+}
+
+resource "local_file" "servers_yml" {
+  /*
+  Manually create the yaml
+  TODO: Update to yamlencode function once stable
+  */
+  filename        = "${abspath(path.root)}/servers.yml"
+  file_permission = "0600"
+  content         = <<-EOT
+---
+servers:
+%{ for type, instances in local.outputs ~}
+    ${type}:
+%{   for name, attributes in instances ~}
+      ${name}:
+%{     for key, values in attributes ~}
+        ${key}: ${jsonencode(values)}
+%{     endfor ~}
+%{   endfor ~}
+%{ endfor ~}
+    EOT
 }
 
 output "{{output_name}}" {
@@ -129,8 +118,7 @@ output "spec" {
 
 resource "local_file" "user_templates" {
   /*
-  User custom templates based on local.outputs and .tftpl stripped
-
+  User custom templates with local.outputs passed in for generation
     output_name default made through jinja2 templating with edb-terraform: 'servers'
     terraform output -json <output_name>
   */
