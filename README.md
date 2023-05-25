@@ -182,27 +182,37 @@ resources creation:
 
 Once cloud resources provisioning is completed, machines public and private IPs
 are stored in the `servers.yml` file, located into the project's directory.
+These outputs can be used with a list of templates to generate files for other programs such as ansible.
+See example here which uses the below outputs. [inventory.yml](./infrastructure-examples/v2_inventory.yml.tftpl)
 
 Example:
 
 ```yaml
 ---
 servers:
-  barman1:
-    type: barman
-    region: us-east-1
-    zone: us-east-1b
-    public_ip: 54.166.46.2
-    private_ip: 10.0.0.103
-    # Default provided DNS only supported by AWS
-    public_dns: ec2-54-166-46-2.compute-1.amazonaws.com
-  pg1:
-    type: postgres
-    region: us-east-1
-    zone: us-east-1b
-    public_ip: 3.80.202.134
-    private_ip: 10.0.0.148
-    public_dns: ec2-3-80-202-134.compute-1.amazonaws.com
+  machines:
+    dbt2-driver:
+      additional_volumes: []
+      instance_type: "c5.4xlarge"
+      operating_system: {"name":"debian-10-amd64","owner":"136693071363","ssh_user":"admin"}
+      private_ip: "10.2.20.38"
+      public_dns: "ec2-54-197-78-139.compute-1.amazonaws.com"
+      public_ip: "54.197.78.139"
+      region: "us-east-1"
+      tags: {"Name":"dbt2-driver-Demo-Infra-d8d0a932","cluster_name":"Demo-Infra","created_by":"edb-terraform","terraform_hex":"d8d0a932","terraform_id":"2NCpMg","terraform_time":"2023-05-24T21:09:11Z","type":"dbt2-driver"}
+      type: null
+      zone: "us-east-1b"
+    pg1:
+      additional_volumes: [{"encrypted":false,"iops":5000,"mount_point":"/opt/pg_data","size_gb":20,"type":"io2"},{"encrypted":false,"iops":5000,"mount_point":"/opt/pg_wal","size_gb":20,"type":"io2"}]
+      instance_type: "c5.4xlarge"
+      operating_system: {"name":"Rocky-8-ec2-8.6-20220515.0.x86_64","owner":"679593333241","ssh_user":"rocky"}
+      private_ip: "10.2.30.197"
+      public_dns: "ec2-3-89-238-24.compute-1.amazonaws.com"
+      public_ip: "3.89.238.24"
+      region: "us-east-1"
+      tags: {"Name":"pg1-Demo-Infra-d8d0a932","cluster_name":"Demo-Infra","created_by":"edb-terraform","terraform_hex":"d8d0a932","terraform_id":"2NCpMg","terraform_time":"2023-05-24T21:09:11Z","type":"postgres"}
+      type: null
+      zone: "us-east-1b"
 [...]
 ```
 

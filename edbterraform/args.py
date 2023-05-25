@@ -6,11 +6,12 @@ import textwrap
 from dataclasses import dataclass, field
 from collections import OrderedDict
 from typing import List
+from datetime import datetime
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
 from edbterraform import __project_name__
-from edbterraform.Logger import logger
+from edbterraform.utils import logs
 
 ENVIRONMENT_PREFIX = 'ET_' # Appended to allow overrides of defaults
 
@@ -152,6 +153,47 @@ Validation = ArgumentConfig(
         '''
 )
 
+LogLevel = ArgumentConfig(
+    names = ['--log_level',],
+    dest='log_level',
+    required=False,
+    default="INFO",
+    help='''
+        Default: %(default)s
+        '''
+)
+
+LogFile = ArgumentConfig(
+    names = ['--log_file',],
+    dest='log_file',
+    required=False,
+    default=datetime.now().strftime('%Y-%m-%d'),
+    help='''
+        Default: %(default)s
+        '''
+)
+
+LogDirectory = ArgumentConfig(
+    names = ['--log_directory',],
+    dest='log_directory',
+    required=False,
+    default=f'{Path.home()}/.{__project_name__}/logs',
+    help='''
+        Default: %(default)s
+        '''
+)
+
+LogStdout = ArgumentConfig(
+    names = ['--log_stdout',],
+    dest='log_stdout',
+    action='store_true',
+    required=False,
+    default=True,
+    help='''
+        Default: %(default)s
+        '''
+)
+
 class Arguments:
 
     # Command, description, and its options
@@ -162,6 +204,10 @@ class Arguments:
             CloudServiceProvider,
             Validation,
             BinPath,
+            LogLevel,
+            LogFile,
+            LogDirectory,
+            LogStdout,
         ]],
         'generate': ['Generate terraform files based on a yaml infrastructure file\n',[
             ProjectName,
@@ -170,9 +216,17 @@ class Arguments:
             CloudServiceProvider,
             Validation,
             BinPath,
+            LogLevel,
+            LogFile,
+            LogDirectory,
+            LogStdout,
         ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
+            LogLevel,
+            LogFile,
+            LogDirectory,
+            LogStdout,
         ]],
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
@@ -235,6 +289,12 @@ class Arguments:
         return getattr(self.env, key, default)
 
     def process_args(self):
+        logs.setup_logs(
+            level=self.get_env('log_level'),
+            file_name=self.get_env('log_file'),
+            directory=self.get_env('log_directory'),
+            stdout=self.get_env('log_stdout'),
+        )
         if self.command == 'depreciated':
             outputs = generate_terraform(
                 self.get_env('infra_file'),
