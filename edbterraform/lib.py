@@ -81,7 +81,7 @@ def save_terraform_vars(dir, filename, vars):
         logger.error("ERROR: could not write %s (%s)" % (dest, e))
         sys.exit(1)
 
-def save_user_templates(project_path: Path, template_files: List[str|Path]) -> List[str]:
+def save_user_templates(project_path: Path, template_files: List[str]) -> List[str]:
     '''
     Save any user templates into a template directory
     for reuse during terraform execution and portability of directory
