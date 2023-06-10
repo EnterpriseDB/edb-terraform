@@ -27,7 +27,7 @@ locals {
   port_rules_descriptions = {
     for port in var.ports:
       join("_", formatlist("%#v", [port.protocol, port.port, port.type])) 
-      => coalesce(port.description, "")...
+      => coalesce(port.description, "default")...
     }
   port_rules_mapping = {
     for port in var.ports:
