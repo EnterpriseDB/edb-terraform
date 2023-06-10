@@ -74,7 +74,7 @@ class ArgumentConfig:
         return self.filtered_dict.get(key, None)
 
 BinPath = ArgumentConfig(
-    names = ['--bin_path'],
+    names = ['--bin-path'],
     dest  = 'bin_path',
     default = TerraformCLI.DEFAULT_PATH,
     required = False,
@@ -86,7 +86,7 @@ BinPath = ArgumentConfig(
 )
 
 ProjectPathDepreciated = ArgumentConfig(
-    names = ['project_path',],
+    names = ['project-path',],
     metavar='PROJECT_PATH',
     type=Path,
     help="Project path. Default: %(default)s",
@@ -100,7 +100,7 @@ InfraFileDepreciated = ArgumentConfig(
 )
 
 WorkPath = ArgumentConfig(
-    names = ['--work_path',],
+    names = ['--work-path',],
     metavar='WORK_PATH',
     dest='work_path',
     type=Path,
@@ -110,7 +110,7 @@ WorkPath = ArgumentConfig(
 )
 
 InfrastructureFilePath = ArgumentConfig(
-    names = ['--infra_file',],
+    names = ['--infra-file',],
     metavar='INFRA_FILE_YAML',
     dest='infra_file',
     type=Path,
@@ -119,7 +119,7 @@ InfrastructureFilePath = ArgumentConfig(
 )
 
 ProjectName = ArgumentConfig(
-    names = ['--project_name',],
+    names = ['--project-name',],
     metavar='PROJECT_NAME',
     dest='project_name',
     required=True,
@@ -154,7 +154,7 @@ Validation = ArgumentConfig(
 )
 
 LogLevel = ArgumentConfig(
-    names = ['--log_level',],
+    names = ['--log-level',],
     dest='log_level',
     required=False,
     default="INFO",
@@ -164,7 +164,7 @@ LogLevel = ArgumentConfig(
 )
 
 LogFile = ArgumentConfig(
-    names = ['--log_file',],
+    names = ['--log-file',],
     dest='log_file',
     required=False,
     default=datetime.now().strftime('%Y-%m-%d'),
@@ -174,7 +174,7 @@ LogFile = ArgumentConfig(
 )
 
 LogDirectory = ArgumentConfig(
-    names = ['--log_directory',],
+    names = ['--log-directory',],
     dest='log_directory',
     required=False,
     default=f'{Path.home()}/.{__project_name__}/logs',
@@ -184,7 +184,7 @@ LogDirectory = ArgumentConfig(
 )
 
 LogStdout = ArgumentConfig(
-    names = ['--log_stdout',],
+    names = ['--log-stdout',],
     dest='log_stdout',
     action='store_true',
     required=False,
