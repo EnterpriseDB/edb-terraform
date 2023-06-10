@@ -10,5 +10,8 @@ output "host" {
   description = "GKE Cluster Host"
 }
 output "tags" {
+  value = var.tags
+}
+output "labels" {
   value = google_container_cluster.primary.resource_labels
 }

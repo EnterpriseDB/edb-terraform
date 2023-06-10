@@ -1,17 +1,11 @@
 locals {
   tags = merge(var.spec.tags, {
     # add ids for tracking
-    # gcloud label restrictions:
-    # - lowercase letters, numeric characters, underscores and dashes
-    # - 63 characters max
-    # to match other providers as close as possible,
-    # we will do any needed handling and continue to treat
-    # key-values as tags even though they are labels under gcloud
-    terraform_hex   = lower(random_id.apply.hex)
-    terraform_id    = lower(random_id.apply.id)
-    terraform_time  = lower(replace(time_static.first_created.id,":","_"))
-    created_by      = lower(local.created_by)
-    cluster_name    = lower(local.cluster_name)
+    terraform_hex   = random_id.apply.hex
+    terraform_id    = random_id.apply.id
+    terraform_time  = time_static.first_created.id
+    created_by      = local.created_by
+    cluster_name    = local.cluster_name
   })
 }
 

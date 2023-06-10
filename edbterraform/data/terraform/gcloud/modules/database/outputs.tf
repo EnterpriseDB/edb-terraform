@@ -26,5 +26,8 @@ output "dbname" {
   value = google_sql_database.db.name
 }
 output "tags" {
+  value = var.tags
+}
+output "labels" {
   value = google_sql_database_instance.instance.settings[0].user_labels
 }

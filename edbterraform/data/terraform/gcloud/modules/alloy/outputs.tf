@@ -25,5 +25,9 @@ output "version" {
   value = google_alloydb_cluster.main.database_version
 }
 output "tags" {
+  value = var.tags
+}
+
+output "labels" {
   value = google_alloydb_cluster.main.labels
 }

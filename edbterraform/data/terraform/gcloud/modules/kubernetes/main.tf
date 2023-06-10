@@ -7,7 +7,7 @@ resource "google_container_cluster" "primary" {
   network    = var.network
   subnetwork = var.subnetwork
 
-  resource_labels = var.tags
+  resource_labels = local.labels
 }
 
 resource "google_container_node_pool" "primary_nodes" {
@@ -23,7 +23,7 @@ resource "google_container_node_pool" "primary_nodes" {
     ]
 
     machine_type = var.machine.spec.instance_type
-    labels       = var.tags
+    labels       = local.labels
     tags         = [format("%s-%s", var.cluster_name, "gke-node"), format("%s-%s", var.cluster_name, "gke")]
     metadata = {
       disable-legacy-endpoints = "true"
