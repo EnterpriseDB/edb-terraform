@@ -13,6 +13,7 @@ module "machine_{{ region_ }}" {
   ssh_priv_key                    = module.spec.private_key
   ssh_pub_key                     = module.spec.public_key
   use_agent                       = module.spec.base.ssh_key.use_agent
+  network_name                    = module.vpc_{{ region_ }}.vpc_id
   subnet_name                     = module.network_{{ region_ }}[each.value.spec.zone_name].name
   name_id                         = module.spec.hex_id
   tags                            = each.value.spec.tags

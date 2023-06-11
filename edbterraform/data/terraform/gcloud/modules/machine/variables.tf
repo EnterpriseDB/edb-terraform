@@ -19,6 +19,7 @@ variable "operating_system" {
     error_message = "only one, name or family must be defined"
   }
 }
+variable "network_name" {}
 variable "subnet_name" {}
 variable "name_id" { default = "0" }
 variable "use_agent" {
@@ -44,6 +45,10 @@ locals {
 }
 
 locals {
+  additional_volumes_length = length(lookup(var.machine.spec, "additional_volumes", []))
+  additional_volumes_count = local.additional_volumes_length > 0 ? 1 : 0
+  additional_volumes_map = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+
   prefix = "/dev/disk/by-id/google-"
   base = ["sd"]
   letters = [

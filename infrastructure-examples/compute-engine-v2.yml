@@ -27,8 +27,6 @@ gcloud:
           cidrs:
             - 0.0.0.0/0
       region_ports:
-        - protocol: icmp
-          description: "ping"
         - port: 22
           to_port: 65
           protocol: tcp
@@ -48,6 +46,11 @@ gcloud:
       image_name: rocky
       region: us-west4
       zone_name: main
+      ports:
+        - protocol: icmp
+          description: "ping"
+          cidrs:
+            - 10.2.20.0/24
       instance_type: e2-standard-4
       volume:
         type: pd-standard

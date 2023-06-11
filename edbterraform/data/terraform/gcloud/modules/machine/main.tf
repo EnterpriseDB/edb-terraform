@@ -56,75 +56,97 @@ resource "google_compute_instance" "machine" {
   labels   = local.labels
 }
 
+module "machine_ports" {
+  source = "../security"
+
+  network_name     = var.network_name
+  ports            = var.machine.spec.ports
+  ingress_cidrs    = flatten([google_compute_instance.machine.network_interface.*.network_ip, google_compute_instance.machine.network_interface[*].access_config.*.nat_ip])
+  egress_cidrs     = flatten([google_compute_instance.machine.network_interface.*.network_ip, google_compute_instance.machine.network_interface[*].access_config.*.nat_ip])
+  region           = var.machine.spec.region
+  name_id          = "${var.machine.name}-${var.name_id}"
+}
+
+resource "null_resource" "ensure_ssh_open" {
+  count = local.additional_volumes_count
+  triggers = {
+    "depends_on" = local.additional_volumes_length
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo connected",
+    ]
+    connection {
+      type        = "ssh"
+      user        = var.operating_system.ssh_user
+      host        = google_compute_instance.machine.network_interface.0.access_config.0.nat_ip
+      port        = var.machine.spec.ssh_port
+      agent       = var.use_agent # agent and private_key conflict
+      private_key = var.use_agent ? null : var.ssh_priv_key
+    }
+  }
+}
+
 resource "google_compute_disk" "volumes" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+  for_each = local.additional_volumes_map
 
   name             = lower(format("%s-%s-%s-%s", var.machine.name, var.cluster_name, var.name_id, each.key))
   type             = each.value.type
   size             = each.value.size_gb
   zone             = var.machine.spec.zone
   provisioned_iops = try(each.value.iops, null)
-  labels           = local.labels
-
-  depends_on = [google_compute_instance.machine]
+  # Implicit dependency to aws_ebs_volume.ebs_volume
+  labels = can(null_resource.ensure_ssh_open) ? var.tags : var.tags
 
 }
 
 resource "google_compute_attached_disk" "attached_volumes" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
+  for_each = local.additional_volumes_map
 
   device_name = trimprefix(element(local.linux_device_names, tonumber(each.key))[0], local.prefix)
   disk        = google_compute_disk.volumes[each.key].id
-  instance    = google_compute_instance.machine.id
-
-  depends_on = [google_compute_disk.volumes]
+  instance    = can(google_compute_disk.volumes) ? google_compute_instance.machine.id : google_compute_instance.machine.id
 
 }
 
 resource "null_resource" "copy_setup_volume_script" {
-
-  count = length(lookup(var.machine.spec, "additional_volumes", [])) > 0 ? 1 : 0
+  count = local.additional_volumes_count
+  triggers = {
+    "depends_on" = local.additional_volumes_length
+  }
 
   provisioner "file" {
     content     = file("${abspath(path.module)}/setup_volume.sh")
     destination = "/tmp/setup_volume.sh"
 
-    # Requires firewall access to ssh port
     connection {
-      type        = "ssh"
+      # Implicit dependency to null_resource.attached_volume
+      type        = can(google_compute_attached_disk.attached_volumes) ? "ssh" : "ssh"
       user        = var.operating_system.ssh_user
       host        = google_compute_instance.machine.network_interface.0.access_config.0.nat_ip
+      port        = var.machine.spec.ssh_port
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.ssh_priv_key
     }
   }
-
-  depends_on = [
-    google_compute_attached_disk.attached_volumes
-  ]
-
 }
 
 resource "null_resource" "setup_volume" {
-  for_each = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
-
+  for_each = local.additional_volumes_map
   provisioner "remote-exec" {
     inline = [
       "chmod a+x /tmp/setup_volume.sh",
       "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
     ]
-
-    # Requires firewall access to ssh port
     connection {
-      type        = "ssh"
+      # Implicit dependency to null_resource.copy_setup_volume_script
+      type        = can(null_resource.copy_setup_volume_script) ? "ssh" : "ssh"
       user        = var.operating_system.ssh_user
       host        = google_compute_instance.machine.network_interface.0.access_config.0.nat_ip
+      port        = var.machine.spec.ssh_port
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.ssh_priv_key
     }
   }
-
-  depends_on = [
-    null_resource.copy_setup_volume_script
-  ]
 }
