@@ -21,10 +21,18 @@ aws:
         main:
           zone: us-east-1b
           cidr: 10.2.30.0/24
-      service_ports: []
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+          type: ingress
+          cidrs:
+            - 0.0.0.0/0
       region_ports:
-        - protocol: icmp
-          description: "ping"
+        - port: 22
+          to_port: 65
+          protocol: tcp
+          description: "ranges"
   machines:
     dbt2-driver:
       image_name: debian
@@ -43,9 +51,10 @@ aws:
       region: us-east-1
       zone_name: main
       ports:
-        - port: 22
-          protocol: tcp
-          description: "SSH"
+        - protocol: icmp
+          description: "ping"
+          cidrs:
+            - 10.2.20.0/24
       instance_type: c5.4xlarge
       volume:
         type: gp2
