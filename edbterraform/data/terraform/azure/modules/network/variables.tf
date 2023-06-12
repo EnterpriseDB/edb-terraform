@@ -44,7 +44,14 @@ variable "zone" {
     EOT
   }
 }
-
+variable "tags" {
+  type = map(string)
+  default = {}
+  nullable = false
+}
+variable "name_id" {
+  default = 0
+}
 locals {
   regions_with_zones = [
     # Americas

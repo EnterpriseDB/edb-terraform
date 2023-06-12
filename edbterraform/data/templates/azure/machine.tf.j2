@@ -8,10 +8,12 @@ module "machine_{{ region_ }}" {
 
   resource_name                   = module.vpc_{{ region_ }}.resource_name
   subnet_id                       = module.network_{{ region_ }}[each.value.spec.zone_name].subnet_id
+  security_group_name             = module.network_{{ region_ }}[each.value.spec.zone_name].security_group_name
   operating_system                = each.value.spec.operating_system
   cluster_name                    = module.spec.base.tags.cluster_name
   name                            = each.value.name
   machine                         = each.value.spec
+  ports                           = each.value.spec.ports
   additional_volumes              = each.value.spec.additional_volumes
   private_key                     = module.spec.private_key
   public_key                      = module.spec.public_key

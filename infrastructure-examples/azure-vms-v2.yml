@@ -34,8 +34,6 @@ azure:
           cidrs:
             - 0.0.0.0/0
       region_ports:
-        - protocol: icmp
-          description: "ping"
         - port: 22
           to_port: 65
           protocol: tcp
@@ -55,6 +53,16 @@ azure:
       image_name: rocky
       region: westus
       zone_name: main
+      ports:
+        - protocol: icmp
+          description: "ping"
+          cidrs:
+            - 10.2.20.0/24
+        - protocol: icmp
+          description: "ping"
+          type: egress
+          cidrs:
+            - 10.2.20.0/24
       instance_type: Standard_D2s_v3
       volume:
         type: StandardSSD_LRS

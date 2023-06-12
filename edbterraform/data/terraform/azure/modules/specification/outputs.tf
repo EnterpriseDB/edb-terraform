@@ -44,17 +44,23 @@ locals {
           # assign zone from mapped names
           # Handle 0 as null to represent a region with no zones available
           zone = tostring(var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone) == "0" ? null : var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
+
+          ports = [
+            for idx, port in machine_spec.ports:
+              merge(port, {"priority"="${index(keys(var.spec.machines), name) + idx + 100}"})
+          ]
         })
       }
     ]
   ])
-}
-
-output "region_machines" {
-  value = {
+  region_machines = {
     for machine in local.machines_extended :
       machine.spec.region => machine...
   }
+}
+
+output "region_machines" {
+  value = local.region_machines
 }
 
 output "region_databases" {
@@ -134,6 +140,9 @@ output "region_ports" {
   description = "mapping of region to its list of port rules"
   value = {
     for region, values in var.spec.regions:
-      region => flatten([values.service_ports, values.region_ports])
+      region => [ 
+        for idx, port in flatten([values.service_ports, values.region_ports]):
+          merge(port, {"priority"="${length(local.region_machines[region][*].spec.ports.*) + idx + 100}"})
+      ]
   }
 }

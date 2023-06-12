@@ -68,6 +68,16 @@ variable "spec" {
       region        = string
       zone_name     = string
       instance_type = string
+      ssh_port      = optional(number, 22)
+      ports         = optional(list(object({
+        port        = optional(number)
+        to_port     = optional(number)
+        protocol    = string
+        description = optional(string, "default")
+        type        = optional(string, "ingress")
+        cidrs       = optional(list(string))
+        })), []
+      )
       volume = object({
         type    = string
         size_gb = number
@@ -141,30 +151,6 @@ variable "spec" {
     })), {})
     templates = optional(list(string), [])
   })
-
-  validation {
-    condition = (
-      alltrue([
-        for machine in var.spec.machines :
-        length(machine.additional_volumes) == 0 ||
-        anytrue([for service_port in var.spec.regions[machine.region].service_ports :
-          service_port.port == 22
-        ])
-      ])
-    )
-    error_message = (
-      <<-EOT
-When using machines with additional volumes, SSH must be open.
-Ensure each region listed below has port 22 open under service_ports.
-Region - Machine:
-%{for name, spec in var.spec.machines~}
-%{if length(spec.additional_volumes) != 0~}
-  ${spec.region} - ${name}
-%{endif~}
-%{endfor~}
-EOT
-    )
-  }
 
 }
 
