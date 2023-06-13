@@ -28,7 +28,10 @@ resource "azurerm_network_security_rule" "rules" {
   description                = each.value.description
   # First letter must be uppercase
   protocol                   = title(each.value.protocol)
-  destination_port_range     = each.value.port != null ? each.value.port : "*"
+  destination_port_range     = (
+    each.value.port != null && each.value.to_port != null ? "${each.value.port}-${each.value.to_port}" : 
+    each.value.port != null ? each.value.port : "*"
+    )
   destination_address_prefixes = each.value.egress_cidrs != null ? each.value.egress_cidrs : var.egress_cidrs
   source_port_range          = "*"
   source_address_prefixes    = each.value.ingress_cidrs != null ? each.value.ingress_cidrs : var.ingress_cidrs
