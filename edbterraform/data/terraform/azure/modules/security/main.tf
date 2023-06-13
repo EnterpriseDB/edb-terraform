@@ -1,8 +1,9 @@
 resource "azurerm_network_security_rule" "rules" {
   for_each = {
     # preserve ordering
-    for values in var.ports:
-      format("0%.5d",values.priority) => values
+    # 100-4096 priorities allowed by Azure
+    for idx, values in var.ports:
+      format("0%.4d",idx+100) => values
   }
 
   resource_group_name         = var.resource_name

@@ -9,6 +9,7 @@ module "machine_{{ region_ }}" {
   resource_name                   = module.vpc_{{ region_ }}.resource_name
   subnet_id                       = module.network_{{ region_ }}[each.value.spec.zone_name].subnet_id
   security_group_name             = module.network_{{ region_ }}[each.value.spec.zone_name].security_group_name
+  security_group_id               = module.network_{{ region_ }}[each.value.spec.zone_name].security_group_id
   operating_system                = each.value.spec.operating_system
   cluster_name                    = module.spec.base.tags.cluster_name
   name                            = each.value.name

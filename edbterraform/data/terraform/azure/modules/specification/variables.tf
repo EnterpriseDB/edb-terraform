@@ -60,7 +60,7 @@ variable "spec" {
         description = optional(string, "default")
         type = optional(string, "ingress")
         access      = optional(string, "allow")
-        cidrs = optional(list(string))
+        cidrs = optional(list(string), [])
       })), [])
     }))
     machines = optional(map(object({
@@ -78,7 +78,7 @@ variable "spec" {
         description = optional(string, "default")
         type        = optional(string, "ingress")
         access      = optional(string, "allow")
-        cidrs       = optional(list(string))
+        cidrs       = optional(list(string), [])
         })), []
       )
       volume = object({

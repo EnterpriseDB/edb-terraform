@@ -74,10 +74,24 @@ resource "azurerm_linux_virtual_machine" "main" {
   depends_on = [azurerm_network_interface.internal, ]
 }
 
+resource "azurerm_network_security_group" "firewall" {
+  count               = length(var.ports) != 0 ? 1 : 0
+  name                = replace(join("-", formatlist("%#v", [var.name, var.machine.region, var.machine.zone, var.name_id])), "\"", "")
+  resource_group_name = var.resource_name
+  location            = var.machine.region
+  tags                = var.tags
+}
+
+resource "azurerm_network_interface_security_group_association" "firewall" {
+  count                = length(var.ports) != 0 ? 1 : 0
+  network_interface_id = azurerm_network_interface.internal.id
+  network_security_group_id = azurerm_network_security_group.firewall.0.id
+}
+
 module "machine_ports" {
   source = "../security"
 
-  security_group_name = var.security_group_name
+  security_group_name = length(var.ports) != 0 ? azurerm_network_security_group.firewall.0.name : var.security_group_name
   name_id          = "${var.name}-${var.name_id}"
   region           = var.machine.region
   resource_name    = var.resource_name

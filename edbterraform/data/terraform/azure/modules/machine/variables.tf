@@ -27,7 +27,11 @@ variable "machine" {
     })
   })
 }
-variable "ports" {}
+variable "ports" {
+  type = list
+  default = []
+  nullable = false
+}
 variable "tags" {
   type    = map(string)
   default = {}
@@ -45,6 +49,7 @@ variable "name_id" {
 }
 variable "subnet_id" {}
 variable "security_group_name" {}
+variable "security_group_id" {}
 variable "private_key" {}
 variable "public_key" {}
 variable "use_agent" {

@@ -7,6 +7,12 @@ locals {
     created_by      = local.created_by
     cluster_name    = local.cluster_name
   })
+
+  # each regions cidrblock, should not overlap since we perform VPC peering
+  region_cidrblocks = flatten([
+    for region, values in var.spec.regions:
+      values.cidr_block
+  ])
 }
 
 output "base" {
@@ -28,6 +34,9 @@ output "public_key" {
 }
 
 locals {
+  # Set the default cidr to the rules region cidr block if one is not set by the optional's default or by the user
+  region_ports = { for region, values in var.spec.regions: region => [ 
+    for port in flatten([values.service_ports, values.region_ports]): length(port.cidrs) == 0 ? merge(port,{"cidrs": local.region_cidrblocks}) : port ] } 
   # Extend machine's count as of list objects, with an index in the name only when count over 1
   machines_extended = flatten([
     for name, machine_spec in var.spec.machines : [
@@ -45,10 +54,11 @@ locals {
           # Handle 0 as null to represent a region with no zones available
           zone = tostring(var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone) == "0" ? null : var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
 
-          ports = [
-            for idx, port in machine_spec.ports:
-              merge(port, {"priority"="${index(keys(var.spec.machines), name) + idx + 100}"})
-          ]
+          # Azure networking does not allow fine-grain control like AWS security groups
+          # The machine module defines a network interface security group so machines can define rules specific to the instance
+          # This network interface security group has preference over the subnet security group
+          # so it will not be attached when no ports are defined so that the subnets security group is used.
+          ports = length(machine_spec.ports) != 0 ? flatten([local.region_ports[machine_spec.region], machine_spec.ports]) : machine_spec.ports
         })
       }
     ]
@@ -129,20 +139,11 @@ output "region_zone_networks" {
 }
 
 output "region_cidrblocks" {
-  description = "list of all cidrs from each defined zone"
-  value = flatten([
-    for region, values in var.spec.regions:
-      values.cidr_block
-  ])
+  description = "list of all cidrs from each defined region"
+  value = local.region_cidrblocks
 }
 
 output "region_ports" {
   description = "mapping of region to its list of port rules"
-  value = {
-    for region, values in var.spec.regions:
-      region => [ 
-        for idx, port in flatten([values.service_ports, values.region_ports]):
-          merge(port, {"priority"="${length(local.region_machines[region][*].spec.ports.*) + idx + 100}"})
-      ]
-  }
+  value = local.region_ports
 }
