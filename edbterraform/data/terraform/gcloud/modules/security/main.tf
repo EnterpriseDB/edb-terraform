@@ -8,7 +8,10 @@ resource "google_compute_firewall" "rules" {
   network = var.network_name
   allow {
     protocol = each.value.protocol
-    ports    = each.value.port != null ? [each.value.port] : []
+    ports    = (
+      each.value.port != null && each.value.to_port != null ? ["${each.value.port}-${each.value.to_port}"] :
+      each.value.port != null ? [each.value.port] : []
+    )
   }
   source_ranges = each.value.ingress_cidrs != null ? each.value.ingress_cidrs : var.ingress_cidrs
   destination_ranges = each.value.egress_cidrs != null ? each.value.egress_cidrs : var.egress_cidrs
