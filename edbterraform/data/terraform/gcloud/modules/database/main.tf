@@ -18,7 +18,7 @@ resource "google_sql_database_instance" "instance" {
     disk_type             = upper(replace(var.disk_type, ".", "_"))
     disk_autoresize       = var.autoresize
     disk_autoresize_limit = (var.autoresize ? var.autoresize_limit : null)
-    user_labels           = var.tags
+    user_labels           = local.labels
 
     location_preference {
       zone = var.zone

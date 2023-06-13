@@ -53,7 +53,7 @@ resource "google_compute_instance" "machine" {
   }
 
   metadata = { ssh-keys = "${var.operating_system.ssh_user}:${var.ssh_pub_key}" }
-  labels   = var.tags
+  labels   = local.labels
 }
 
 resource "google_compute_disk" "volumes" {
@@ -64,7 +64,7 @@ resource "google_compute_disk" "volumes" {
   size             = each.value.size_gb
   zone             = var.machine.spec.zone
   provisioned_iops = try(each.value.iops, null)
-  labels           = var.tags
+  labels           = local.labels
 
   depends_on = [google_compute_instance.machine]
 
