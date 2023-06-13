@@ -37,8 +37,13 @@ variable "spec" {
         zone = optional(string)
         cidr = optional(string)
       })), {})
+      # TODO: Collapse service and regions ports into one
+      # 0.0.0.0/0 defaults can be blocked by IT.
+      # Instead, use region_ports as the default and if user wants access,
+      # they will need to specify the allowed ranges: home ip, elastic IPs, VPN/Proxy IPs
       service_ports = optional(list(object({
         port        = optional(number)
+        to_port     = optional(number)
         protocol    = string
         description = optional(string, "default")
         type = optional(string, "ingress")
@@ -46,6 +51,7 @@ variable "spec" {
       })), [])
       region_ports = optional(list(object({
         port        = optional(number)
+        to_port     = optional(number)
         protocol    = string
         description = optional(string, "default")
         type = optional(string, "ingress")
@@ -60,6 +66,7 @@ variable "spec" {
       ssh_port      = optional(number, 22)
       ports         = optional(list(object({
         port        = optional(number)
+        to_port     = optional(number)
         protocol    = string
         description = optional(string, "default")
         type = optional(string, "ingress")
