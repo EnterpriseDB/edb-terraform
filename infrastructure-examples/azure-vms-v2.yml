@@ -30,9 +30,16 @@ azure:
         - port: 22
           protocol: tcp
           description: "SSH"
+          type: ingress
+          cidrs:
+            - 0.0.0.0/0
       region_ports:
         - protocol: icmp
           description: "ping"
+        - port: 22
+          to_port: 65
+          protocol: tcp
+          description: "ranges"
   machines:
     dbt2-driver:
       image_name: rocky_8_7_0
