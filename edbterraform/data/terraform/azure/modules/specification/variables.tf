@@ -43,14 +43,14 @@ variable "spec" {
       service_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
-        description = string
+        description = optional(string, "default")
         ingress_cidrs = optional(list(string), ["0.0.0.0/0"])
         egress_cidrs = optional(list(string))
       })), [])
       region_ports = optional(list(object({
         port        = optional(number)
         protocol    = string
-        description = string
+        description = optional(string, "default")
         ingress_cidrs = optional(list(string))
         egress_cidrs = optional(list(string))
       })), [])
