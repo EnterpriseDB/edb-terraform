@@ -14,7 +14,10 @@ resource "aws_security_group_rule" "rule" {
   type = each.value.type
 
   from_port   = each.value.protocol == "icmp" ? 8 : each.value.port != null ? each.value.port : -1
-  to_port     = each.value.port != null && each.value.protocol != "icmp"  ? each.value.port : -1
+  to_port     = (
+      each.value.to_port != null && each.value.protocol != "icmp"  ? each.value.to_port : 
+      each.value.port != null && each.value.protocol != "icmp" ? each.value.port : -1
+    )
   protocol    = each.value.protocol
   cidr_blocks = each.value.cidrs
 
