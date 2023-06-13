@@ -50,6 +50,7 @@ variable "spec" {
         protocol    = string
         description = optional(string, "default")
         type = optional(string, "ingress")
+        access      = optional(string, "allow")
         cidrs = optional(list(string), ["0.0.0.0/0"])
       })), [])
       region_ports = optional(list(object({
@@ -58,6 +59,7 @@ variable "spec" {
         protocol    = string
         description = optional(string, "default")
         type = optional(string, "ingress")
+        access      = optional(string, "allow")
         cidrs = optional(list(string))
       })), [])
     }))
@@ -75,6 +77,7 @@ variable "spec" {
         protocol    = string
         description = optional(string, "default")
         type        = optional(string, "ingress")
+        access      = optional(string, "allow")
         cidrs       = optional(list(string))
         })), []
       )

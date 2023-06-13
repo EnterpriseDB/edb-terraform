@@ -20,7 +20,7 @@ resource "azurerm_network_security_rule" "rules" {
   destination_address_prefixes = lower(each.value.type) == "egress" && each.value.cidrs != null ? each.value.cidrs : var.egress_cidrs
   source_port_range          = "*"
   source_address_prefixes    = lower(each.value.type) == "ingress" && each.value.cidrs != null ? each.value.cidrs : var.ingress_cidrs
-  access                     = "Allow"
+  access                     = lower(each.value.access) == "deny" ? "Deny" : "Allow"
   priority                   = tonumber(each.key)
 
   lifecycle {

@@ -31,6 +31,7 @@ azure:
           protocol: tcp
           description: "SSH"
           type: ingress
+          access: allow
           cidrs:
             - 0.0.0.0/0
       region_ports:
