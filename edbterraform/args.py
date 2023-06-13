@@ -86,7 +86,7 @@ BinPath = ArgumentConfig(
 )
 
 ProjectPathDepreciated = ArgumentConfig(
-    names = ['project-path',],
+    names = ['project_path',],
     metavar='PROJECT_PATH',
     type=Path,
     help="Project path. Default: %(default)s",
