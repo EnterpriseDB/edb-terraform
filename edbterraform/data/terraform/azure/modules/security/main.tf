@@ -32,10 +32,17 @@ resource "azurerm_network_security_rule" "rules" {
     each.value.port != null && each.value.to_port != null ? "${each.value.port}-${each.value.to_port}" : 
     each.value.port != null ? each.value.port : "*"
     )
-  destination_address_prefixes = each.value.egress_cidrs != null ? each.value.egress_cidrs : var.egress_cidrs
+  direction                  = lower(each.value.type) == "ingress" ? "Inbound" : "Outbound"
+  destination_address_prefixes = lower(each.value.type) == "egress" && each.value.cidrs != null ? each.value.cidrs : var.egress_cidrs
   source_port_range          = "*"
-  source_address_prefixes    = each.value.ingress_cidrs != null ? each.value.ingress_cidrs : var.ingress_cidrs
+  source_address_prefixes    = lower(each.value.type) == "ingress" && each.value.cidrs != null ? each.value.cidrs : var.ingress_cidrs
   access                     = "Allow"
-  direction                  = "Inbound"
   priority                   = 100 + tonumber(each.key)
+
+  lifecycle {
+    precondition {
+      condition     = each.value.type == "ingress" || each.value.type == "egress"
+      error_message = "${each.key} has type ${each.value.type}. Must be ingress or egress."
+    }
+  }
 }
