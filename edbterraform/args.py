@@ -10,7 +10,7 @@ from datetime import datetime
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
-from edbterraform import __project_name__
+from edbterraform import __dot_project__
 from edbterraform.utils import logs
 
 ENVIRONMENT_PREFIX = 'ET_' # Appended to allow overrides of defaults
@@ -177,7 +177,7 @@ LogDirectory = ArgumentConfig(
     names = ['--log-directory',],
     dest='log_directory',
     required=False,
-    default=f'{Path.home()}/.{__project_name__}/logs',
+    default=f'{__dot_project__}/logs',
     help='''
         Default: %(default)s
         '''
