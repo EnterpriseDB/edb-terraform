@@ -18,6 +18,7 @@ from edbterraform.utils.dict import change_keys
 from edbterraform.utils.files import load_yaml_file
 from edbterraform.utils.logs import logger
 from edbterraform.CLI import TerraformCLI
+from edbterraform import __dot_project__
 
 def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
@@ -42,6 +43,35 @@ def tpl(template_name, dest, csp, vars={}):
 
     except Exception as e:
         logger.error("ERROR: could not render template %s (%s)" % (template_name, e))
+        sys.exit(1)
+
+def save_default_templates(templates_directory):
+    '''
+    Save any predefined templates into the 'directory/templates' for consistent referencing
+    If the filename already exists, it should be skipped to avoid overriding user customizations.
+    '''
+    # Templates are located in parent_directory/data/templates/user
+    script_dir = Path(__file__).parent.resolve()
+    predefined_templates = script_dir / 'data' / 'templates' / 'user'
+    templates_directory = Path(templates_directory)
+    logger.info(f'Copy templates from {script_dir} into {templates_directory}')
+    try:
+        for template in predefined_templates.iterdir():
+            final_file = templates_directory / template
+
+            if not template.is_file():
+                logger.warning(f'Skipping {template} as it is not a file')
+                continue
+
+            if not final_file.exists():
+                shutil.copy2(str(template), str(final_file))
+            else:
+                logger.info(f'''
+                Skipping: {template} already exists at {final_file}.
+                To copy the latest pre-defined templates, erase any conflicting template file names.
+                ''')
+    except Exception as e:
+        logger.error("ERROR: cannot create template directory %s (%s)" % (templates_directory, e))
         sys.exit(1)
 
 def create_project_dir(dir, csp):
@@ -195,7 +225,7 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
     
     return (terraform_vars, template_vars)
 
-def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_validation: bool, bin_path: Path) -> dict:
+def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_validation: bool, bin_path: Path, user_templates: List[Path]) -> dict:
     """
     Generates the terraform files from jinja templates and terraform modules and
     saves the files into a project_directory for use with 'terraform' commands
@@ -216,6 +246,9 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
     # Load infrastructure variables from the YAML file that was passed
     infra_vars = load_yaml_file(infra_file)
 
+    # Save default templates into dot directory
+    save_default_templates(f'{__dot_project__}/templates')
+
     # Duplicate terraform code into target project directory
     create_project_dir(project_path, csp)
 
@@ -223,7 +256,7 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
     # Terraform does not allow us to copy a template and then reference it within the same run when using templatefile()
     # To get past this, we will need to copy over all the user passed templates into the project directory
     # and update the template variable passed in by the user
-    infra_vars[csp]["templates"] = save_user_templates(project_path, infra_vars.get(csp,{}).get('templates',[]))
+    save_user_templates(project_path, infra_vars.get(csp,{}).get('templates',[]))
 
     # Transform variables extracted from the infrastructure file into
     # terraform and templates variables.

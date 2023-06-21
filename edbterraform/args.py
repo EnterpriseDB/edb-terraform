@@ -117,8 +117,8 @@ UserTemplatesPath = ArgumentConfig(
     type=Path,
     nargs='+',
     required=False,
-    default=[f'{__dot_project__}/templates/inventory.yml.tftpl', f'{__dot_project__}/templates/config.yml.tftpl',],
-    help="Users can pass in templates, which will be rendered with the servers output. Default: %(default)s",
+    default=[f'{__dot_project__}/templates',],
+    help="Users can pass in a list of template files or template directories, which will be rendered with the servers output. Default: %(default)s",
 )
 
 InfrastructureFilePath = ArgumentConfig(
@@ -331,6 +331,7 @@ class Arguments:
                 self.get_env('csp'),
                 self.get_env('run_validation'),
                 self.get_env('bin_path'),
+                self.get_env('user_templates_path')
             )
             return outputs
 
