@@ -331,7 +331,7 @@ class Arguments:
                 self.get_env('csp'),
                 self.get_env('run_validation'),
                 self.get_env('bin_path'),
-                self.get_env('user_templates_path')
+                self.get_env('user_templates')
             )
             return outputs
 
