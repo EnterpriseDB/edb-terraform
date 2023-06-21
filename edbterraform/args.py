@@ -35,6 +35,7 @@ class ArgumentConfig:
     choices: list = None
     required: bool = None
     action: str = None
+    nargs: str = None
 
     def __post_init__(self) -> None:
         # Allow overriding of variables with environment variables
@@ -107,6 +108,17 @@ WorkPath = ArgumentConfig(
     default=Path.cwd(),
     required=False,
     help="Project path. Default: %(default)s",
+)
+
+UserTemplatesPath = ArgumentConfig(
+    names = ['--user-templates',],
+    metavar='USER_TEMPLATE_FILES',
+    dest='user_templates',
+    type=Path,
+    nargs='+',
+    required=False,
+    default=[f'{__dot_project__}/templates/inventory.yml.tftpl', f'{__dot_project__}/templates/config.yml.tftpl',],
+    help="Users can pass in templates, which will be rendered with the servers output. Default: %(default)s",
 )
 
 InfrastructureFilePath = ArgumentConfig(
@@ -220,6 +232,7 @@ class Arguments:
             LogFile,
             LogDirectory,
             LogStdout,
+            UserTemplatesPath,
         ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
@@ -287,6 +300,13 @@ class Arguments:
         Get environment variables which are available after parse_args() is called
         '''
         return getattr(self.env, key, default)
+    
+    def get_kwargs(self):
+        '''
+        Returns the parsed arguments as a dictionary.
+        _get_kwargs not used as it returns a list of dictionary items.
+        '''
+        return self.env.__dict__.copy()
 
     def process_args(self):
         logs.setup_logs(
