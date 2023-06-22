@@ -152,7 +152,6 @@ variable "spec" {
       publisher_name          = string
       tags                    = optional(map(string), {})
     })), {})
-    templates = optional(list(string), [])
   })
 
 }
