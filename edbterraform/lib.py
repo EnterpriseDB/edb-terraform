@@ -54,20 +54,22 @@ def save_default_templates(templates_directory):
     script_dir = Path(__file__).parent.resolve()
     predefined_templates = script_dir / 'data' / 'templates' / 'user'
     templates_directory = Path(templates_directory)
-    logger.info(f'Copy templates from {script_dir} into {templates_directory}')
+    logger.info(f'Copy templates from {predefined_templates} into {templates_directory}')
     try:
-        for template in predefined_templates.iterdir():
-            final_file = templates_directory / template
+        if not templates_directory.exists():
+            logger.info(f'Creating predefined template directory: {templates_directory}')
+            templates_directory.mkdir(parents=True, exist_ok=True)
 
+        for template in predefined_templates.iterdir():
             if not template.is_file():
                 logger.warning(f'Skipping {template} as it is not a file')
                 continue
 
-            if not final_file.exists():
-                shutil.copy2(str(template), str(final_file))
+            if not (templates_directory / template.name).exists():
+                shutil.copy2(str(template), str(templates_directory))
             else:
                 logger.info(f'''
-                Skipping: {template} already exists at {final_file}.
+                Skipping: {template} already exists in {templates_directory}.
                 To copy the latest pre-defined templates, erase any conflicting template file names.
                 ''')
     except Exception as e:
@@ -111,36 +113,40 @@ def save_terraform_vars(dir, filename, vars):
         logger.error("ERROR: could not write %s (%s)" % (dest, e))
         sys.exit(1)
 
-def save_user_templates(project_path: Path, template_files: List[str]) -> List[str]:
+def save_user_templates(project_path: Path, templates: List[str]):
     '''
-    Save any user templates into a template directory
-    for reuse during terraform execution and portability of directory
-    
-    Return a list of template/<basename>
+    Save any user templates under project/templates
+    For reuse during terraform execution and portability of directory
     '''
-    new_files = []
+    logger.info(f'Saving user templates: {templates}')
     directory = "templates"
     basepath = project_path / directory
+
     try:
-        for file in template_files:
+        if not basepath.exists():
+            logger.info(f'Creating template directory: {basepath}')
+            basepath.mkdir(parents=True, exist_ok=True)
 
-            if not os.path.exists(file):
-                raise Exception("templates %s does not exist" % file)
+        for template in templates:
+            template = Path(template)
 
-            if not os.path.exists(basepath):
-                logger.info(f'Creating template directory: {basepath}')
-                basepath.mkdir(parents=True, exist_ok=True)
+            if not template.exists():
+                raise Exception("templates %s does not exist" % template)
 
-            full_path = basepath / os.path.basename(file)
-            logger.info(f'Copying file {file} into {full_path}')
-            final_path = shutil.copy(file, full_path)
-            new_files.append(f'{directory}/{os.path.basename(final_path)}')
+            if template.is_dir():
+                for file in template.iterdir():
+                    logger.info(f'Copying {file} into {basepath}')
+                    shutil.copy2(str(file), str(basepath))
+
+            if template.is_file():
+                logger.info(f'Copying {template} into {basepath}')
+                shutil.copy2(str(template), str(basepath))
+
     except Exception as e:
-        logger.error("Cannot create template %s (%s)" % (file, e))
+        logger.error("Cannot create template (%s)" % (e))
         logger.error("Current working directory: %s" % (Path.cwd()))
-        logger.error("List of templates: %s" % (template_files))
+        logger.error("List of templates: %s" % (templates))
         sys.exit(1)
-    return new_files
 
 def regions_to_peers(regions):
     # Build a list of peer regions, based on a given list of regions.
@@ -256,7 +262,7 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
     # Terraform does not allow us to copy a template and then reference it within the same run when using templatefile()
     # To get past this, we will need to copy over all the user passed templates into the project directory
     # and update the template variable passed in by the user
-    save_user_templates(project_path, infra_vars.get(csp,{}).get('templates',[]))
+    save_user_templates(project_path, user_templates)
 
     # Transform variables extracted from the infrastructure file into
     # terraform and templates variables.
