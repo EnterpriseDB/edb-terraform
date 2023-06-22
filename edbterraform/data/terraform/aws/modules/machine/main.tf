@@ -50,7 +50,7 @@ resource "aws_instance" "machine" {
 resource "null_resource" "ensure_ssh_open" {
   count = local.additional_volumes_count
   triggers = {
-    "depends_on" = local.additional_volumes_length
+    "depends_on" = can(module.machine_ports) ? local.additional_volumes_length : local.additional_volumes_length
   }
 
   provisioner "remote-exec" {

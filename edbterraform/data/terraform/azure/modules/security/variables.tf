@@ -1,5 +1,4 @@
-variable "subnet_id" {}
-variable "zone" {}
+variable "security_group_name" {}
 variable "resource_name" {}
 variable "region" {}
 variable "ports" {

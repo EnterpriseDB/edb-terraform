@@ -19,3 +19,15 @@ resource "azurerm_subnet" "internal" {
     }
   }
 }
+
+resource "azurerm_network_security_group" "firewall" {
+  name                = replace(join("-", formatlist("%#v", [var.name, var.region, var.zone, var.name_id])), "\"", "")
+  resource_group_name = var.resource_name
+  location            = var.region
+  tags                = var.tags
+}
+
+resource "azurerm_subnet_network_security_group_association" "firewall" {
+  subnet_id                 = azurerm_subnet.internal.id
+  network_security_group_id = azurerm_network_security_group.firewall.id
+}

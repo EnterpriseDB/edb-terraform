@@ -38,19 +38,27 @@ variable "spec" {
         zone = optional(string)
         cidr = optional(string)
       })), {})
+      # TODO: Collapse service and regions ports into one
+      # 0.0.0.0/0 defaults can be blocked by IT.
+      # Instead, use region_ports as the default and if user wants access,
+      # they will need to specify the allowed ranges: home ip, elastic IPs, VPN/Proxy IPs
       service_ports = optional(list(object({
         port        = optional(number)
+        to_port     = optional(number)
         protocol    = string
         description = optional(string, "default")
-        ingress_cidrs = optional(list(string), ["0.0.0.0/0"])
-        egress_cidrs = optional(list(string))
+        type = optional(string, "ingress")
+        access      = optional(string, "allow")
+        cidrs = optional(list(string), ["0.0.0.0/0"])
       })), [])
       region_ports = optional(list(object({
         port        = optional(number)
+        to_port     = optional(number)
         protocol    = string
         description = optional(string, "default")
-        ingress_cidrs = optional(list(string))
-        egress_cidrs = optional(list(string))
+        type = optional(string, "ingress")
+        access      = optional(string, "allow")
+        cidrs = optional(list(string))
       })), [])
     }))
     machines = optional(map(object({
@@ -61,6 +69,16 @@ variable "spec" {
       zone_name     = string
       instance_type = string
       ip_forward    = optional(bool)
+      ssh_port      = optional(number, 22)
+      ports         = optional(list(object({
+        port        = optional(number)
+        to_port     = optional(number)
+        protocol    = string
+        description = optional(string, "default")
+        type        = optional(string, "ingress")
+        access      = optional(string, "allow")
+        cidrs       = optional(list(string))
+      })), [])
       volume = object({
         type      = string
         size_gb   = number
@@ -119,29 +137,6 @@ variable "spec" {
     templates = optional(list(string), [])
   })
 
-  validation {
-    condition = (
-      alltrue([
-        for machine in var.spec.machines :
-        length(machine.additional_volumes) == 0 ||
-        anytrue([for service_port in var.spec.regions[machine.region].service_ports :
-          service_port.port == 22
-        ])
-      ])
-    )
-    error_message = (
-      <<-EOT
-When using machines with additional volumes, SSH must be open.
-Ensure each region listed below has port 22 open under service_ports.
-Region - Machine:
-%{for name, spec in var.spec.machines~}
-%{if length(spec.additional_volumes) != 0~}
-  ${spec.region} - ${name}
-%{endif~}
-%{endfor~}
-EOT
-    )
-  }
 }
 
 locals {

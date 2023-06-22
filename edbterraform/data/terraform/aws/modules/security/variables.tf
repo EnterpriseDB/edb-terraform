@@ -20,18 +20,18 @@ locals {
   # Create mapping with new key and collapse protocol, port, description and ingress_cidrs
   port_rules_cidr_blocks = {
     for port in var.ports:
-      join("_", formatlist("%#v", [port.protocol, port.port, port.type])) 
+      join("_", formatlist("%#v", [port.protocol, port.port, port.to_port, port.type])) 
       => coalesce(port.cidrs, var.ingress_cidrs)...
     }
 
   port_rules_descriptions = {
     for port in var.ports:
-      join("_", formatlist("%#v", [port.protocol, port.port, port.type])) 
+      join("_", formatlist("%#v", [port.protocol, port.port, port.to_port, port.type])) 
       => coalesce(port.description, "default")...
     }
   port_rules_mapping = {
     for port in var.ports:
-      join("_", formatlist("%#v", [port.protocol, port.port, port.type])) 
+      join("_", formatlist("%#v", [port.protocol, port.port, port.to_port, port.type])) 
        => port...
   }
   merged_rules = {

@@ -23,7 +23,8 @@ module "network_{{ region_ }}" {
   region          = module.vpc_{{ region_ }}.region
   zone            = each.value.zone
   ip_cidr_range   = [ each.value.cidr ]
-  name            = "{{region}}-${each.key}-${module.spec.hex_id}"
+  name            = "{{region}}-${each.key}"
+  name_id         = module.spec.hex_id
 
   depends_on = [module.vpc_{{ region_ }}]
 
@@ -37,9 +38,8 @@ module "security_{{ region_ }}" {
 
   for_each = lookup(module.spec.region_zone_networks, "{{ region }}", null)
 
-  subnet_id         = module.network_{{ region_ }}[each.key].subnet_id
-  zone              = each.key
-  name_id           = module.spec.hex_id
+  security_group_name = module.network_{{ region_ }}[each.key].security_group_name
+  name_id           = "${each.key}-${module.spec.hex_id}"
   region            = module.vpc_{{ region_ }}.region
   resource_name     = module.vpc_{{ region_ }}.resource_name
   ports             = try(module.spec.region_ports["{{ region }}"], [])

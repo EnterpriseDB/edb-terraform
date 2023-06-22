@@ -19,12 +19,18 @@ variable "machine" {
     region        = string
     zone          = optional(string)
     instance_type = string
+    ssh_port      = optional(number, 22)
     volume = object({
       caching = optional(string, "None")
       size_gb = number
       type    = string
     })
   })
+}
+variable "ports" {
+  type = list
+  default = []
+  nullable = false
 }
 variable "tags" {
   type    = map(string)
@@ -42,6 +48,8 @@ variable "name_id" {
   type = string
 }
 variable "subnet_id" {}
+variable "security_group_name" {}
+variable "security_group_id" {}
 variable "private_key" {}
 variable "public_key" {}
 variable "use_agent" {
@@ -84,12 +92,9 @@ variable "additional_volumes" {
 }
 
 locals {
-  additional_volumes = {
-    for key, value in var.additional_volumes :
-    key => value
-  }
-
-  volume_script_count = length(var.additional_volumes) > 0 ? 1 : 0
+  additional_volumes_length = length(var.additional_volumes)
+  additional_volumes_count = local.additional_volumes_length > 0 ? 1 : 0
+  additional_volumes_map = { for i, v in var.additional_volumes : i => v }
 
   premium_ssd = {
     regions = ["eastus", "westeurope", ]

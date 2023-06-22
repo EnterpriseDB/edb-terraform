@@ -74,8 +74,56 @@ resource "azurerm_linux_virtual_machine" "main" {
   depends_on = [azurerm_network_interface.internal, ]
 }
 
+resource "azurerm_network_security_group" "firewall" {
+  count               = length(var.ports) != 0 ? 1 : 0
+  name                = replace(join("-", formatlist("%#v", [var.name, var.machine.region, var.machine.zone, var.name_id])), "\"", "")
+  resource_group_name = var.resource_name
+  location            = var.machine.region
+  tags                = var.tags
+}
+
+resource "azurerm_network_interface_security_group_association" "firewall" {
+  count                = length(var.ports) != 0 ? 1 : 0
+  network_interface_id = azurerm_network_interface.internal.id
+  network_security_group_id = azurerm_network_security_group.firewall.0.id
+}
+
+module "machine_ports" {
+  source = "../security"
+
+  security_group_name = length(var.ports) != 0 ? azurerm_network_security_group.firewall.0.name : var.security_group_name
+  name_id          = "${var.name}-${var.name_id}"
+  region           = var.machine.region
+  resource_name    = var.resource_name
+  ports            = var.ports
+  ingress_cidrs    = flatten([azurerm_linux_virtual_machine.main.public_ip_address, azurerm_linux_virtual_machine.main.private_ip_addresses])  
+  egress_cidrs     = flatten([azurerm_linux_virtual_machine.main.public_ip_address, azurerm_linux_virtual_machine.main.private_ip_addresses])
+  tags             = var.tags
+}
+
+resource "null_resource" "ensure_ssh_open" {
+  count = local.additional_volumes_count
+  triggers = {
+    "depends_on" = can(module.machine_ports) ? local.additional_volumes_length : local.additional_volumes_length
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo connected",
+    ]
+    connection {
+      type        = "ssh"
+      user        = var.operating_system.ssh_user
+      host        = azurerm_linux_virtual_machine.main.public_ip_address
+      port        = var.machine.ssh_port
+      agent       = var.use_agent # agent and private_key conflict
+      private_key = var.use_agent ? null : var.private_key
+    }
+  }
+}
+
 resource "azurerm_managed_disk" "volume" {
-  for_each = local.additional_volumes
+  for_each = local.additional_volumes_map
 
   name                 = format("%s-%s-%s-%s", var.name, var.cluster_name, var.name_id, each.key)
   resource_group_name  = var.resource_name
@@ -85,7 +133,8 @@ resource "azurerm_managed_disk" "volume" {
   create_option        = "Empty"
   disk_size_gb         = each.value.size_gb
   disk_iops_read_write = each.value.iops
-  tags                 = var.tags
+  # Implicit dependency to aws_ebs_volume.ebs_volume
+  tags = can(null_resource.ensure_ssh_open) ? var.tags : var.tags
   lifecycle {
     precondition {
       condition = (
@@ -100,68 +149,56 @@ resource "azurerm_managed_disk" "volume" {
       EOT
     }
   }
-
-  depends_on = [
-    azurerm_linux_virtual_machine.main,
-  ]
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "attached_volumes" {
-  for_each = local.additional_volumes
+  for_each = local.additional_volumes_map
 
   virtual_machine_id = azurerm_linux_virtual_machine.main.id
   managed_disk_id    = azurerm_managed_disk.volume[each.key].id
   lun                = 10 + tonumber(each.key)
-  caching            = each.value.caching
-
-  depends_on = [
-    azurerm_managed_disk.volume,
-  ]
+  caching            = can(azurerm_managed_disk.volume) ? each.value.caching : each.value.caching
 }
 
 resource "null_resource" "copy_setup_volume_script" {
-  count = local.volume_script_count
+  count = local.additional_volumes_count
+  triggers = {
+    "depends_on" = local.additional_volumes_length
+  }
 
   provisioner "file" {
     content     = file("${abspath(path.module)}/setup_volume.sh")
     destination = "/tmp/setup_volume.sh"
 
-    # Requires firewall access to ssh port
     connection {
-      type        = "ssh"
+      # Implicit dependency to null_resource.attached_volume
+      type        = can(azurerm_virtual_machine_data_disk_attachment.attached_volumes) ? "ssh" : "ssh"
       user        = var.operating_system.ssh_user
       host        = azurerm_linux_virtual_machine.main.public_ip_address
+      port        = var.machine.ssh_port
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.private_key
     }
   }
-
-  depends_on = [
-    azurerm_virtual_machine_data_disk_attachment.attached_volumes,
-  ]
-
 }
 
 resource "null_resource" "setup_volume" {
-  for_each = local.additional_volumes
-
+  for_each = local.additional_volumes_map
   provisioner "remote-exec" {
     inline = [
       "chmod a+x /tmp/setup_volume.sh",
-      "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine, "additional_volumes", [])) + 1}  >> /tmp/mount.log 2>&1"
+      "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(var.additional_volumes) + 1}  >> /tmp/mount.log 2>&1"
     ]
 
-    # Requires firewall access to ssh port
     connection {
-      type        = "ssh"
+      # Implicit dependency to null_resource.copy_setup_volume_script
+      type        = can(null_resource.copy_setup_volume_script) ? "ssh" : "ssh"
       user        = var.operating_system.ssh_user
       host        = azurerm_linux_virtual_machine.main.public_ip_address
+      port        = var.machine.ssh_port
       agent       = var.use_agent # agent and private_key conflict
       private_key = var.use_agent ? null : var.private_key
     }
   }
-
-  depends_on = [
-    null_resource.copy_setup_volume_script
-  ]
 }
+
