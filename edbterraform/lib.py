@@ -261,7 +261,13 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
     # Allow for user supplied templates
     # Terraform does not allow us to copy a template and then reference it within the same run when using templatefile()
     # To get past this, we will need to copy over all the user passed templates into the project directory
-    # and update the template variable passed in by the user
+    infra_file_templates = infra_vars.get(csp, {}).get('templates', [])
+    if not isinstance(infra_file_templates, list):
+        raise TypeError("Template variables should pass in a list of strings that represent a path or rely on the CLI passthrough")
+    # Remove templates from final terraform variables since save_user_templates will save them into project_name/templates/
+    if infra_file_templates:
+        del infra_vars[csp]['templates']
+    user_templates.extend(infra_file_templates)
     save_user_templates(project_path, user_templates)
 
     # Transform variables extracted from the infrastructure file into
