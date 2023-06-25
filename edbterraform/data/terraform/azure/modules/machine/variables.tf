@@ -10,6 +10,8 @@ variable "operating_system" {
     publisher = string
     version   = string
     ssh_user  = string
+    ssh_public_key_file = string
+    ssh_private_key_file = string
   })
 }
 variable "machine" {
