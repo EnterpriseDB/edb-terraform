@@ -1,0 +1,253 @@
+---
+aws:
+  tags:
+    created_by: Demo-Infra
+    cluster_name: edb-ra-3
+    reference_architecture: edb-ra-3
+  images:
+    rocky8:
+      name: Rocky-8-ec2-8.5-20211114.2.x86_64
+      owner: "792107900819"
+      ssh_user: rocky
+  regions:
+    us-west-2:
+      cidr_block: 10.2.0.0/16
+      zones:
+        default:
+          cidr: 10.2.1.0/24
+          zone: us-west-2a
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: SSH default
+      region_ports:
+        - protocol: icmp
+          description: regional ping
+        - port: 8443
+          protocol: tcp
+          description: tcp
+        - port: 5432
+          protocol: tcp
+          description: postgres-port
+        - port: 5444
+          protocol: tcp
+          description: epas-port
+        - port: 7800
+          to_port: 7810
+          protocol: tcp
+          description: tcp
+        - port: 9999
+          protocol: tcp
+          description: pgpool2 user connections
+        - port: 9898
+          protocol: tcp
+          description: pgpool2 pcp
+        - port: 9898
+          protocol: udp
+          description: pgpool2 pcp
+        - port: 9000
+          protocol: tcp
+          description: pgpool2 watchdog
+        - port: 9000
+          protocol: udp
+          description: pgpool2 watchdog
+        - port: 9694
+          protocol: tcp
+          description: pgpool2 heartbeat
+        - port: 9694
+          protocol: udp
+          description: pgpool2 heartbeat
+        - port: 6432
+          protocol: tcp
+          description: pgbouncer
+        - port: 5442
+          protocol: tcp
+          description: HARP
+        - port: 2379
+          protocol: tcp
+          description: etcd client
+        - port: 2380
+          protocol: tcp
+          description: etcd peer
+        - port: 30000
+          protocol: tcp
+          description: dbt2 client
+  machines:
+    pem-server-0:
+      instance_type: c5.xlarge
+      volume:
+        type: gp2
+        size: 100
+        iops: 250
+        size_gb: 100
+      image_name: rocky8
+      region: us-west-2
+      zone_name: default
+      tags:
+        type: pem_server
+        pg_type: epas
+        index: 0
+    postgres-server-0:
+      volume:
+        type: gp2
+        size: 50
+        iops: 250
+        size_gb: 50
+      additional_volumes:
+        - type: gp2
+          size: 50
+          iops: 250
+          encrypted: false
+          mount_point: /pgdata
+          size_gb: 50
+        - type: gp2
+          size: 50
+          iops: 250
+          encrypted: false
+          mount_point: /pgwal
+          size_gb: 50
+      instance_type: c5.2xlarge
+      image_name: rocky8
+      region: us-west-2
+      zone_name: default
+      tags:
+        reference_architecture: edb-ra-3
+        type: postgres_server
+        pg_type: epas
+        index: 0
+        postgres_group: postgres_server
+        pooler_type: pgpool2
+        pooler_local: false
+    postgres-server-1:
+      volume:
+        type: gp2
+        size: 50
+        iops: 250
+        size_gb: 50
+      additional_volumes:
+        - type: gp2
+          size: 50
+          iops: 250
+          encrypted: false
+          mount_point: /pgdata
+          size_gb: 50
+        - type: gp2
+          size: 50
+          iops: 250
+          encrypted: false
+          mount_point: /pgwal
+          size_gb: 50
+      instance_type: c5.2xlarge
+      image_name: rocky8
+      region: us-west-2
+      zone_name: default
+      tags:
+        type: postgres_server
+        pg_type: epas
+        index: 1
+        postgres_group: postgres_server
+        replication_type: synchronous
+        pooler_type: pgpool2
+        pooler_local: false
+    postgres-server-2:
+      volume:
+        type: gp2
+        size: 50
+        iops: 250
+        size_gb: 50
+      additional_volumes:
+        - type: gp2
+          size: 50
+          iops: 250
+          encrypted: false
+          mount_point: /pgdata
+          size_gb: 50
+        - type: gp2
+          size: 50
+          iops: 250
+          encrypted: false
+          mount_point: /pgwal
+          size_gb: 50
+      instance_type: c5.2xlarge
+      image_name: rocky8
+      region: us-west-2
+      zone_name: default
+      tags:
+        type: postgres_server
+        pg_type: epas
+        index: 2
+        postgres_group: postgres_server
+        replication_type: asynchronous
+        pooler_type: pgpool2
+        pooler_local: false
+    barman-server-0:
+      instance_type: c5.2xlarge
+      volume:
+        type: gp2
+        size: 50
+        iops: 250
+        size_gb: 50
+      additional_volumes:
+        - count: 1
+          type: gp2
+          size: 300
+          iops: 250
+          encrypted: false
+          mount_point: /var/lib/barman
+          size_gb: 300
+      image_name: rocky8
+      region: us-west-2
+      zone_name: default
+      tags:
+        type: barman_server
+        pg_type: epas
+        index: 0
+    pooler-server-0:
+      instance_type: c5.xlarge
+      volume:
+        type: gp2
+        size: 30
+        iops: 250
+        size_gb: 30
+      image_name: rocky8
+      region: us-west-2
+      zone_name: default
+      tags:
+        reference_architecture: edb-ra-3
+        type: pooler_server
+        pg_type: epas
+        index: 0
+        pooler_type: pgpool2
+        pooler_local: false
+    pooler-server-1:
+      instance_type: c5.xlarge
+      volume:
+        type: gp2
+        size: 30
+        iops: 250
+        size_gb: 30
+      image_name: rocky8
+      region: us-west-2
+      zone_name: default
+      tags:
+        type: pooler_server
+        pg_type: epas
+        index: 1
+        pooler_type: pgpool2
+        pooler_local: false
+    pooler-server-2:
+      instance_type: c5.xlarge
+      volume:
+        type: gp2
+        size: 30
+        iops: 250
+        size_gb: 30
+      image_name: rocky8
+      region: us-west-2
+      zone_name: default
+      tags:
+        type: pooler_server
+        pg_type: epas
+        index: 2
+        pooler_type: pgpool2
+        pooler_local: false
