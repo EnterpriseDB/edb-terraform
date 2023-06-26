@@ -84,6 +84,7 @@ def create_project_dir(project_directory, cloud_service_provider, infrastructure
     - cloud service provider modules
     - infrastructure.yml user file
       - edb-terraform.version key added
+    - hcl lock file
     '''
     if os.path.exists(project_directory):
         sys.exit("ERROR: directory %s already exists" % project_directory)
