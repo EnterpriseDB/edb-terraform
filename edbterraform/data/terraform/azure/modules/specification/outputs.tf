@@ -49,7 +49,9 @@ locals {
             name = machine_spec.count > 1 ? "${name}-${index}" : name
           })
           # assign operating system from mapped names
-          operating_system = var.spec.images[machine_spec.image_name]
+          # add private and public key paths so they can be passed in the machine outputs
+          operating_system = merge(var.spec.images[machine_spec.image_name], { "ssh_private_key_file": local.private_ssh_path, "ssh_public_key_file": local.public_ssh_path })
+
           # assign zone from mapped names
           # Handle 0 as null to represent a region with no zones available
           zone = tostring(var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone) == "0" ? null : var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone

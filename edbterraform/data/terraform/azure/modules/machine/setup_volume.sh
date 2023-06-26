@@ -34,7 +34,9 @@ done
 # NVME device.
 for NVME_DEVICE in $(sudo ls /dev/nvme*n*); do
 	EBS_DEVICE=$(sudo nvme id-ctrl -v ${NVME_DEVICE} | grep "0000:" | awk '{ print $18 }' | sed 's/["\.]//g')
-	if [ "$EBS_DEVICE" = "${TARGET_EBS_DEVICES[0]}" ]; then
+
+	# /dev/ might be dropped at times so we need to check both cases
+    if [ "$EBS_DEVICE" = "${TARGET_EBS_DEVICES[0]}" ] || [ "/dev/$EBS_DEVICE" = "${TARGET_EBS_DEVICES[0]}" ]; then
 		TARGET_NVME_DEVICE=${NVME_DEVICE}
 		break
 	fi

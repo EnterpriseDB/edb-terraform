@@ -67,5 +67,3 @@ gcloud:
           iops: null
       tags:
         type: postgres
-  templates:
-    - ./edb-terraform/infrastructure-examples/v2_inventory.yml.tftpl

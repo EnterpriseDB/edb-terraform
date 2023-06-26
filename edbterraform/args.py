@@ -10,7 +10,7 @@ from datetime import datetime
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
-from edbterraform import __project_name__
+from edbterraform import __dot_project__
 from edbterraform.utils import logs
 
 ENVIRONMENT_PREFIX = 'ET_' # Appended to allow overrides of defaults
@@ -35,6 +35,7 @@ class ArgumentConfig:
     choices: list = None
     required: bool = None
     action: str = None
+    nargs: str = None
 
     def __post_init__(self) -> None:
         # Allow overriding of variables with environment variables
@@ -109,6 +110,17 @@ WorkPath = ArgumentConfig(
     help="Project path. Default: %(default)s",
 )
 
+UserTemplatesPath = ArgumentConfig(
+    names = ['--user-templates',],
+    metavar='USER_TEMPLATE_FILES',
+    dest='user_templates',
+    type=Path,
+    nargs='+',
+    required=False,
+    default=[f'{__dot_project__}/templates',],
+    help="Users can pass in a list of template files or template directories, which will be rendered with the servers output. Default: %(default)s",
+)
+
 InfrastructureFilePath = ArgumentConfig(
     names = ['--infra-file',],
     metavar='INFRA_FILE_YAML',
@@ -177,7 +189,7 @@ LogDirectory = ArgumentConfig(
     names = ['--log-directory',],
     dest='log_directory',
     required=False,
-    default=f'{Path.home()}/.{__project_name__}/logs',
+    default=f'{__dot_project__}/logs',
     help='''
         Default: %(default)s
         '''
@@ -220,6 +232,7 @@ class Arguments:
             LogFile,
             LogDirectory,
             LogStdout,
+            UserTemplatesPath,
         ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
@@ -287,6 +300,13 @@ class Arguments:
         Get environment variables which are available after parse_args() is called
         '''
         return getattr(self.env, key, default)
+    
+    def get_kwargs(self):
+        '''
+        Returns the parsed arguments as a dictionary.
+        _get_kwargs not used as it returns a list of dictionary items.
+        '''
+        return self.env.__dict__.copy()
 
     def process_args(self):
         logs.setup_logs(
@@ -311,6 +331,7 @@ class Arguments:
                 self.get_env('csp'),
                 self.get_env('run_validation'),
                 self.get_env('bin_path'),
+                self.get_env('user_templates')
             )
             return outputs
 

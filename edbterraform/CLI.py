@@ -9,7 +9,7 @@ import stat
 import json
 import textwrap
 
-from edbterraform import __project_name__
+from edbterraform import __dot_project__
 from edbterraform.utils.logs import logger
 
 Version = namedtuple('Version', ['major', 'minor', 'patch'])
@@ -133,7 +133,7 @@ class TerraformCLI:
     arch_alias = {
         'x86_64': 'amd64',
     }
-    DEFAULT_PATH=f'{Path.home()}/.{__project_name__}'
+    DEFAULT_PATH = __dot_project__
 
     def __init__(self, binary_dir=None):
         self.bin_dir = binary_dir if binary_dir else TerraformCLI.DEFAULT_PATH

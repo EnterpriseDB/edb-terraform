@@ -79,5 +79,3 @@ azure:
           iops: 1000
       tags:
         type: postgres
-  templates:
-    - ./edb-terraform/infrastructure-examples/v2_inventory.yml.tftpl

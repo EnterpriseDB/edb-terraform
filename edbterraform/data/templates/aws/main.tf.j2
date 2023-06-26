@@ -138,7 +138,7 @@ resource "local_file" "user_templates" {
     output_name default made through jinja2 templating with edb-terraform: 'servers'
     terraform output -json <output_name>
   */
-  for_each   = toset(module.spec.base.templates)
+  for_each   = fileset(path.root, "templates/*.tftpl")
   content    = templatefile(each.value, local.servers)
   filename   = "${abspath(path.root)}/${trimsuffix(basename(each.value), ".tftpl")}"
   file_permission = "0600"
