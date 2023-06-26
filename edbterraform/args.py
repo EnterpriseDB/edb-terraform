@@ -10,7 +10,7 @@ from datetime import datetime
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
-from edbterraform import __dot_project__
+from edbterraform import __project_name__, __dot_project__, __version__
 from edbterraform.utils import logs
 
 ENVIRONMENT_PREFIX = 'ET_' # Appended to allow overrides of defaults
@@ -130,6 +130,19 @@ InfrastructureFilePath = ArgumentConfig(
     help="cloud service provider infrastructure file path (YAML format). Default: %(default)s"
 )
 
+TerraformLockHcl = ArgumentConfig(
+    names = ['--lock-hcl-file',],
+    metavar='LOCK_HCL_FILE',
+    dest='lock_hcl_file',
+    type=Path,
+    required=False,
+    help='''
+    Terraform Lock HCL file is used to ensure the same package versions are used across architectures with terraform's cli.
+    If not used, terraform will try to grab the latest versions from each provider.
+    Default: %(default)s
+    '''
+)
+
 ProjectName = ArgumentConfig(
     names = ['--project-name',],
     metavar='PROJECT_NAME',
@@ -233,6 +246,7 @@ class Arguments:
             LogDirectory,
             LogStdout,
             UserTemplatesPath,
+            TerraformLockHcl,
         ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
@@ -243,6 +257,7 @@ class Arguments:
         ]],
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
+    VERSION_MESSAGE=f'Version: {__version__}\n'
 
     def __init__(self, args:List[str]=sys.argv, parser=argparse.ArgumentParser()):
         self.parser = parser
@@ -258,7 +273,7 @@ class Arguments:
                     *(config.get_names()),
                     **(config.get_args())
                 )
-            subparser.usage = arg_configs[0]+subparser.format_usage()
+            subparser.usage = arg_configs[0]+self.VERSION_MESSAGE+subparser.format_usage()
 
         self.env = self.parser.parse_args()
 
@@ -331,7 +346,8 @@ class Arguments:
                 self.get_env('csp'),
                 self.get_env('run_validation'),
                 self.get_env('bin_path'),
-                self.get_env('user_templates')
+                self.get_env('user_templates'),
+                self.get_env('lock_hcl_file'),
             )
             return outputs
 
