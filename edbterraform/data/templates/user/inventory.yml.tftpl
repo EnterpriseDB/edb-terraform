@@ -1,6 +1,14 @@
+# Original filename: inventory.yml.tftpl
+# This inventory file is meant to be used alongside edb-ansible: https://github.com/EnterpriseDB/edb-ansible
+# and relies on tags set within the infrastructure file to properly generate.
+# Sample infrastructure file for this template can be found under infrastructure-examples/aws-edb-ra-3.yml
+#
+# As a sample template, it will not cause terraform CLI and so it might be invalid.
+# To fail upon errors, remove any try() function.
 ---
 all:
   children:
+# PEM servers: tags.type.pem_server
 %{ for key, values in {for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "pem_server" && tonumber(try(values.tags.index, -1)) == 0 } ~}
     pemserver:
       hosts:
@@ -15,6 +23,7 @@ all:
           ansible_ssh_private_key_file: ${ values.operating_system.ssh_private_key_file }
 %{ endfor ~}
 
+# Barman servers: tags.type.barman_server
 %{ for key, values in {for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "barman_server" && tonumber(try(values.tags.index, -1)) == 0 } ~}
     barmanserver:
       hosts:
@@ -35,6 +44,7 @@ all:
 %{   endfor ~}
 %{ endfor ~}
 
+# Postgres servers: tags.type.postgres_server
 %{ for key,values in { for key,values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "postgres_server" && tonumber(try(values.tags.index, -1)) == 0 } ~}
     primary:
       hosts:
@@ -107,6 +117,7 @@ all:
 %{   endfor ~}
 %{ endfor ~}
 
+# BDR servers: tags.type.bdr_server
 %{ for key, values in {for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "bdr_server" && tonumber(try(values.tags.index, -1)) == 0 } ~}
     primary:
       hosts:
@@ -142,6 +153,7 @@ all:
 %{   endfor ~}
 %{ endfor ~}
 
+# Pool connection servers: tags.type.pooler_server
 %{ for key, values in {for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "pooler_server" && tonumber(try(values.tags.index, -1)) == 0 } ~}
     ${ values.tags.pooler_type }:
       hosts:
@@ -165,6 +177,7 @@ all:
 %{   endfor ~}
 %{ endfor ~}
 
+# DBT2 servers: tags.type.dbt2_client
 %{ for key, values in { for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "dbt2_client" && tonumber(try(values.tags.index, -1)) == 0 } ~}
     dbt2_client:
       hosts:
@@ -177,6 +190,7 @@ all:
           ansible_ssh_private_key_file: ${ values.operating_system.ssh_private_key_file }
 %{ endfor ~}
 
+# DBT2 servers: tags.type.dbt2_driver
 %{ for key, values in { for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "dbt2_driver" && tonumber(try(values.tags.index, -1)) == 0 } ~}
     dbt2_driver:
       hosts:
@@ -189,11 +203,12 @@ all:
           ansible_ssh_private_key_file: ${ values.operating_system.ssh_private_key_file }
 %{ endfor ~}
 
-%{ for key, values in { for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "dbt2_driver" && tonumber(try(values.tags.index, -1)) == 0 } ~}
+# HammerDB servers: tags.type.hammerdb_server
+%{ for key, values in { for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "hammerdb_server" && tonumber(try(values.tags.index, -1)) == 0 } ~}
     hammerdbserver:
       hosts:
 %{ endfor ~}
-%{ for key, values in { for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "dbt2_driver" } ~}
+%{ for key, values in { for key, values in servers.machines: key=>values if lower(try(values.tags.type, "")) == "hammerdb_server" } ~}
         hammerdbserver${ 1 + tonumber(try(values.tags.index, -2)) }.${ values.tags.cluster_name }.internal:
           ansible_host: ${ values.public_ip }
           private_ip: ${ values.private_ip }
