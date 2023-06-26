@@ -10,7 +10,7 @@ from datetime import datetime
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
-from edbterraform import __dot_project__
+from edbterraform import __project_name__, __dot_project__, __version__
 from edbterraform.utils import logs
 
 ENVIRONMENT_PREFIX = 'ET_' # Appended to allow overrides of defaults
@@ -243,6 +243,7 @@ class Arguments:
         ]],
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
+    VERSION_MESSAGE=f'Version: {__version__}\n'
 
     def __init__(self, args:List[str]=sys.argv, parser=argparse.ArgumentParser()):
         self.parser = parser
@@ -258,7 +259,7 @@ class Arguments:
                     *(config.get_names()),
                     **(config.get_args())
                 )
-            subparser.usage = arg_configs[0]+subparser.format_usage()
+            subparser.usage = arg_configs[0]+self.VERSION_MESSAGE+subparser.format_usage()
 
         self.env = self.parser.parse_args()
 
