@@ -130,6 +130,19 @@ InfrastructureFilePath = ArgumentConfig(
     help="cloud service provider infrastructure file path (YAML format). Default: %(default)s"
 )
 
+TerraformLockHcl = ArgumentConfig(
+    names = ['--lock-hcl-file',],
+    metavar='LOCK_HCL_FILE',
+    dest='lock_hcl_file',
+    type=Path,
+    required=False,
+    help='''
+    Terraform Lock HCL file is used to ensure the same package versions are used across architectures with terraform's cli.
+    If not used, terraform will try to grab the latest versions from each provider.
+    Default: %(default)s
+    '''
+)
+
 ProjectName = ArgumentConfig(
     names = ['--project-name',],
     metavar='PROJECT_NAME',
@@ -233,6 +246,7 @@ class Arguments:
             LogDirectory,
             LogStdout,
             UserTemplatesPath,
+            TerraformLockHcl,
         ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
@@ -332,7 +346,8 @@ class Arguments:
                 self.get_env('csp'),
                 self.get_env('run_validation'),
                 self.get_env('bin_path'),
-                self.get_env('user_templates')
+                self.get_env('user_templates'),
+                self.get_env('lock_hcl_file'),
             )
             return outputs
 

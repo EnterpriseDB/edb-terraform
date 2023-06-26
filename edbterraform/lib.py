@@ -78,7 +78,7 @@ def save_default_templates(templates_directory):
         logger.error("ERROR: cannot create template directory %s (%s)" % (templates_directory, e))
         sys.exit(1)
 
-def create_project_dir(project_directory, cloud_service_provider, infrastructure_file):
+def create_project_dir(project_directory, cloud_service_provider, infrastructure_file, hcl_lock_file):
     '''
     Create new terraform project directory and copy needed files
     - cloud service provider modules
@@ -92,6 +92,7 @@ def create_project_dir(project_directory, cloud_service_provider, infrastructure
     try:
         terraform_modules_directory = script_dir / 'data' / 'terraform' / cloud_service_provider
         infrastructure_final_file = project_directory / 'infrastructure.yml.bak'
+        hcl_lock_final_file = project_directory / '.terraform.lock.hcl'
 
         logger.info(f'Copying terraform modules {terraform_modules_directory} into {project_directory}')
         shutil.copytree(terraform_modules_directory, project_directory)
@@ -102,6 +103,12 @@ def create_project_dir(project_directory, cloud_service_provider, infrastructure
         logger.info(f'Adding version to {infrastructure_final_file.name} under keys edb-terraform.version')
         with open(infrastructure_final_file, 'a') as f:
             f.write(yaml.dump({'edb-terraform': {'version': __version__}}))
+
+        if hcl_lock_file:
+            logger.info(f'Copying HCL lock file: {hcl_lock_file}')
+            shutil.copyfile(hcl_lock_file, hcl_lock_final_file)
+        else:
+            logger.info(f'HCL lock file was not provided. Terraform will create one under {hcl_lock_final_file} during terraform init')
 
     except Exception as e:
         logger.error("ERROR: cannot create project directory %s (%s)" % (project_directory, e))
@@ -247,7 +254,14 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
     
     return (terraform_vars, template_vars)
 
-def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_validation: bool, bin_path: Path, user_templates: List[Path]) -> dict:
+def generate_terraform(
+        infra_file: Path,
+        project_path: Path,
+        csp: str,
+        run_validation: bool,
+        bin_path: Path,
+        user_templates: List[Path],
+        hcl_lock_file: Path,) -> dict:
     """
     Generates the terraform files from jinja templates and terraform modules and
     saves the files into a project_directory for use with 'terraform' commands
@@ -272,7 +286,7 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
     save_default_templates(f'{__dot_project__}/templates')
 
     # Duplicate terraform code into target project directory
-    create_project_dir(project_path, csp, infra_file)
+    create_project_dir(project_path, csp, infra_file, hcl_lock_file)
 
     # Allow for user supplied templates
     # Terraform does not allow us to copy a template and then reference it within the same run when using templatefile()
