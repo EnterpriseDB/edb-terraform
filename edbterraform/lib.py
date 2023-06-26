@@ -328,7 +328,8 @@ def generate_terraform(infra_file: Path, project_path: Path, csp: str, run_valid
     You can use now use terraform and see info about your boxes after creation:
     * cd {project_path}
     * terraform init
-    * terraform apply -auto-approve
+    * terraform plan -out terraform.plan
+    * terraform apply -auto-approve terraform.plan
     * terraform output -json {output_key}
     * ssh <ssh_user>@<ip-address> -i {ssh_file}
     ''').format(
