@@ -149,7 +149,7 @@ resources creation:
      
      Defaults to `aws` if not used
      ```shell
-     $ edb-terraform generate ~/my_project -c aws my_infrastructure.yml
+     $ edb-terraform generate --project-name aws-terraform --cloud-service-provider aws --infra-file edb-terraform/infrastructure-examples/aws-edb-ra-3.yml
      ```
 
       b. Step 2 can be skipped if using option `--validate`,
@@ -159,20 +159,20 @@ resources creation:
       * terraform `>= 1.3.6` 
       * CLI from chosen provider setup already (authenticated, export needed variables/files)
      ```shell
-     $ edb-terraform generate ~/my_project -c aws my_infrastructure.yml --validate
+     $ edb-terraform generate --project-name aws-terraform --cloud-service-provider aws --infra-file edb-terraform/infrastructure-examples/aws-edb-ra-3.yml --validate
      ```
 
 [![asciicast](https://asciinema.org/a/593423.svg)](https://asciinema.org/a/593423)
 
   2. Terraform initialisation of the *project*:
      ```shell
-     $ cd ~/my_project
+     $ cd aws-terraform
      $ terraform init
      ```
 
   3. Apply Cloud resources creation:
      ```shell
-     $ cd ~/my_project
+     $ cd aws-terraform
      $ terraform apply -auto-approve
      ```
 
@@ -228,7 +228,7 @@ SSH key files: `ssh-id_rsa` and `ssh-id_rsa.pub`.
 ## Cloud resources destruction
 
 ```shell
-$ cd ~/my_project
+$ cd aws-terraform
 $ terraform destroy -auto-approve
 ```
 
