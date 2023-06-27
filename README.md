@@ -183,7 +183,7 @@ resources creation:
 Once cloud resources provisioning is completed, machines public and private IPs
 are stored in the `servers.yml` file, located into the project's directory.
 These outputs can be used with a list of templates to generate files for other programs such as ansible.
-See example here which uses the below outputs. [inventory.yml](./infrastructure-examples/v2_inventory.yml.tftpl)
+See example here which uses the below outputs. 
 
 Example:
 
@@ -222,6 +222,14 @@ terraform output -json servers | python3 -m json.tool
 ```
 
 SSH key files: `ssh-id_rsa` and `ssh-id_rsa.pub`.
+
+## Customizations
+Users can further modify their resources after the initial provisioning.
+If any output files are needed based on the resources,
+terraform templates can be added to the projects `template` directory to have it rendered with any resource outputs once all resources are created.
+Examples of template files can be found here:
+[edb-ansible included inventory.yml](./edbterraform/data/templates/user/inventory.yml.tftpl)
+[sample inventory.yml](./infrastructure-examples/v2_inventory.yml.tftpl)
 
 [![asciicast](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY.svg)](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY)
 
