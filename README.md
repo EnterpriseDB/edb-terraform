@@ -115,9 +115,14 @@ $ sudo install terraform /usr/bin
 ### edb-terraform installation
 
 ```console
+$ git clone https://github.com/EnterpriseDB/edb-terraform.git
+```
+[![asciicast](https://asciinema.org/a/593420.svg)](https://asciinema.org/a/593420)
+
+```console
 $ pip3 install . --upgrade
 ```
-
+[![asciicast](https://asciinema.org/a/593421.svg)](https://asciinema.org/a/593421)
 ## Cloud Resources Creation
 
 Once the infrastructure file has been created we can to proceed with cloud
@@ -157,9 +162,7 @@ resources creation:
      $ edb-terraform generate ~/my_project -c aws my_infrastructure.yml --validate
      ```
 
-<p align="center">
-  <img width="100%" src="./images/generate.svg">
-</p>
+[![asciicast](https://asciinema.org/a/593423.svg)](https://asciinema.org/a/593423)
 
   2. Terraform initialisation of the *project*:
      ```shell
@@ -173,10 +176,7 @@ resources creation:
      $ terraform apply -auto-approve
      ```
 
-<p align="center">
-  <img width="100%" src="./images/apply.svg">
-</p>
-
+[![asciicast](https://asciinema.org/a/593425.svg)](https://asciinema.org/a/593425)
 
 ## SSH access to the machines
 
@@ -223,9 +223,7 @@ terraform output -json servers | python3 -m json.tool
 
 SSH key files: `ssh-id_rsa` and `ssh-id_rsa.pub`.
 
-<p align="center">
-  <img width="100%" src="./images/ssh.svg">
-</p>
+[![asciicast](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY.svg)](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY)
 
 ## Cloud resources destruction
 
@@ -234,6 +232,4 @@ $ cd ~/my_project
 $ terraform destroy -auto-approve
 ```
 
-<p align="center">
-  <img width="100%" src="./images/destroy.svg">
-</p>
+[![asciicast](https://asciinema.org/a/593427.svg)](https://asciinema.org/a/593427)
