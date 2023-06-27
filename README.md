@@ -115,9 +115,14 @@ $ sudo install terraform /usr/bin
 ### edb-terraform installation
 
 ```console
-$ pip3 install . --upgrade
+$ git clone https://github.com/EnterpriseDB/edb-terraform.git
 ```
+[![asciicast](https://asciinema.org/a/593420.svg)](https://asciinema.org/a/593420)
 
+```console
+$ python3 -m pip install edb-terraform/. --upgrade
+```
+[![asciicast](https://asciinema.org/a/593421.svg)](https://asciinema.org/a/593421)
 ## Cloud Resources Creation
 
 Once the infrastructure file has been created we can to proceed with cloud
@@ -144,7 +149,7 @@ resources creation:
      
      Defaults to `aws` if not used
      ```shell
-     $ edb-terraform generate ~/my_project -c aws my_infrastructure.yml
+     $ edb-terraform generate --project-name aws-terraform --cloud-service-provider aws --infra-file edb-terraform/infrastructure-examples/aws-edb-ra-3.yml
      ```
 
       b. Step 2 can be skipped if using option `--validate`,
@@ -154,36 +159,31 @@ resources creation:
       * terraform `>= 1.3.6` 
       * CLI from chosen provider setup already (authenticated, export needed variables/files)
      ```shell
-     $ edb-terraform generate ~/my_project -c aws my_infrastructure.yml --validate
+     $ edb-terraform generate --project-name aws-terraform --cloud-service-provider aws --infra-file edb-terraform/infrastructure-examples/aws-edb-ra-3.yml --validate
      ```
 
-<p align="center">
-  <img width="100%" src="./images/generate.svg">
-</p>
+[![asciicast](https://asciinema.org/a/593423.svg)](https://asciinema.org/a/593423)
 
   2. Terraform initialisation of the *project*:
      ```shell
-     $ cd ~/my_project
+     $ cd aws-terraform
      $ terraform init
      ```
 
   3. Apply Cloud resources creation:
      ```shell
-     $ cd ~/my_project
+     $ cd aws-terraform
      $ terraform apply -auto-approve
      ```
 
-<p align="center">
-  <img width="100%" src="./images/apply.svg">
-</p>
-
+[![asciicast](https://asciinema.org/a/593425.svg)](https://asciinema.org/a/593425)
 
 ## SSH access to the machines
 
 Once cloud resources provisioning is completed, machines public and private IPs
 are stored in the `servers.yml` file, located into the project's directory.
 These outputs can be used with a list of templates to generate files for other programs such as ansible.
-See example here which uses the below outputs. [inventory.yml](./infrastructure-examples/v2_inventory.yml.tftpl)
+See example here which uses the below outputs. 
 
 Example:
 
@@ -223,17 +223,21 @@ terraform output -json servers | python3 -m json.tool
 
 SSH key files: `ssh-id_rsa` and `ssh-id_rsa.pub`.
 
-<p align="center">
-  <img width="100%" src="./images/ssh.svg">
-</p>
+## Customizations
+Users can further modify their resources after the initial provisioning.
+If any output files are needed based on the resources,
+terraform templates can be added to the projects `template` directory to have it rendered with any resource outputs once all resources are created.
+Examples of template files can be found here:
+[edb-ansible included inventory.yml](./edbterraform/data/templates/user/inventory.yml.tftpl)
+[sample inventory.yml](./infrastructure-examples/v2_inventory.yml.tftpl)
+
+[![asciicast](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY.svg)](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY)
 
 ## Cloud resources destruction
 
 ```shell
-$ cd ~/my_project
+$ cd aws-terraform
 $ terraform destroy -auto-approve
 ```
 
-<p align="center">
-  <img width="100%" src="./images/destroy.svg">
-</p>
+[![asciicast](https://asciinema.org/a/593427.svg)](https://asciinema.org/a/593427)
