@@ -120,7 +120,7 @@ $ git clone https://github.com/EnterpriseDB/edb-terraform.git
 [![asciicast](https://asciinema.org/a/593420.svg)](https://asciinema.org/a/593420)
 
 ```console
-$ pip3 install . --upgrade
+$ python3 -m pip install edb-terraform/. --upgrade
 ```
 [![asciicast](https://asciinema.org/a/593421.svg)](https://asciinema.org/a/593421)
 ## Cloud Resources Creation
