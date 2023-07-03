@@ -68,7 +68,7 @@ variable "tags" {
 
 locals {
   # resource expects a cloud provider prefix infront of its instance type
-  instance_type = !startswith("azure:", var.instance_type) ? format("azure:%s",var.instance_type) : var.instance_type
+  instance_type = !startswith("aws:", var.instance_type) ? format("aws:%s",var.instance_type) : var.instance_type
 
   volume_size = "${var.volume.size_gb} Gi"
 

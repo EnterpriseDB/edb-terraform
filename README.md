@@ -62,7 +62,7 @@ $ sudo pip3 install pip --upgrade
   - changes after every refresh with a new access_token
 ```console
 wget https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh
-sh get-token.sh
+bash get-token.sh
 # Visit the biganimal link to activate the device
 # ex. Please login to https://auth.biganimal.com/activate?user_code=JWPL-RCXL with your BigAnimal account
 #     Have you finished the login successfully. (y/n)
@@ -72,7 +72,7 @@ export BA_BEARER_TOKEN=<access_token>
 
 Refresh the token
 ```console
-sh get-token.sh --refresh <refresh_token>
+bash get-token.sh --refresh <refresh_token>
 # Save the new refresh token, if needed again
 export BA_BEARER_TOKEN=<access_token>
 ```
