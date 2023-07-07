@@ -41,3 +41,11 @@ output "instance_type" {
 output "tags" {
   value = aws_rds_cluster.aurora_cluster.tags_all
 }
+
+output "cluster_id" {
+  value = aws_rds_cluster.aurora_cluster.id
+}
+
+output "resource_id" {
+  value = aws_rds_cluster_instance.aurora_instance.*.id
+}
