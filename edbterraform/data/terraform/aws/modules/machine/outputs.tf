@@ -37,3 +37,7 @@ output "additional_volumes" {
 output "operating_system" {
   value = var.operating_system
 }
+
+output "resource_id" {
+  value = aws_instance.machine.id
+}

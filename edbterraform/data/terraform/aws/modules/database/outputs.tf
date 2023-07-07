@@ -41,3 +41,7 @@ output "dbname" {
 output "tags" {
   value = aws_db_instance.rds_server.tags_all
 }
+
+output "resource_id" {
+  value = aws_db_instance.rds_server.id
+}
