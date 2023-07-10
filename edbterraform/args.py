@@ -143,14 +143,26 @@ TerraformLockHcl = ArgumentConfig(
     '''
 )
 
+class ProjectNameAction(argparse.Action):
+    '''
+    project name might be combined with Path
+    and should avoid setting leading slashes: '/'
+    During conatentation, Path will return the second value if it is a root path.
+    '''
+    def __call__(self, parser, namespace, values, option_string=None):
+        new_value = values.lstrip('\\/')
+        setattr(namespace, self.dest, new_value)
+
 ProjectName = ArgumentConfig(
     names = ['--project-name',],
     metavar='PROJECT_NAME',
     dest='project_name',
     required=True,
+    action=ProjectNameAction,
     help='''
-        Creates a directory with PROJECT_NAME for generated files in the WORK_PATH
-        %(default)s
+        Creates a directory with PROJECT_NAME for generated files in the WORK_PATH.
+        Leading slashes will be removed from names.
+        Default: %(default)s
         '''
 )
 
