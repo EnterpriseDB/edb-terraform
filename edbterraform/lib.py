@@ -9,7 +9,7 @@ import shutil
 import subprocess
 from jinja2 import Environment, FileSystemLoader
 import textwrap
-from typing import List
+from typing import List, Optional
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -261,8 +261,9 @@ def generate_terraform(
         csp: str,
         run_validation: bool,
         bin_path: Path,
-        user_templates: List[Path],
-        hcl_lock_file: Path,) -> dict:
+        user_templates: Optional[List[Path]]=[],
+        hcl_lock_file: Optional[Path]=None,
+    ) -> dict:
     """
     Generates the terraform files from jinja templates and terraform modules and
     saves the files into a project_directory for use with 'terraform' commands
