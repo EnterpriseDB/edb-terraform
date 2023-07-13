@@ -24,6 +24,6 @@ module "alloy_{{ region_ }}" {
   depends_on = [module.security_{{ region_ }}]
 
   providers = {
-    google = google-beta.{{ region_ }}
+    google = google.{{ region_ }}
   }
 }

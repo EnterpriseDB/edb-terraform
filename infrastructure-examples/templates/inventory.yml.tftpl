@@ -1,4 +1,12 @@
 ---
+# Examples meant to be passed in with 'edb-terraform generate'
+# or added manually to the projects template directory after generate,
+# so that it may be processed after all the infrastrcture has been provisioned.
+#
+# All values from servers.yml are passed in with the template and can be referenced in the templates.
+#
+# Basic ansible inventory example
+# Asssumes that the infrastrcture file has machine with a tag of 'type=postgres' or 'type=dbt2-driver'
 all:
   children:
     benchmarkers:

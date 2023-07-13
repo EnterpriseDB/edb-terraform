@@ -8,9 +8,4 @@ provider "google" {
   alias = "{{ region_ }}"
 }
 
-provider "google-beta" {
-  region = "{{ region }}"
-  alias = "{{ region_ }}"
-}
-
 {% endfor %}

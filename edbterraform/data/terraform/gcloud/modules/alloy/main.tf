@@ -1,3 +1,4 @@
+# Resource docs: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/alloydb_cluster
 resource "google_alloydb_cluster" "main" {
   cluster_id = var.name
   location   = var.region
@@ -29,11 +30,23 @@ resource "google_alloydb_cluster" "main" {
 
 }
 
+# Resource docs: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/alloydb_instance
 resource "google_alloydb_instance" "main" {
   cluster       = google_alloydb_cluster.main.name
   instance_id   = var.name
   instance_type = "PRIMARY"
-  # ZONAL only available for READ_POOL instances
+  /*
+  availability_type (Optional) - Availability type of an Instance:
+  - From resource docs - v4.53.0:
+    - Defaults to REGIONAL for both primary and read instances.
+      - Note that primary and read instances can have different availability types.
+    - Possible values are: AVAILABILITY_TYPE_UNSPECIFIED, ZONAL, REGIONAL.
+  - Additions to resource docs - v4.71.0:
+    - Only READ_POOL instance supports ZONAL type.
+    - Users can't specify the zone for READ_POOL instance.
+    - Zone is automatically chosen from the list of zones in the region specified.
+    - Read pool of size 1 can only have zonal availability.
+    - Read pools with node count of 2 or more can have regional availability (nodes are present in 2 or more zones in a region).'*/
   availability_type = "REGIONAL"
 
   database_flags = {

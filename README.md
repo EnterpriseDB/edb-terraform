@@ -38,7 +38,7 @@ The following components must be installed on the system:
 ## Infrastructure file examples
 
 Infrastructure files describing the target cloud
-can be found inside of the [infrastructure-examples directory](./infrastructure-examples/)
+can be found inside of the [infrastructure-examples directory](./infrastructure-examples/README.md)
 
 
 ### Prequisites installation on Debian 11
@@ -149,17 +149,15 @@ resources creation:
      
      Defaults to `aws` if not used
      ```shell
-     $ edb-terraform generate --project-name aws-terraform --cloud-service-provider aws --infra-file edb-terraform/infrastructure-examples/aws-edb-ra-3.yml
+     $ edb-terraform generate --project-name aws-terraform \
+                              --cloud-service-provider aws \
+                              --infra-file edb-terraform/infrastructure-examples/aws/edb-ra-3.yml \
+                              --user-templates edb-terraform/infrastructure-examples/templates/inventory.yml.tftpl
      ```
 
-      b. Step 2 can be skipped if using option `--validate`,
+      b. Step 2 can be skipped if option `--validate` is included with `generate`,
      which provides basic validations and checks through terraform.
-     
-     Requires:
-      * terraform `>= 1.3.6` 
-      * CLI from chosen provider setup already (authenticated, export needed variables/files)
-     ```shell
-     $ edb-terraform generate --project-name aws-terraform --cloud-service-provider aws --infra-file edb-terraform/infrastructure-examples/aws-edb-ra-3.yml --validate
+
      ```
 
 [![asciicast](https://asciinema.org/a/593423.svg)](https://asciinema.org/a/593423)
@@ -229,7 +227,7 @@ If any output files are needed based on the resources,
 terraform templates can be added to the projects `template` directory to have it rendered with any resource outputs once all resources are created.
 Examples of template files can be found here:
 [edb-ansible included inventory.yml](./edbterraform/data/templates/user/inventory.yml.tftpl)
-[sample inventory.yml](./infrastructure-examples/v2_inventory.yml.tftpl)
+[sample inventory.yml](./infrastructure-examples/templates/inventory.yml.tftpl)
 
 [![asciicast](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY.svg)](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY)
 
