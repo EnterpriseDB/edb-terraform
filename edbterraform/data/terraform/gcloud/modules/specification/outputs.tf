@@ -20,11 +20,11 @@ output "tags" {
 }
 
 output "private_key" {
-  value = var.spec.ssh_key.private_path != null ? file(var.spec.ssh_key.private_path) : tls_private_key.default[0].private_key_openssh
+  value = var.spec.ssh_key.private_path != null ? file(var.spec.ssh_key.private_path) : try(tls_private_key.default[0].private_key_openssh, "")
 }
 
 output "public_key" {
-  value = var.spec.ssh_key.public_path != null ? file(var.spec.ssh_key.public_path) : tls_private_key.default[0].public_key_openssh
+  value = var.spec.ssh_key.public_path != null ? file(var.spec.ssh_key.public_path) : try(tls_private_key.default[0].public_key_openssh, "")
 }
 
 locals {
@@ -40,7 +40,8 @@ locals {
             name = machine_spec.count > 1 ? "${name}-${index}" : name
           })
           # assign operating system from mapped names
-          operating_system = var.spec.images[machine_spec.image_name]
+          # add private and public key paths so they can be passed in the machine outputs
+          operating_system = merge(var.spec.images[machine_spec.image_name], { "ssh_private_key_file": local.private_ssh_path, "ssh_public_key_file": local.public_ssh_path })
           # assign zone from mapped names
           zone = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
         })
