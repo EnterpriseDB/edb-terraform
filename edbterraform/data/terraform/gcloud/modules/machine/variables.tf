@@ -9,6 +9,8 @@ variable "operating_system" {
     family = optional(string)
     project = optional(string)
     ssh_user = string
+    ssh_public_key_file = string
+    ssh_private_key_file = string
   })
 
   validation {

@@ -96,8 +96,8 @@ resource "google_compute_disk" "volumes" {
   size             = each.value.size_gb
   zone             = var.machine.spec.zone
   provisioned_iops = try(each.value.iops, null)
-  # Implicit dependency to aws_ebs_volume.ebs_volume
-  labels = can(null_resource.ensure_ssh_open) ? var.tags : var.tags
+  # Implicit dependency to previous step
+  labels = can(null_resource.ensure_ssh_open) ? local.labels : local.labels
 
 }
 
