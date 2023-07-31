@@ -43,5 +43,5 @@ output "tags" {
 }
 
 output "resource_id" {
-  value = aws_db_instance.rds_server.id
+  value = aws_db_instance.rds_server.identifier
 }
