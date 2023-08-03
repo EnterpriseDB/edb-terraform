@@ -337,7 +337,7 @@ def generate_terraform(
     if 'ssh_key' in terraform_vars['spec'] and 'output_name' in terraform_vars['spec']['ssh_key']:
         OUTPUT['ssh_filename'] = terraform_vars['spec']['ssh_key']['output_name']
 
-    run_terraform(project_path, run_validation, bin_path)
+    run_terraform(project_path, bin_path, run_validation)
 
     logger.info(textwrap.dedent('''
     Success!
@@ -356,29 +356,36 @@ def generate_terraform(
 
     return OUTPUT
 
-def run_terraform(cwd, validate, bin_path):
-    if validate:
+def run_terraform(cwd, bin_path, validate=False, apply=False, destroy=False):
         try:
             terraform = TerraformCLI(bin_path)
             terraform.init_command(cwd)
             terraform.plan_command(cwd)
-            terraform.apply_target_command(cwd)
         except subprocess.CalledProcessError as e:
-            logger.warning(textwrap.dedent('''
-            Validation skipped, check {bin_path}.
-            Remove --validate option or install terraform >= {min_version}
-            and rerun edb-terraform
-            Install and manually run:
-            1. `terraform init`
-            2. `terraform plan`
-            3. `terraform apply -target=null_resource.validation`
-            ''').format(
-                bin_path=bin_path,
-                min_version=terraform.min_version,
-            ))
             logger.error(f'Error: ({e.output})')
             destroy_project_dir(cwd)
             sys.exit(e.returncode)
+        
+        if validate:
+            try:
+                terraform.apply_command(cwd, validate)
+                return
+            except subprocess.CalledProcessError as e:
+                logger.warning(textwrap.dedent('''
+                Validation skipped, check {bin_path}.
+                Remove --validate option or install terraform >= {min_version}
+                and rerun edb-terraform
+                Install and manually run:
+                1. `terraform init`
+                2. `terraform plan`
+                3. `terraform apply -target=null_resource.validation`
+                ''').format(
+                    bin_path=bin_path,
+                    min_version=terraform.min_version,
+                ))
+                logger.error(f'Error: ({e.output})')
+                destroy_project_dir(cwd)
+                sys.exit(e.returncode)
 
 """
 Support backwards compatability to older specs 

@@ -218,16 +218,12 @@ class TerraformCLI:
             logger.error(f'Error: ({e.output})')
             raise e
 
-    def apply_target_command(self, cwd):
+    def apply_command(self, cwd, validate_only=False):
         try:
             terraform_path = self.get_compatible_terraform()
-            command = [
-                terraform_path,
-                'apply',
-                '-input=false',
-                '-target=null_resource.validation',
-                '-auto-approve',
-            ]
+            command = [terraform_path, 'apply', '-input=false', '-auto-approve',]
+            if validate_only:
+                command.append('-target=null_resource.validation')
             output = execute_shell(
                     args=command,
                     environment=os.environ.copy(),
