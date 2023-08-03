@@ -190,6 +190,34 @@ Validation = ArgumentConfig(
         '''
 )
 
+Apply = ArgumentConfig(
+    names = ['--apply',],
+    dest='apply',
+    action='store_true',
+    required=False,
+    default=False,
+    help='''
+        Requires terraform >= 1.3.6
+        `terraform apply`
+        If invalid, error will be displayed and project directory destroyed
+        Default: %(default)s
+        '''
+)
+
+Destroy = ArgumentConfig(
+    names = ['--destroy',],
+    dest='destroy',
+    action='store_true',
+    required=False,
+    default=False,
+    help='''
+        Requires terraform >= 1.3.6
+        Attempt to remove an existing project before creating a new one.
+        If invalid, error will be displayed and project directory destroyed
+        Default: %(default)s
+        '''
+)
+
 LogLevel = ArgumentConfig(
     names = ['--log-level',],
     dest='log_level',
@@ -252,6 +280,8 @@ class Arguments:
             WorkPath,
             CloudServiceProvider,
             Validation,
+            Apply,
+            Destroy,
             BinPath,
             LogLevel,
             LogFile,
@@ -347,8 +377,8 @@ class Arguments:
                 self.get_env('infra_file'),
                 self.get_env('project_path'),
                 self.get_env('csp'),
-                self.get_env('run_validation'),
                 self.get_env('bin_path'),
+                self.get_env('run_validation'),
             )
 
         if self.command == 'generate':
@@ -356,10 +386,12 @@ class Arguments:
                 self.get_env('infra_file'),
                 self.get_env('work_path') / self.get_env('project_name'),
                 self.get_env('csp'),
-                self.get_env('run_validation'),
                 self.get_env('bin_path'),
                 self.get_env('user_templates'),
                 self.get_env('lock_hcl_file'),
+                self.get_env('run_validation'),
+                self.get_env('apply'),
+                self.get_env('destroy'),
             )
             return outputs
 
