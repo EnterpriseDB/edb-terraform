@@ -259,10 +259,12 @@ def generate_terraform(
         infra_file: Path,
         project_path: Path,
         csp: str,
-        run_validation: bool,
         bin_path: Path,
         user_templates: Optional[List[Path]]=[],
         hcl_lock_file: Optional[Path]=None,
+        run_validation: bool = False,
+        apply: bool = False,
+        destroy: bool = False,
     ) -> dict:
     """
     Generates the terraform files from jinja templates and terraform modules and
@@ -280,6 +282,9 @@ def generate_terraform(
         'terraform_output': '',
         'ssh_filename': '',
     }
+
+    # Destroy existing project before creating a new one
+    run_terraform(project_path, bin_path, validate=False, apply=False, destroy=destroy)
 
     # Load infrastructure variables from the YAML file that was passed
     infra_vars = load_yaml_file(infra_file)
@@ -337,7 +342,7 @@ def generate_terraform(
     if 'ssh_key' in terraform_vars['spec'] and 'output_name' in terraform_vars['spec']['ssh_key']:
         OUTPUT['ssh_filename'] = terraform_vars['spec']['ssh_key']['output_name']
 
-    run_terraform(project_path, bin_path, run_validation)
+    run_terraform(project_path, bin_path, run_validation, apply)
 
     logger.info(textwrap.dedent('''
     Success!
@@ -357,17 +362,34 @@ def generate_terraform(
     return OUTPUT
 
 def run_terraform(cwd, bin_path, validate=False, apply=False, destroy=False):
-        try:
-            terraform = TerraformCLI(bin_path)
-            terraform.init_command(cwd)
-            terraform.plan_command(cwd)
-        except subprocess.CalledProcessError as e:
-            logger.error(f'Error: ({e.output})')
-            destroy_project_dir(cwd)
-            sys.exit(e.returncode)
-        
+        terraform = TerraformCLI(bin_path)
+        if destroy:
+            try:
+                if terraform.destroy_command(cwd):
+                    destroy_project_dir(cwd)
+                return
+            except subprocess.CalledProcessError as e:
+                logger.warning(textwrap.dedent('''
+                Destroy skipped or failed, check {bin_path}.
+                Remove --destroy option or install terraform >= {min_version}
+                and rerun edb-terraform.
+                Install and manually run:
+                1. `terraform state list`
+                2. `terraform destroy`
+                ''').format(
+                    bin_path=bin_path,
+                    min_version=terraform.min_version,
+                ))
+                logger.error(f'Error: ({e.output})')
+                sys.exit(e.returncode)
+            except Exception as e:
+                logger.error(f'Error: ({e})')
+                sys.exit(1)
+
         if validate:
             try:
+                terraform.init_command(cwd)
+                terraform.plan_command(cwd)
                 terraform.apply_command(cwd, validate)
                 return
             except subprocess.CalledProcessError as e:
@@ -385,6 +407,29 @@ def run_terraform(cwd, bin_path, validate=False, apply=False, destroy=False):
                 ))
                 logger.error(f'Error: ({e.output})')
                 destroy_project_dir(cwd)
+                sys.exit(e.returncode)
+
+        if apply:
+            try:
+                terraform.init_command(cwd)
+                terraform.plan_command(cwd)
+                terraform.apply_command(cwd)
+                return
+            except subprocess.CalledProcessError as e:
+                logger.warning(textwrap.dedent('''
+                Apply skipped or failed, check {bin_path}.
+                Remove --apply option or install terraform >= {min_version}
+                and rerun edb-terraform.
+                Install and manually run:
+                1. `terraform init`
+                2. `terraform plan`
+                3. `terraform apply`
+                ''').format(
+                    bin_path=bin_path,
+                    min_version=terraform.min_version,
+                ))
+                logger.error(f'Error: ({e.output})')
+                run_terraform(cwd, bin_path, validate=False, apply=False, destroy=True)
                 sys.exit(e.returncode)
 
 """

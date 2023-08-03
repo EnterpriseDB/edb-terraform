@@ -134,6 +134,7 @@ class TerraformCLI:
         'x86_64': 'amd64',
     }
     DEFAULT_PATH = __dot_project__
+    plan_file = 'terraform.plan'
 
     def __init__(self, binary_dir=None):
         self.bin_dir = binary_dir if binary_dir else TerraformCLI.DEFAULT_PATH
@@ -208,6 +209,7 @@ class TerraformCLI:
                 terraform_path,
                 'plan',
                 '-input=false',
+                f'-out={self.plan_file}'
             ]
             output = execute_shell(
                     args=command,
@@ -224,6 +226,7 @@ class TerraformCLI:
             command = [terraform_path, 'apply', '-input=false', '-auto-approve',]
             if validate_only:
                 command.append('-target=null_resource.validation')
+            command.append(self.plan_file)
             output = execute_shell(
                     args=command,
                     environment=os.environ.copy(),
@@ -232,6 +235,53 @@ class TerraformCLI:
         except subprocess.CalledProcessError as e:
             logger.error(f'Error: ({e.output})')
             raise e
+
+    def destroy_command(self, cwd):
+        '''
+        Attempt to destroy resources.
+        If previously destroyed, a second attempt will fail with our custom modules,
+          and instead requires checking of the state to confirm destruction.
+        Some destructions will require manual intervention if state is left incomplete.
+        In most cases, we are able to comment out the codesection 
+          or use the Terraform cli to attempt to remove the problem resource from the state.
+        If a user deletes their statefile, they will need to visit the providers GUI and manually destroy any remaining resources.
+        '''
+        try:
+            cwd = Path(cwd)
+            if not cwd.exists():
+                logger.info('path does not exist yet, no destruction needed')
+                return False
+
+            if not (cwd / 'terraform.tfstate').exists():
+                raise IOError('terraform.tfstate not found.')
+
+            if (cwd / 'terraform.tfstate').stat().st_size == 0:
+                logger.info('terraform.tfstate is empty, no destruction needed')
+                return True
+
+            terraform_path = self.get_compatible_terraform()
+            command = [terraform_path, 'state', 'list',]
+            output = execute_shell(
+                    args=command,
+                    environment=os.environ.copy(),
+                    cwd=cwd,
+            )
+
+            if len(output.decode("utf-8").split('\n'))-1 == 0:
+                logger.info('state list return 0 results, no destruction needed')
+                return True
+
+            command = [terraform_path, 'destroy', '-input=false', '-auto-approve',]
+            output = execute_shell(
+                    args=command,
+                    environment=os.environ.copy(),
+                    cwd=cwd,
+            )
+        except subprocess.CalledProcessError as e:
+            logger.error(f'Error: ({e.output})')
+            raise e
+
+        return True
 
     @classmethod
     def get_max_version(cls):
