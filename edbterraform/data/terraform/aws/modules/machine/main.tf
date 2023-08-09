@@ -31,6 +31,21 @@ resource "aws_instance" "machine" {
   subnet_id              = var.subnet_id
   vpc_security_group_ids = flatten([var.custom_security_group_ids, module.machine_ports.security_group_ids])
 
+  dynamic "instance_market_options" {
+    for_each = var.machine.spec.spot_max_price[*]
+    content {
+      market_type = "spot"
+      dynamic "spot_options" {
+        for_each = var.machine.spec.spot_max_price[*]
+        content {
+          instance_interruption_behavior = "hibernate"
+          max_price = var.machine.spec.spot_max_price
+          spot_instance_type = "persistent"
+        }
+      }
+    }
+  }
+
   root_block_device {
     delete_on_termination = "true"
     volume_size           = var.machine.spec.volume.size_gb
