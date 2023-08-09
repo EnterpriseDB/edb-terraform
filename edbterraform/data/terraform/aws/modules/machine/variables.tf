@@ -48,4 +48,6 @@ locals {
     for names in local.linux_device_names:
       format("%s,%s,%s", names...)
   ]
+  # Default filesystem related variables
+  filesystem = "xfs"
 }
