@@ -9,3 +9,20 @@ provider "google" {
 }
 
 {% endfor %}
+
+{% if has_biganimal %}
+provider "biganimal" {
+  # BA_BEARER_TOKEN environment variable
+  # BA_API_URI environment variable, optional
+  alias = "default"
+}
+
+terraform {
+  required_providers {
+    biganimal = {
+      source  = "EnterpriseDB/biganimal"
+    }
+  }
+}
+
+{% endif %}

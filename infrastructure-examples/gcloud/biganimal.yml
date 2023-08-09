@@ -1,0 +1,33 @@
+gcloud:
+  tags:
+    cluster_name: biganimal
+    created_by: edb-terraform
+  regions:
+    us-east4:
+      cidr_block: 10.2.0.0/16
+  biganimal:
+    mydb2:
+      project:
+        id: prj_ziJPLQw3XxpR7nxV
+      region: us-east4
+      type: ha # Options: single | ha
+      node_count: 3 # must be 1 when using type: single
+      engine: epas
+      engine_version: 14
+      instance_type: e2-highcpu-4
+      password: "ndslniv&03ind**vDdjfnjv"
+      volume:
+        type: pd-ssd
+        properties: pd-ssd
+        size_gb: 10
+      settings:
+        - name: max_connections
+          value: 300
+        - name: random_page_cost
+          value: 1.25
+        - name: work_mem
+          value: 16000
+      allowed_ip_ranges:
+        - cidr_block: 10.0.0.0/24
+        - cidr_block: 127.0.0.1/32
+          description: localhost
