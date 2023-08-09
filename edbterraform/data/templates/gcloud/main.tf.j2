@@ -19,6 +19,10 @@
 {%     include "alloy.tf.j2" %}
 {%   endif %}
 
+{%   if has_biganimal %}
+{%     include "biganimal.tf.j2" %}
+{%   endif %}
+
 {%   if has_kubernetes %}
 {%     include "kubernetes.tf.j2" %}
 {%   endif %}
@@ -43,6 +47,11 @@
     'active': has_alloy,
     'regions': alloy_regions,
     'module_base': "module.alloy_",
+  },
+  'biganimal': {
+    'active': has_biganimal,
+    'regions': biganimal_regions,
+    'module_base': "module.biganimal_",
   },
   'kubernetes': {
     'active': has_kubernetes,
