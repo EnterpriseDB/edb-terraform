@@ -30,7 +30,7 @@ resource "biganimal_cluster" "instance" {
             description = allowed_ip_ranges.value.description
         }
     }
-    backup_retention_period = "30d"
+    # backup_retention_period = "30d"
     csp_auth = false
     dynamic "pg_config" {
         for_each = { for key,values in var.settings: key=>values } 
