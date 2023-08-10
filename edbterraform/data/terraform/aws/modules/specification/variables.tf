@@ -83,12 +83,13 @@ variable "spec" {
         encrypted = optional(bool)
       })
       additional_volumes = optional(list(object({
-        mount_point = string
-        size_gb     = number
-        iops        = optional(number)
-        type        = string
-        encrypted   = optional(bool)
-        filesystem  = optional(string)
+        mount_point   = string
+        size_gb       = number
+        iops          = optional(number)
+        type          = string
+        encrypted     = optional(bool)
+        filesystem    = optional(string)
+        mount_options = optional(string)
       })), [])
       tags = optional(map(string), {})
     })), {})

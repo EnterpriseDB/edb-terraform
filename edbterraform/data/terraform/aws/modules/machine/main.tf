@@ -136,8 +136,7 @@ resource "null_resource" "setup_volume" {
   provisioner "remote-exec" {
     inline = [
       "chmod a+x /tmp/setup_volume.sh",
-      "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1} ${coalesce(each.value.filesystem, local.filesystem)} >> /tmp/mount.log 2>&1"
-    ]
+      "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1} ${coalesce(each.value.filesystem, local.filesystem)} ${coalesce(try(join(",", each.value.mount_options), null), try(join(",", local.mount_options), null))} >> /tmp/mount.log 2>&1" ]
 
     connection {
       # Implicit dependency to null_resource.copy_setup_volume_script
