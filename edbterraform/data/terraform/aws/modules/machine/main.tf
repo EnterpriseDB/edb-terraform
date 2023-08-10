@@ -38,7 +38,7 @@ resource "aws_instance" "machine" {
       dynamic "spot_options" {
         for_each = var.machine.spec.spot_max_price[*]
         content {
-          instance_interruption_behavior = "hibernate"
+          instance_interruption_behavior = "stop"
           max_price = var.machine.spec.spot_max_price
           spot_instance_type = "persistent"
         }
