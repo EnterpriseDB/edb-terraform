@@ -8,8 +8,14 @@ MOUNT_POINT=$2
 # Total number of nvme devices that should be present on the system
 N_NVME_DEVICE=$3
 FSTYPE=$4
+FSMOUNTOPT=$5
 
 TARGET_NVME_DEVICE=""
+FSMOUNTOPT_ARG=""
+
+if [ ! "${FSMOUNTOPT}" = "" ]; then
+	FSMOUNTOPT_ARG="-o ${FSMOUNTOPT}"
+fi
 
 # Install nvme-cli
 if [ -f /etc/redhat-release ]; then
@@ -65,5 +71,5 @@ sudo mkdir -p "${MOUNT_POINT}"
 # UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 echo "Warning: Will be mounted by UUID in /etc/fstab"
 UUID=$(sudo blkid ${TARGET_NVME_DEVICE} -o export | grep -E "^UUID=")
-echo "${UUID} ${MOUNT_POINT} ${FSTYPE} noatime 0 0" | sudo tee -a /etc/fstab
-sudo mount -t "${FSTYPE}" -o noatime "${TARGET_NVME_DEVICE}" "${MOUNT_POINT}"
+echo "${UUID} ${MOUNT_POINT} ${FSTYPE} ${FSMOUNTOPT} 0 0" | sudo tee -a /etc/fstab
+eval "sudo mount -t ${FSTYPE} ${FSMOUNTOPT_ARG} ${TARGET_NVME_DEVICE} ${MOUNT_POINT}"

@@ -72,6 +72,10 @@ aws:
           type: io2
           iops: 50000
           encrypted: false
+          filesystem: xfs
+          mount_options:
+            - noatime
+            - nodiratime
   databases:
     mydb1:
       region: us-east-1

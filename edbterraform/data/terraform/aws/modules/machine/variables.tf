@@ -50,4 +50,5 @@ locals {
   ]
   # Default filesystem related variables
   filesystem = "xfs"
+  mount_options = ["noatime", "nodiratime", "logbsize=256k", "allocsize=1m"]
 }
