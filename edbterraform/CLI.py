@@ -129,7 +129,9 @@ def binary_path(name, bin_path=None):
 class TerraformCLI:
     binary_name = 'terraform'
     min_version = Version(1, 3, 6)
-    max_version = Version(1, 4, 6)
+    # Version temporarily locked to 1.5.5
+    # Ref PR: https://github.com/EnterpriseDB/edb-terraform/pull/88
+    max_version = Version(1, 5, 5)
     arch_alias = {
         'x86_64': 'amd64',
     }
