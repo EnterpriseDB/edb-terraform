@@ -47,7 +47,7 @@ aws:
       tags:
         type: dbt2-driver
     pg1:
-      spot_max_price: .50
+      spot: true
       image_name: rocky
       region: us-east-1
       zone_name: main

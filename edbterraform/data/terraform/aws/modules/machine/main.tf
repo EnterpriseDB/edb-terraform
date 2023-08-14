@@ -32,14 +32,13 @@ resource "aws_instance" "machine" {
   vpc_security_group_ids = flatten([var.custom_security_group_ids, module.machine_ports.security_group_ids])
 
   dynamic "instance_market_options" {
-    for_each = var.machine.spec.spot_max_price[*]
+    for_each = var.machine.spec.spot == true ? [1] : []
     content {
       market_type = "spot"
       dynamic "spot_options" {
-        for_each = var.machine.spec.spot_max_price[*]
+        for_each = var.machine.spec.spot == true ? [1] : []
         content {
           instance_interruption_behavior = "stop"
-          max_price = var.machine.spec.spot_max_price
           spot_instance_type = "persistent"
         }
       }

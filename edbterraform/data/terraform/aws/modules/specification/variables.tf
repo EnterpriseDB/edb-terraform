@@ -62,7 +62,7 @@ variable "spec" {
       type          = optional(string)
       image_name    = string
       count         = optional(number, 1)
-      spot_max_price = optional(number)
+      spot          = optional(bool)
       region        = string
       ssh_port      = optional(number, 22)
       ports         = optional(list(object({
