@@ -9,6 +9,7 @@ gcloud:
     mydb2:
       project:
         id: prj_ziJPLQw3XxpR7nxV
+      cloud_account: true
       region: us-east4
       type: ha # Options: single | ha
       node_count: 3 # must be 1 when using type: single
