@@ -6,6 +6,10 @@ variable "project" {
 
 variable "name" {}
 variable "name_id" {}
+variable "cloud_account" {
+  type = bool
+  description = "Option for selecting if biganimal should host the resources with your own cloud account instead of biganimal hosted resources"
+}
 variable "cluster_name" {}
 variable "cluster_type" {
   type = string
@@ -72,6 +76,6 @@ locals {
 
   volume_size = "${var.volume.size_gb} Gi"
 
-  cloud_provider = "gcp"
+  cloud_provider = var.cloud_account ? "gcp" : "bah:gcp"
   cluster_name = format("%s-%s", var.name, var.name_id)
 }
