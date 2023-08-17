@@ -10,6 +10,7 @@ module "biganimal_{{ region_ }}" {
   name                      = each.value.name
   name_id                   = module.spec.hex_id
 
+  cloud_account             = each.value.spec.cloud_account
   cluster_name              = module.spec.base.tags.cluster_name
   cluster_type              = each.value.spec.type
   node_count                = each.value.spec.node_count
