@@ -9,6 +9,7 @@ azure:
     mydb2:
       project:
         id: prj_ziJPLQw3XxpR7nxV
+      cloud_account: true
       region: eastus
       type: ha
       node_count: 3
