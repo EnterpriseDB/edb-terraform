@@ -9,6 +9,7 @@ aws:
     mydb2:
       project:
         id: prj_ziJPLQw3XxpR7nxV
+      cloud_account: true
       region: us-east-1
       type: ha
       node_count: 3

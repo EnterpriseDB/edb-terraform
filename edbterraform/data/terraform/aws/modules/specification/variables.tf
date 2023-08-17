@@ -136,6 +136,7 @@ variable "spec" {
       project        = object({
         id = optional(string)
       })
+      cloud_account = optional(bool, false)
       region         = string
       node_count     = number
       engine         = string
