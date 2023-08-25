@@ -27,16 +27,16 @@ gcloud:
           protocol: tcp
           description: "SSH"
   machines:
-    dbt2-driver2:
-      type: dbt2-driver
+    dbt2_driver2:
       region: us-west1
       zone: us-west1-b
       instance_type: c2-standard-4
       volume:
         type: pd-standard
         size_gb: 50
-    dbt2-proxy:
-      type: proxy
+      tags:
+        type: dbt2-driver
+    dbt2_proxy:
       region: us-west2
       zone: us-west2-b
       ip_forward: true
@@ -44,6 +44,8 @@ gcloud:
       volume:
         type: pd-standard
         size_gb: 50
+      tags:
+        type: proxy
   databases:
     mydb1:
       region: us-west2
@@ -71,3 +73,5 @@ gcloud:
           value: 1.25
         - name: work_mem
           value: 16000
+      tags:
+        foo: bar

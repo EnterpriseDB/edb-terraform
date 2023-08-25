@@ -34,16 +34,16 @@ azure:
           protocol: icmp
           description: "ping"
   machines:
-    dbt2-driver:
-      type: dbt2-driver
+    dbt2_driver:
       region: westus
       zone: 0
       instance_type: Standard_D2as_v4
       volume:
         type: StandardSSD_LRS
         size_gb: 50
+      tags:
+        type: dbt2-driver
     pg1:
-      type: postgres
       region: westus3
       zone: 2
       instance_type: Standard_D2as_v4
@@ -59,4 +59,5 @@ azure:
           type: UltraSSD_LRS
           size_gb: 50
           iops: 1000
-          
+      tags:
+        type: postgres

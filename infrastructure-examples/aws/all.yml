@@ -29,8 +29,7 @@ aws:
           protocol: tcp
           description: "PostgreSQL"
   machines:
-    dbt2-client:
-      type: dbt2-client
+    dbt2_client:
       region: us-east-1
       zone: us-east-1b
       instance_type: c5.4xlarge
@@ -40,9 +39,8 @@ aws:
         iops: 5000
         encrypted: false
       tags:
-        foo: bar
-    dbt2-driver:
-      type: dbt2-driver
+        type: dbt2-client
+    dbt2_driver:
       region: us-east-1
       zone: us-east-1c
       instance_type: c5.4xlarge
@@ -51,8 +49,8 @@ aws:
         size_gb: 50
         iops: 5000
         encrypted: false
+      tags: dbt2-driver
     pg1:
-      type: postgres
       region: us-east-1
       zone: us-east-1c
       instance_type: c5.4xlarge
@@ -76,6 +74,8 @@ aws:
           mount_options:
             - noatime
             - nodiratime
+      tags:
+        type: postgres
   databases:
     mydb1:
       region: us-east-1

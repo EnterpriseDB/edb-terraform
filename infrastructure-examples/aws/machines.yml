@@ -16,8 +16,7 @@ aws:
           protocol: tcp
           description: "SSH"
   machines:
-    dbt2-client:
-      type: dbt2-client
+    dbt2_client:
       region: us-east-1
       zone: us-east-1b
       instance_type: c5.4xlarge
@@ -28,8 +27,8 @@ aws:
         encrypted: false
       tags:
         foo: bar
-    dbt2-driver:
-      type: dbt2-driver
+        type: dbt2-client
+    dbt2_driver:
       region: us-east-1
       zone: us-east-1b
       instance_type: c5.4xlarge
@@ -38,6 +37,7 @@ aws:
         size_gb: 50
         iops: 5000
         encrypted: false
+      type: dbt2-driver
     pg1:
       type: postgres
       region: us-east-1
