@@ -34,7 +34,7 @@ aws:
           protocol: tcp
           description: "ranges"
   machines:
-    dbt2-driver:
+    dbt2_driver:
       image_name: debian
       region: us-east-1
       zone_name: proxy

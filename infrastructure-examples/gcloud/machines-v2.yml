@@ -33,7 +33,7 @@ gcloud:
           protocol: tcp
           description: "ranges"
   machines:
-    dbt2-driver:
+    dbt2_driver:
       image_name: debian
       region: us-west4
       zone_name: proxy

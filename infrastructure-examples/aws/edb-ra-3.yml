@@ -73,7 +73,7 @@ aws:
           protocol: tcp
           description: dbt2 client
   machines:
-    pem-server-0:
+    pem_server_0:
       instance_type: c5.xlarge
       volume:
         type: gp2
@@ -118,7 +118,7 @@ aws:
         postgres_group: postgres_server
         pooler_type: pgpool2
         pooler_local: false
-    postgres-server-1:
+    postgres_server_1:
       volume:
         type: gp2
         size: 50
@@ -149,7 +149,7 @@ aws:
         replication_type: synchronous
         pooler_type: pgpool2
         pooler_local: false
-    postgres-server-2:
+    postgres_server_2:
       volume:
         type: gp2
         size: 50
@@ -180,7 +180,7 @@ aws:
         replication_type: asynchronous
         pooler_type: pgpool2
         pooler_local: false
-    barman-server-0:
+    barman_server_0:
       instance_type: c5.2xlarge
       volume:
         type: gp2
@@ -202,7 +202,7 @@ aws:
         type: barman_server
         pg_type: epas
         index: 0
-    pooler-server-0:
+    pooler_server_0:
       instance_type: c5.xlarge
       volume:
         type: gp2
@@ -219,7 +219,7 @@ aws:
         index: 0
         pooler_type: pgpool2
         pooler_local: false
-    pooler-server-1:
+    pooler_server_1:
       instance_type: c5.xlarge
       volume:
         type: gp2
@@ -235,7 +235,7 @@ aws:
         index: 1
         pooler_type: pgpool2
         pooler_local: false
-    pooler-server-2:
+    pooler_server_2:
       instance_type: c5.xlarge
       volume:
         type: gp2

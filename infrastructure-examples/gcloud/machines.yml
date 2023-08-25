@@ -26,16 +26,16 @@ gcloud:
         - protocol: icmp
           description: "ping"
   machines:
-    dbt2-driver:
-      type: dbt2-driver
+    dbt2_driver:
       region: us-west2
       zone: us-west2-b
       instance_type: c2-standard-4
       volume:
         type: pd-standard
         size_gb: 50
+      tags:
+        type: dbt2-driver
     pg1:
-      type: postgres
       region: us-west1
       zone: us-west1-c
       instance_type: e2-standard-4
@@ -51,4 +51,6 @@ gcloud:
         - mount_point: /opt/pg_wal
           type: pd-ssd
           size_gb: 50
-          iops: null      
+          iops: null
+      tags:
+        type: postgres
