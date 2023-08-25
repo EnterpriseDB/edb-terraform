@@ -14,15 +14,14 @@ data "google_compute_image" "image" {
 }
 
 resource "google_compute_address" "public_ip" {
-  name         = format("public-ip-%s-%s", var.machine.name, var.name_id)
+  name         = local.public_ip_name
   region       = var.machine.spec.region
   address_type = "EXTERNAL"
   # TODO: Add labels once they are out of beta. 2023-05-05
 }
 
 resource "google_compute_instance" "machine" {
-  # name expects to be lower case
-  name           = lower(format("%s-%s-%s", var.cluster_name, var.machine.name, var.name_id))
+  name           = local.machine_name
   machine_type   = var.machine.spec.instance_type
   zone           = var.zone
   can_ip_forward = try(var.machine.spec.ip_forward, var.ip_forward)

@@ -44,6 +44,14 @@ locals {
   # we will do any needed handling and continue to treat
   # key-values as tags even though they are labels under gcloud
   labels = { for key,value in var.tags: key => lower(replace(value, ":", "_"))}
+
+  # public ip name and machine name must match regex: "^(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)$"
+  # Handle underscore in machine name
+  name = lower(replace(var.machine.name, "_", "-"))
+  name_id = lower(replace(var.name_id, "_", "-"))
+  cluster_name = lower(replace(var.cluster_name, "_", "-"))
+  machine_name = format("%s-%s-%s", local.cluster_name, local.name, local.name_id)
+  public_ip_name = format("public-ip-%s-%s", local.machine_name, var.name_id)
 }
 
 locals {
