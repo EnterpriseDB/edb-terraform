@@ -34,14 +34,13 @@ def execute_shell(args, environment=os.environ, cwd=None):
         return process
     
     except subprocess.CalledProcessError as e:
-        logger.error("Failed to execute the command: %s", e.cmd)
-        logger.error("Return code is: %s", e.returncode)
+        logger.error("Command failed: %s", e.cmd)
+        logger.error("Return code: %s", e.returncode)
         logger.error("Output: %s", e.output)
         raise Exception(
-            "executable seems to be missing. Please install it "
-            "or check your PATH variable"
+            "If executable fails to execute, check the path."
+            "If options --destroy or --apply fail, manual intervention may be required to allow for a recovery."
         )
-
 
 def execute_live_shell(args, environment=os.environ, cwd=None):
     logger.info("Executing command: %s", ' '.join(args))
