@@ -60,16 +60,34 @@
   }  
 } %}
 locals {
-  # outputs set with the help of jinja2 in edb-terraform
-  outputs = {
+  # Module names set with jinja2 in edb-terraform
+  # Modules cannot be referenced dynamically.
+  modules = {
 {% for type, attributes in boxes.items() if attributes["active"] %}
-    "{{type}}" = merge(
+    {{ type }} = flatten([
 {%   for region in attributes["regions"] -%}
 {%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
-    tomap([for key, values in {{module}}[*]: values]...),
+      {{ module }},
 {%   endfor %}
-    )
+    ])
 {% endfor %}
+  }
+}
+
+output "modules" {
+  description = "Variable which holds all final modules."
+  value = local.modules
+  sensitive = true
+}
+
+locals {
+  # Set final output
+  outputs = {
+    for type, modules in local.modules: type => merge(jsondecode(
+    <<-EOT
+    [ %{ for num, module in modules ~}${ jsonencode(module) }%{ if tonumber(num) < length(modules)-1 ~},%{ endif ~}%{ endfor ~} ]
+    EOT
+    )...)
   }
   servers = { "servers" = local.outputs }
 }
