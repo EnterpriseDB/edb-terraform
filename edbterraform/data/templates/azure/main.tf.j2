@@ -39,22 +39,18 @@
 
 {% set boxes = {
   'machines': { 
-    'active': has_machines,
     'regions': machine_regions,
     'module_base': 'module.machine_',
   },
   'databases': {
-    'active': has_databases,
     'regions': database_regions,
     'module_base': "module.database_",
   },
   'biganimal': {
-    'active': has_biganimal,
     'regions': biganimal_regions,
     'module_base': "module.biganimal_",
   },
   'kubernetes': {
-    'active': has_kubernetes,
     'regions': kubernetes_regions,
     'module_base': "module.kubernetes_",
   }
@@ -63,7 +59,7 @@ locals {
   # Module names set with jinja2 in edb-terraform
   # Modules cannot be referenced dynamically.
   modules = {
-{% for type, attributes in boxes.items() if attributes["active"] %}
+{% for type, attributes in boxes.items() %}
     {{ type }} = flatten([
 {%   for region in attributes["regions"] -%}
 {%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
