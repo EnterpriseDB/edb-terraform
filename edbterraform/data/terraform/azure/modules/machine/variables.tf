@@ -64,6 +64,8 @@ variable "additional_volumes" {
     type        = string
     caching     = optional(string, "None")
     iops        = optional(number)
+    filesystem    = optional(string)
+    mount_options = optional(string)
   }))
 
   validation {
@@ -125,10 +127,7 @@ locals {
     for letter in local.letters:
       formatlist("${local.prefix}%s${letter}", local.base)
   ]
-  # List(String) with comma delimiter
-  # [ "/dev/sdc" , ]
-  string_device_names = [
-    for names in local.linux_device_names:
-      format("%s", names...)
-  ]
+  # Default filesystem related variables
+  filesystem = "xfs"
+  mount_options = ["noatime", "nodiratime", "logbsize=256k", "allocsize=1m"]
 }
