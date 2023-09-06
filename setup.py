@@ -61,9 +61,8 @@ setup(
     data_files=[],
     package_data={
         'edbterraform': [
-            'data/terraform/*/variables.tf',
-            'data/terraform/*/modules/*/*.tf',
-            'data/terraform/*/modules/*/*.sh',
+            'data/terraform/*/*',
+            'data/terraform/*/modules/*/*',
             'data/templates/*/*',
             'utils/*'
         ]
