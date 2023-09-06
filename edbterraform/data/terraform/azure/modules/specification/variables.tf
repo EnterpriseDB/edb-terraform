@@ -90,6 +90,8 @@ variable "spec" {
         size_gb     = number
         iops        = optional(number)
         type        = string
+        filesystem    = optional(string)
+        mount_options = optional(string)
       })), [])
       tags = optional(map(string), {})
     })), {})

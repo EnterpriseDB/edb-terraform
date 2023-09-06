@@ -24,6 +24,14 @@ output "additional_volumes" {
   value = var.additional_volumes
 }
 
+output "block_devices" {
+  value = {
+    initial = local.initial_block_devices
+    all = local.all_block_devices
+    final = local.final_block_devices
+  }
+}
+
 output "operating_system" {
   value = var.operating_system
 }
