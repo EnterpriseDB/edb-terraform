@@ -72,10 +72,7 @@ locals {
     for letter in local.letters:
       formatlist("${local.prefix}%s${letter}", local.base)
   ]
-  # List(String) with comma delimiter
-  # [ "/dev/disk/by-id/google-sdf" , ]
-  string_device_names = [
-    for names in local.linux_device_names:
-      format("%s", names...)
-  ]
+  # Default filesystem related variables
+  filesystem = "xfs"
+  mount_options = ["noatime", "nodiratime", "logbsize=256k", "allocsize=1m"]
 }

@@ -91,6 +91,8 @@ variable "spec" {
         iops        = optional(number)
         type        = string
         encrypted   = optional(bool)
+        filesystem    = optional(string)
+        mount_options = optional(string)
       })), [])
       tags = optional(map(string), {})
     })), {})
