@@ -65,12 +65,13 @@ resource "aws_instance" "machine" {
 resource "null_resource" "ensure_ssh_open" {
   count = local.additional_volumes_count
   triggers = {
-    "depends_on" = can(module.machine_ports) ? local.additional_volumes_length : local.additional_volumes_length
+    "depends0" = local.additional_volumes_length
+    "depends1" = can(module.machine_ports)
   }
 
   provisioner "remote-exec" {
     inline = [
-      "echo connected",
+      "printf 'connected\n'",
     ]
     connection {
       type        = "ssh"
@@ -83,6 +84,23 @@ resource "null_resource" "ensure_ssh_open" {
   }
 }
 
+resource "toolbox_external" "initial_block_devices" {
+  count = local.additional_volumes_count
+  query = {
+    depend0 = can(null_resource.ensure_ssh_open)
+    depends1 = local.additional_volumes_length
+  }
+  program = [
+    "bash",
+    "-c",
+    "${abspath(path.module)}/lsblk_devices.sh '${var.operating_system.ssh_user}@${aws_instance.machine.public_ip} -p ${var.machine.spec.ssh_port} -i ${var.machine.spec.operating_system.ssh_private_key_file}'",
+  ]
+}
+
+locals {
+  initial_block_devices = can(toolbox_external.initial_block_devices.0.result) ? jsondecode(base64decode(toolbox_external.initial_block_devices.0.result.base64json)) : {}
+}
+
 resource "aws_ebs_volume" "ebs_volume" {
   for_each = local.additional_volumes_map 
 
@@ -92,8 +110,8 @@ resource "aws_ebs_volume" "ebs_volume" {
   iops              = each.value.type == "io2" ? each.value.iops : each.value.type == "io1" ? each.value.iops : null
   encrypted         = each.value.encrypted
 
-  # Implicit dependency to aws_ebs_volume.ebs_volume
-  tags = can(null_resource.ensure_ssh_open) ? var.tags : var.tags
+  # Implicit dependency to initial devices check
+  tags = can(toolbox_external.initial_block_devices) ? var.tags : var.tags
 }
 
 resource "aws_volume_attachment" "attached_volume" {
@@ -109,43 +127,100 @@ resource "aws_volume_attachment" "attached_volume" {
   }
 }
 
-resource "null_resource" "copy_setup_volume_script" {
+resource "toolbox_external" "all_block_devices" {
   count = local.additional_volumes_count
-  triggers = {
-    "depends_on" = local.additional_volumes_length
+  query = {
+    depend0 = can(aws_volume_attachment.attached_volume)
+    depends1 = local.additional_volumes_length
   }
-
-  provisioner "file" {
-    content     = file("${abspath(path.module)}/setup_volume.sh")
-    destination = "/tmp/setup_volume.sh"
-
-    connection {
-      # Implicit dependency to null_resource.attached_volume
-      type        = can(aws_volume_attachment.attached_volume) ? "ssh" : "ssh"
-      user        = var.operating_system.ssh_user
-      host        = aws_instance.machine.public_ip
-      port        = var.machine.spec.ssh_port
-      agent       = var.use_agent # agent and private_key conflict
-      private_key = var.use_agent ? null : var.ssh_priv_key
-    }
-  }
+  program = [
+    "bash",
+    "-c",
+    "${abspath(path.module)}/lsblk_devices.sh '${var.operating_system.ssh_user}@${aws_instance.machine.public_ip} -p ${var.machine.spec.ssh_port} -i ${var.machine.spec.operating_system.ssh_private_key_file}'",
+  ]
 }
 
-resource "null_resource" "setup_volume" {
-  for_each = local.additional_volumes_map
-  provisioner "remote-exec" {
-    inline = [
-      "chmod a+x /tmp/setup_volume.sh",
-      "/tmp/setup_volume.sh ${element(local.string_device_names, tonumber(each.key))} ${each.value.mount_point} ${length(lookup(var.machine.spec, "additional_volumes", [])) + 1} ${coalesce(each.value.filesystem, local.filesystem)} ${coalesce(try(join(",", each.value.mount_options), null), try(join(",", local.mount_options), null))} >> /tmp/mount.log 2>&1" ]
+locals {
+  all_block_devices = can(toolbox_external.all_block_devices.0.result) ? jsondecode(base64decode(toolbox_external.all_block_devices.0.result.base64json)) : {}
+}
 
-    connection {
-      # Implicit dependency to null_resource.copy_setup_volume_script
-      type        = can(null_resource.copy_setup_volume_script) ? "ssh" : "ssh"
-      user        = var.operating_system.ssh_user
-      host        = aws_instance.machine.public_ip
-      port        = var.machine.spec.ssh_port
-      agent       = var.use_agent # agent and private_key conflict
-      private_key = var.use_agent ? null : var.ssh_priv_key
+locals {
+  script_variables = [
+    for key, values in local.additional_volumes_map: {
+        "device_names": element(local.linux_device_names, tonumber(key))
+        "number_of_volumes": length(lookup(var.machine.spec, "additional_volumes", [])) + 1
+        "mount_point": values.mount_point
+        "mount_options": coalesce(try(join(",", values.mount_options), null), try(join(",", local.mount_options), null))
+        "filesystem": coalesce(values.filesystem, local.filesystem)
     }
+  ]
+}
+
+resource "toolbox_external" "setup_volumes" {
+  count = local.additional_volumes_count
+  query = {
+    depend0 = can(toolbox_external.all_block_devices)
+    depends1 = local.additional_volumes_length
   }
+  program = [
+    "bash",
+    "-c",
+    <<-EOT
+    CONNECTION="${var.operating_system.ssh_user}@${aws_instance.machine.public_ip}"
+    SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    SFTP_OPTIONS="-P ${var.machine.spec.ssh_port} -i ${var.machine.spec.operating_system.ssh_private_key_file} $SSH_OPTIONS"
+
+    # Copy script to /tmp directory
+    CMD="sftp -b <(printf '%s\n' 'put ${abspath(path.module)}/setup_volume.sh') $SFTP_OPTIONS $CONNECTION:/tmp/"
+    RESULT=$(eval $CMD)
+    RC=$?
+    if [[ $RC -ne 0 ]];
+    then
+      printf "%s\n" "$RESULT" 1>&2
+      exit $RC
+    fi
+
+    ADDITIONAL_SSH_OPTIONS="-p ${var.machine.spec.ssh_port} -i ${var.machine.spec.operating_system.ssh_private_key_file}"
+    SSH_CMD="ssh $CONNECTION $ADDITIONAL_SSH_OPTIONS $SSH_OPTIONS"
+
+    # Set script as executable
+    CMD="$SSH_CMD chmod a+x /tmp/setup_volume.sh 2>&1"
+    RESULT=$($CMD)
+    RC=$?
+    if [[ $RC -ne 0 ]];
+    then
+      printf "%s\n" "$RESULT" 1>&2
+      exit $RC
+    fi
+
+    # Execute Script
+    CMD="$SSH_CMD /tmp/setup_volume.sh ${base64encode(jsonencode(local.script_variables))} >> /tmp/mount.log 2>&1"
+    RESULT=$($CMD)
+    RC=$?
+    if [[ $RC -ne 0 ]];
+    then
+      printf "%s\n" "$RESULT" 1>&2
+      exit $RC
+    fi
+
+    jq -n --arg base64json "$(printf %s $result | base64 | tr -d \\n)" '{"base64json": $base64json}'
+    EOT
+  ]
+}
+
+resource "toolbox_external" "final_block_devices" {
+  count = local.additional_volumes_count
+  query = {
+    depend0 = can(toolbox_external.setup_volumes)
+    depends1 = local.additional_volumes_length
+  }
+  program = [
+    "bash",
+    "-c",
+    "${abspath(path.module)}/lsblk_devices.sh '${var.operating_system.ssh_user}@${aws_instance.machine.public_ip} -p ${var.machine.spec.ssh_port} -i ${var.machine.spec.operating_system.ssh_private_key_file}'",
+  ]
+}
+
+locals {
+  final_block_devices = can(toolbox_external.final_block_devices.0.result) ? jsondecode(base64decode(toolbox_external.final_block_devices.0.result.base64json)) : {}
 }
