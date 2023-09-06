@@ -28,12 +28,14 @@ describing the target cloud infrastructure.
 ## Prerequisites and installation
 
 The following components must be installed on the system:
-- Python3 >= 3.6
+- Terraform >= 1.3.6
+- Python >= 3.6
+- Bash
+- JQ
 - AWS CLI
 - GCloud CLI
 - Azure CLI
 - BigAnimal token (CLI currently optional)
-- Terraform >= 1.3.6
 
 ## Infrastructure file examples
 
