@@ -18,6 +18,7 @@ resource "google_sql_database_instance" "instance" {
     disk_type             = upper(replace(var.disk_type, ".", "_"))
     disk_autoresize       = var.autoresize
     disk_autoresize_limit = (var.autoresize ? var.autoresize_limit : null)
+    edition               = startswith(var.instance_type, "db-perf-optimized") ? "ENTERPRISE_PLUS" : "ENTERPRISE"
     user_labels           = local.labels
 
     location_preference {
