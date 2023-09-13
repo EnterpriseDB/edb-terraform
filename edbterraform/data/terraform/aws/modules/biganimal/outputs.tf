@@ -86,6 +86,14 @@ output "tags" {
   value = var.tags
 }
 
+output "vpc_name" {
+  value = local.vpc_name
+}
+
+output "vpc_id" {
+  value = toolbox_external.vpc_id.result.id
+}
+
 output "all" {
     value = biganimal_cluster.instance
 }
