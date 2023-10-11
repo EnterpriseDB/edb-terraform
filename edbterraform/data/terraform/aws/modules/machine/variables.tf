@@ -32,9 +32,16 @@ locals {
   prefix = "/dev/"
   base = ["sd", "xvd", "hd"]
   letters = [
-    "f", "g", "h", "i", 
-    "j", "k", "l", "m", 
-    "n", "o", "p", "q"
+    "f", "g", "h", "i",
+    "j", "k", "l", "m",
+    "n", "o", "p", "q",
+    "r", "s", "t", "u",
+    "v", "w", "x", "y",
+    "z", "aa", "ab", "ac",
+    "ad", "ae", "af", "ag",
+    "ah", "ai", "aj", "ak",
+    "al", "am", "an", "ao",
+    "ap", "aq", "ar", "as",
   ]
   # List(List(String))
   # [[ "/dev/sdf" , "/dev/xvdf", "/dev/hdf" ], ]
