@@ -86,6 +86,7 @@ variable "spec" {
         mount_point   = string
         size_gb       = number
         iops          = optional(number)
+        throughput    = optional(number)
         type          = string
         encrypted     = optional(bool)
         filesystem    = optional(string)
