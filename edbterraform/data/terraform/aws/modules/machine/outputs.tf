@@ -34,6 +34,10 @@ output "additional_volumes" {
   value = var.machine.spec.additional_volumes
 }
 
+output "jbod_volumes" {
+  value = aws_ebs_volume.jbod_volumes
+}
+
 output "block_devices" {
   value = {
     initial = local.initial_block_devices

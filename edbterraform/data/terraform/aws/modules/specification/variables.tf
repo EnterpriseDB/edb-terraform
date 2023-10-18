@@ -82,6 +82,21 @@ variable "spec" {
         iops      = optional(number)
         encrypted = optional(bool)
       })
+      # Creates a set of volumes around a machine instance to be attached post-terraform
+      jbod_volumes = optional(map(object({
+        type = string
+        size_gb = number
+        iops = optional(number)
+        throughput = optional(number)
+        encrypted = optional(bool)
+      })))
+      # Cloud providers may:
+      #   * change order of volume attachment during reboot/stop
+      #   * mount location can be ignored based on type
+      #   * initial mount location can be set by the instance image
+      # To track volumes, pre-formating is required to create a UUID on the volume.
+      # Use jbod_volumes which are meant to represent "Just a bunch of Disks(Volumes)" as an alternative
+      # to manually manage per machine instance post-terraform
       additional_volumes = optional(list(object({
         mount_point   = string
         size_gb       = number

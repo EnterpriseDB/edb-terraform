@@ -61,6 +61,21 @@ resource "aws_instance" "machine" {
   }
 }
 
+# Create set of volumes around the machine instance to be attached post-terraform
+resource "aws_ebs_volume" "jbod_volumes" {
+  for_each = var.machine.spec.jbod_volumes != null && var.machine.spec.jbod_volumes != {} ? var.machine.spec.jbod_volumes : {}
+
+  availability_zone = var.az
+  size              = each.value.size_gb
+  type              = each.value.type
+  # IOPs and throughput limited to certain volume types
+  iops              = contains(["io1","io2","gp3"], each.value.type) ? each.value.iops : null
+  throughput        = contains(["gp3"], each.value.type) ? each.value.throughput : null
+  encrypted         = each.value.encrypted
+
+  tags = var.tags
+}
+
 resource "null_resource" "ensure_ssh_open" {
   count = local.additional_volumes_count
   triggers = {
