@@ -106,7 +106,9 @@ resource "aws_ebs_volume" "ebs_volume" {
   availability_zone = var.az
   size              = each.value.size_gb
   type              = each.value.type
-  iops              = each.value.type == "io2" ? each.value.iops : each.value.type == "io1" ? each.value.iops : null
+  # IOPs and throughput limited to certain volume types
+  iops              = contains(["io1","io2","gp3"], each.value.type) ? each.value.iops : null
+  throughput        = contains(["gp3"], each.value.type) ? each.value.throughput : null
   encrypted         = each.value.encrypted
 
   # Implicit dependency to initial devices check
