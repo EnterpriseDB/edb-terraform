@@ -62,6 +62,15 @@ aws:
         size_gb: 50
         iops: 5000
         encrypted: false
+      jbod_volumes:
+        0:
+          type: gp2
+          size_gb: 100
+          encrypted: false
+        1:
+          type: gp2
+          size_gb: 100
+          encrypted: false
       additional_volumes:
         - mount_point: /opt/pg_data
           size_gb: 20
