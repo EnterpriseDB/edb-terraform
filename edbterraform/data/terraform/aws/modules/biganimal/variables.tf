@@ -8,6 +8,8 @@ variable "name" {}
 variable "name_id" {}
 variable "cloud_account" {
   type = bool
+  default = true
+  nullable = true
   description = "Option for selecting if biganimal should host the resources with your own cloud account instead of biganimal hosted resources"
 }
 variable "cluster_name" {}
