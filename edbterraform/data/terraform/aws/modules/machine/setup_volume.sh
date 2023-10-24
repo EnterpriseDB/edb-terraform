@@ -1,14 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-# Install nvme-cli and jq
+# Install nvme-cli, jq, and xfsprogs
 if [ -f /etc/redhat-release ]; then
 	sudo yum clean all
-	sudo yum install nvme-cli jq -y
+	sudo yum install nvme-cli jq xfsprogs -y
 fi
 if [ -f /etc/debian_version ]; then
-	sudo apt update -y
-	sudo apt install nvme-cli jq -y
+	export DEBIAN_FRONTEND="noninteractive"
+	sudo apt-get update -y
+	sudo apt-get install nvme-cli jq perl-modules xfsprogs -y
 fi
 
 # Expects a base64encoded json object
