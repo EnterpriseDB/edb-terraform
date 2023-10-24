@@ -1,4 +1,5 @@
 variable "connection_id" {}
+variable "tags" {}
 
 terraform {
   required_providers {
