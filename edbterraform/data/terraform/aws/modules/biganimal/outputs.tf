@@ -87,11 +87,31 @@ output "tags" {
 }
 
 output "vpc_name" {
-  value = local.vpc_name
+  value = can(toolbox_external.vpc.0) ? local.vpc_name : ""
 }
 
 output "vpc_id" {
-  value = toolbox_external.vpc_id.result.id
+  value = can(toolbox_external.vpc.0) ? toolbox_external.vpc.0.result.vpc_id : ""
+}
+
+output "biganimal_id" {
+  value = can(toolbox_external.vpc.0) ? toolbox_external.vpc.0.result.biganimal_id : ""
+}
+
+output "buckets" {
+  value = var.cloud_account ? {
+    postgres = {
+      bucket = local.postgres_bucket
+      prefix = local.postgres_bucket_prefix
+    }
+    container = {
+      bucket = local.container_bucket
+      prefix = local.partial_container_prefix
+    }
+    metrics = {
+      bucket = local.metrics_bucket
+    }
+  } : {}
 }
 
 output "all" {
