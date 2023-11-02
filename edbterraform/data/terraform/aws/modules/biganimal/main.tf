@@ -49,11 +49,31 @@ locals {
   - Currently it has the following VPC name format: vpc-<project_id>-<region>
   - the resource will contain the project id: prj_<project_id>
   */
-  vpc_name = format("vpc-%s-%s",trimprefix(biganimal_cluster.instance.project_id, "prj_"), biganimal_cluster.instance.region)
-  vpc_cmd = "aws ec2 describe-vpcs --filter Name=tag:Name,Values=${local.vpc_name} --query Vpcs[].VpcId --output text --region ${biganimal_cluster.instance.region}"
+  base_project_id = trimprefix(biganimal_cluster.instance.project_id, "prj_")
+  vpc_name = format("vpc-%s-%s", local.base_project_id, biganimal_cluster.instance.region)
+  vpc_cmd = "aws ec2 describe-vpcs --filter Name=tag:Name,Values=${local.vpc_name} --query Vpcs[] --output json --region ${biganimal_cluster.instance.region}"
+  extract_vpc_id = "jq -r .[].VpcId"
+  extract_biganimal_id = "jq -r '.[].Tags[] | select(.Key == \"BAID\") | .Value'"
+
+  /*
+  BigAnimal creates 3 buckets. 2 are accessible with a private endpoint after being activated on the account.
+  When using a cloud_account, we can attempt to find the buckets
+  */
+  // postgres bucket - pg-bucket-<project_id>-<region>/<cluster_id>/
+  // Will contain base and wals directory
+  postgres_bucket = format("pg-bucket-%s-%s", local.base_project_id, biganimal_cluster.instance.region)
+  postgres_bucket_prefix = biganimal_cluster.instance.cluster_id
+  // container logs bucket will need to be queried as each node will have a different directory suffix
+  // Bucket may not not be available for some time after provisioning completes
+  container_bucket = format("logs-bucket-%s-%s", local.base_project_id, biganimal_cluster.instance.region)
+  partial_container_prefix = format("kubernetes-logs/customer_postgresql_cluster.var.log.containers.%s", biganimal_cluster.instance.cluster_id)
+  // metrics logs bucket
+  // directory prefix unknown
+  metrics_bucket = format("metrics-bucket-%s-%s", local.base_project_id, biganimal_cluster.instance.region)
 }
 
-resource "toolbox_external" "vpc_id" {
+resource "toolbox_external" "vpc" {
+  count = var.cloud_account ? 1 : 0
   program = [
     "bash",
     "-c",
@@ -68,7 +88,9 @@ resource "toolbox_external" "vpc_id" {
       exit $RC
     fi
 
-    jq -n --arg result "$RESULT" '{"id": $result}'
+    jq -n --arg vpc_id "$(printf %s "$RESULT" | ${local.extract_vpc_id})" \
+          --arg biganimal_id "$(printf %s "$RESULT" | ${local.extract_biganimal_id})" \
+          '{"vpc_id": $vpc_id, "biganimal_id": $biganimal_id}'
     EOT
   ]
 }
