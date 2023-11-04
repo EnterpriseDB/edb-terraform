@@ -114,6 +114,13 @@ output "buckets" {
   } : {}
 }
 
+output "loadbalancer" {
+  value = var.cloud_account ? {
+    name = toolbox_external.vpc.0.result.loadbalancer_name
+    dns = toolbox_external.vpc.0.result.loadbalancer_dns
+  } : {}
+}
+
 output "all" {
     value = biganimal_cluster.instance
 }
