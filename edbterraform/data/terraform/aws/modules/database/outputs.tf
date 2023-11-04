@@ -45,3 +45,11 @@ output "tags" {
 output "resource_id" {
   value = aws_db_instance.rds_server.identifier
 }
+
+output "resources" {
+  value = {
+    aws_db_subnet_group = { rds = aws_db_subnet_group.rds }
+    aws_db_instance = {rds_server = aws_db_instance.rds_server }
+    aws_db_parameter_group = { edb_rds_db_params = aws_db_parameter_group.edb_rds_db_params }
+  }
+}

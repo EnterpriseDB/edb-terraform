@@ -49,3 +49,12 @@ output "cluster_id" {
 output "resource_id" {
   value = aws_rds_cluster_instance.aurora_instance.*.id
 }
+
+output "resources" {
+  value = {
+    aws_db_subnet_group = { aurora = aws_db_subnet_group.aurora }
+    aws_rds_cluster = { aurora_cluster = aws_rds_cluster.aurora_cluster }
+    aws_rds_cluster_instance = { aurora_instance = aws_rds_cluster_instance.aurora_instance }
+    aws_db_parameter_group = { aurora_db_params = aws_db_parameter_group.aurora_db_params }
+  }
+}

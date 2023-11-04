@@ -53,3 +53,17 @@ output "operating_system" {
 output "resource_id" {
   value = aws_instance.machine.id
 }
+
+output "resources" {
+  value = {
+    aws_instance = { machine = aws_instance.machine }
+    aws_ebs_volume = { 
+      jbod_volumes = aws_ebs_volume.jbod_volumes
+      ebs_volume = aws_ebs_volume.ebs_volume
+    }
+    aws_volume_attachment = { attached_volume = aws_volume_attachment.attached_volume }
+    module = {
+      machine_ports = module.machine_ports
+    }
+  }
+}
