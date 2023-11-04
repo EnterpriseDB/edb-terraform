@@ -124,3 +124,14 @@ output "loadbalancer" {
 output "all" {
     value = biganimal_cluster.instance
 }
+
+output "resources" {
+  value = {
+    biganimal_cluster = {
+      instance = biganimal_cluster.instance
+    }
+    toolbox_external = {
+      vpc = toolbox_external.vpc
+    }
+  }
+}
