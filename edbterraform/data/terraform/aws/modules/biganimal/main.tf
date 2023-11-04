@@ -24,7 +24,7 @@ resource "biganimal_cluster" "instance" {
 
     # optional
     dynamic "allowed_ip_ranges" {
-        for_each = { for key,values in var.allowed_ip_ranges: key=>values }
+        for_each = var.allowed_ip_ranges
         content {
             cidr_block = allowed_ip_ranges.value.cidr_block
             description = allowed_ip_ranges.value.description
@@ -88,9 +88,57 @@ resource "toolbox_external" "vpc" {
       exit $RC
     fi
 
-    jq -n --arg vpc_id "$(printf %s "$RESULT" | ${local.extract_vpc_id})" \
-          --arg biganimal_id "$(printf %s "$RESULT" | ${local.extract_biganimal_id})" \
-          '{"vpc_id": $vpc_id, "biganimal_id": $biganimal_id}'
+    VPC_ID=$(printf %s "$RESULT" | ${local.extract_vpc_id})
+    BIGANIMAL_ID=$(printf %s "$RESULT" | ${local.extract_biganimal_id})
+
+    # BigAnimal main route table
+    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --query RouteTables[?Associations[0].Main].RouteTableId --output text --region ${biganimal_cluster.instance.region}"
+    RESULT=$($CMD)
+    RC=$?
+    if [[ $RC -ne 0 ]];
+    then
+      printf "%s\n%s\n" "$CMD" "$RESULT" 1>&2
+      exit $RC
+    fi
+
+    MAIN_ROUTE_TABLE=$RESULT
+
+    # BigAnimal uses private 3 route tables with the tags ManagedBy=BigAnimal and Name=*private*
+    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --filter "Name=tag:ManagedBy,Values=BigAnimal" --filter "Name=tag:Name,Values=*private*"  --query RouteTables[].RouteTableId --output json --region ${biganimal_cluster.instance.region}"
+    RESULT=$($CMD)
+    RC=$?
+    if [[ $RC -ne 0 ]];
+    then
+      printf "%s\n%s\n" "$CMD" "$RESULT" 1>&2
+      exit $RC
+    fi
+
+    ROUTE_TABLE_0=$(printf "%s" $RESULT | jq -r .[0])
+    ROUTE_TABLE_1=$(printf "%s" $RESULT | jq -r .[1])
+    ROUTE_TABLE_2=$(printf "%s" $RESULT | jq -r .[2])
+
+    # BigAnimal has a loadbalancer attached to the projects vpc
+    CMD="aws elbv2 describe-load-balancers --query "LoadBalancers[?VpcId==\'$VPC_ID\']" --region ${biganimal_cluster.instance.region} --output json"
+    RESULT=$($CMD)
+    RC=$?
+    if [[ $RC -ne 0 ]];
+    then
+      printf "%s\n%s\n" "$CMD" "$RESULT" 1>&2
+      exit $RC
+    fi
+
+    LOADBALANCER_NAME=$(printf "%s" $RESULT | jq -r .[0].LoadBalancerName)
+    LOADBALANCER_DNS=$(printf "%s" $RESULT | jq -r .[0].DNSName)
+
+    jq -n --arg vpc_id "$VPC_ID" \
+          --arg biganimal_id "$BIGANIMAL_ID" \
+          --arg main_route_table_id "$MAIN_ROUTE_TABLE" \
+          --arg route_0_id "$ROUTE_TABLE_0" \
+          --arg route_1_id "$ROUTE_TABLE_1" \
+          --arg route_2_id "$ROUTE_TABLE_2" \
+          --arg loadbalancer_name "$LOADBALANCER_NAME" \
+          --arg loadbalancer_dns "$LOADBALANCER_DNS" \
+            '{"vpc_id": $vpc_id, "biganimal_id": $biganimal_id, "main_route_table_id": $main_route_table_id, "route_0_id": $route_0_id, "route_1_id": $route_1_id, "route_2_id": $route_2_id, "loadbalancer_name": $loadbalancer_name, "loadbalancer_dns": $loadbalancer_dns}'
     EOT
   ]
 }
