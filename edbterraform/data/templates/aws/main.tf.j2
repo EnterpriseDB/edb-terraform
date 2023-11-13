@@ -96,8 +96,9 @@ locals {
 
 resource "local_file" "servers_yml" {
   /*
-  Manually create the yaml
-  TODO: Update to yamlencode function once stable
+  Manually create the yaml file
+  - ignore attributes named 'resources' for now to avoid cluttering the yaml file
+  - For a view of 'resources', reference the outputs through 'terraform output -json modules or servers'
   */
   filename        = "${abspath(path.root)}/servers.yml"
   file_permission = "0600"
@@ -109,7 +110,9 @@ servers:
 %{   for name, attributes in instances ~}
       ${name}:
 %{     for key, values in attributes ~}
+%{       if key != "resources" ~}
         ${key}: ${jsonencode(values)}
+%{       endif ~}
 %{     endfor ~}
 %{   endfor ~}
 %{ endfor ~}
