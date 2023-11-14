@@ -200,7 +200,7 @@ resource "toolbox_external" "setup_volumes" {
     SSH_CMD="ssh $CONNECTION $ADDITIONAL_SSH_OPTIONS $SSH_OPTIONS"
 
     # Set script as executable
-    CMD="$SSH_CMD chmod a+x /tmp/setup_volume.sh 2>&1"
+    CMD="$SSH_CMD chmod a+x /tmp/setup_volume.sh"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
@@ -210,7 +210,7 @@ resource "toolbox_external" "setup_volumes" {
     fi
 
     # Execute Script
-    CMD="$SSH_CMD /tmp/setup_volume.sh ${base64encode(jsonencode(local.script_variables))} >> /tmp/mount.log 2>&1"
+    CMD="$SSH_CMD /tmp/setup_volume.sh ${base64encode(jsonencode(local.script_variables))} >> /tmp/mount.log"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
