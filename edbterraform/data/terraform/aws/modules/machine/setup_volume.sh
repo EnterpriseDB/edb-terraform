@@ -100,7 +100,7 @@ do
 		printf "%s\n" "Warning: Will be mounted by UUID in /etc/fstab"
 		UUID=$(sudo blkid ${TARGET_NVME_DEVICE} -o export | grep -E "^UUID=")
 		printf "%s\n" "${UUID} ${MOUNT_POINT} ${FSTYPE} ${FSMOUNTOPT} 0 0" | sudo tee -a /etc/fstab
-		eval "sudo mount -t ${FSTYPE} ${FSMOUNTOPT_ARG} ${TARGET_NVME_DEVICE} ${MOUNT_POINT}"
+		sudo mount --all
 	fi
 
 done
