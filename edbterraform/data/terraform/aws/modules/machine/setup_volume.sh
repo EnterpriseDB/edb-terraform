@@ -82,14 +82,25 @@ do
 		exit 2
 	fi
 
-	# Mount point and volume creation
-	sudo "mkfs.${FSTYPE}" "${TARGET_NVME_DEVICE}"
-	sudo mkdir -p "${MOUNT_POINT}"
-	# Get device UUID with blkid as exported format:
-	# UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-	printf "%s\n" "Warning: Will be mounted by UUID in /etc/fstab"
-	UUID=$(sudo blkid ${TARGET_NVME_DEVICE} -o export | grep -E "^UUID=")
-	printf "%s\n" "${UUID} ${MOUNT_POINT} ${FSTYPE} ${FSMOUNTOPT} 0 0" | sudo tee -a /etc/fstab
-	eval "sudo mount -t ${FSTYPE} ${FSMOUNTOPT_ARG} ${TARGET_NVME_DEVICE} ${MOUNT_POINT}"
+	if [ "${FSTYPE}" = "lvm" ]; then
+		if ! command -v lvm >/dev/null 2>&1 && [ -f /etc/redhat-release ]; then
+			sudo yum install lvm2 -y
+		fi
+		if ! command -v lvm >/dev/null 2>&1 && [ -f /etc/debian_version ]; then
+			export DEBIAN_FRONTEND="noninteractive"
+			sudo apt-get install lvm2 -y
+		fi
+		sudo pvcreate "${TARGET_NVME_DEVICE}"
+	else
+		# Mount point and volume creation
+		sudo "mkfs.${FSTYPE}" "${TARGET_NVME_DEVICE}"
+		sudo mkdir -p "${MOUNT_POINT}"
+		# Get device UUID with blkid as exported format:
+		# UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+		printf "%s\n" "Warning: Will be mounted by UUID in /etc/fstab"
+		UUID=$(sudo blkid ${TARGET_NVME_DEVICE} -o export | grep -E "^UUID=")
+		printf "%s\n" "${UUID} ${MOUNT_POINT} ${FSTYPE} ${FSMOUNTOPT} 0 0" | sudo tee -a /etc/fstab
+		eval "sudo mount -t ${FSTYPE} ${FSMOUNTOPT_ARG} ${TARGET_NVME_DEVICE} ${MOUNT_POINT}"
+	fi
 
 done
