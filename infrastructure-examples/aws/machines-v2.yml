@@ -12,14 +12,14 @@ aws:
       owner: 136693071363
       ssh_user: admin
   regions:
-    us-east-1:
+    us-west-2:
       cidr_block: 10.2.0.0/16
       zones:
         proxy:
-          zone: us-east-1b
+          zone: us-west-2b
           cidr: 10.2.20.0/24
         main:
-          zone: us-east-1b
+          zone: us-west-2b
           cidr: 10.2.30.0/24
       service_ports:
         - port: 22
@@ -35,10 +35,11 @@ aws:
           description: "ranges"
   machines:
     dbt2_driver:
+      spot: true
       image_name: debian
-      region: us-east-1
+      region: us-west-2
       zone_name: proxy
-      instance_type: c5.4xlarge
+      instance_type: t3a.medium
       volume:
         type: gp2
         size_gb: 50
@@ -47,16 +48,15 @@ aws:
       tags:
         type: dbt2-driver
     pg1:
-      spot: true
       image_name: rocky
-      region: us-east-1
+      region: us-west-2
       zone_name: main
       ports:
         - protocol: icmp
           description: "ping"
           cidrs:
             - 10.2.20.0/24
-      instance_type: c5.4xlarge
+      instance_type: t3a.medium
       volume:
         type: gp2
         size_gb: 50
@@ -72,15 +72,38 @@ aws:
           size_gb: 100
           encrypted: false
       additional_volumes:
-        - mount_point: /opt/pg_data
-          size_gb: 20
-          type: io2
+        - size_gb: 20
+          type: gp3
+          iops: 4000
+          throughput: 1000
+          encrypted: false
+          volume_group: data
+        - size_gb: 20
+          type: gp2
           iops: 5000
           encrypted: false
-        - mount_point: /opt/pg_wal
+          volume_group: other
+        - mount_point: /opt/test
           size_gb: 20
-          type: io2
+          type: gp2
           iops: 5000
           encrypted: false
+          filesystem: xfs
+        - size_gb: 20
+          type: gp3
+          iops: 4000
+          throughput: 1000
+          encrypted: false
+          volume_group: data
+      volume_groups:
+        data:
+          /opt/data0:
+            size: "50%FREE"
+            filesystem: xfs
+          /opt/data1:
+            size: "50%FREE"
+            filesystem: xfs
+        other:
+          /opt/data2: {}
       tags:
         type: postgres

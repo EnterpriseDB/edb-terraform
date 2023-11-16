@@ -161,15 +161,27 @@ locals {
 }
 
 locals {
-  script_variables = [
+  volume_variables = [
     for key, values in local.additional_volumes_map: {
         "device_names": element(local.linux_device_names, tonumber(key))
         "number_of_volumes": length(lookup(var.machine.spec, "additional_volumes", [])) + 1
         "mount_point": values.mount_point
         "mount_options": coalesce(try(join(",", values.mount_options), null), try(join(",", local.mount_options), null))
         "filesystem": coalesce(values.filesystem, local.filesystem)
+        "volume_group": values.volume_group
     }
   ]
+  lvm_variables = {
+    for volume_group, values in var.machine.spec.volume_groups : volume_group => {
+        for mount_point, attibutes in values: mount_point => {
+          "size": coalesce(attibutes.size, "100%FREE")
+          "filesystem": coalesce(attibutes.filesystem, local.filesystem)
+          "mount_options": coalesce(try(join(",", attibutes.mount_options), null), try(join(",", local.mount_options), null))
+          "type": "striped"
+          "stripesize": "64 KB"
+      }
+    }
+  }
 }
 
 resource "toolbox_external" "setup_volumes" {
@@ -210,7 +222,7 @@ resource "toolbox_external" "setup_volumes" {
     fi
 
     # Execute Script
-    CMD="$SSH_CMD /tmp/setup_volume.sh ${base64encode(jsonencode(local.script_variables))} >> /tmp/mount.log"
+    CMD="$SSH_CMD /tmp/setup_volume.sh ${base64encode(jsonencode(local.volume_variables))} ${base64encode(jsonencode(local.lvm_variables))} >> /tmp/mount.log"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
