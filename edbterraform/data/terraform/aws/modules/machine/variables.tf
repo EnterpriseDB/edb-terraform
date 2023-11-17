@@ -30,18 +30,47 @@ locals {
   additional_volumes_map = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
   # Create a list of possible device names
   prefix = "/dev/"
-  base = ["sd", "xvd", "hd"]
+  base = ["xvd", "sd", "hd"]
+  /*
+  HVM device names:
+  - root: /dev/sda1 or /dev/xvda
+  - /dev/sd[a-z]
+  - /dev/xvd[a-d][a-z]
+    - /dev/xvddy and /dev/xvddz return an error
+  - /dev/xvd[e-z]
+  PVM (Legacy) device names:
+  - root: /dev/sda1
+  - /dev/sd[a-z]
+  - /dev/sd[a-z][1-15]
+  - /dev/hd[a-z]
+  - /dev/hd[a-z][1-15]
+  */
   letters = [
-    "f", "g", "h", "i",
-    "j", "k", "l", "m",
-    "n", "o", "p", "q",
-    "r", "s", "t", "u",
-    "v", "w", "x", "y",
-    "z", "aa", "ab", "ac",
-    "ad", "ae", "af", "ag",
-    "ah", "ai", "aj", "ak",
-    "al", "am", "an", "ao",
-    "ap", "aq", "ar", "as",
+    "aa", "ab", "ac", "ad", "ae",
+    "af", "ag", "ah", "ai", "aj",
+    "ak", "al", "am", "an", "ao",
+    "ap", "aq", "ar", "as", "at",
+    "au", "av", "aw", "ax", "ay", "az",
+    "ba", "bb", "bc", "bd", "be",
+    "bf", "bg", "bh", "bi", "bj",
+    "bk", "bl", "bm", "bn", "bo",
+    "bp", "bq", "br", "bs", "bt",
+    "bu", "bv", "bw", "bx", "by", "bz",
+    "ca", "cb", "cc", "cd", "ce",
+    "cf", "cg", "ch", "ci", "cj",
+    "ck", "cl", "cm", "cn", "co",
+    "cp", "cq", "cr", "cs", "ct",
+    "cu", "cv", "cw", "cx", "cy", "cz",
+    "da", "db", "dc", "dd", "de",
+    "df", "dg", "dh", "di", "dj",
+    "dk", "dl", "dm", "dn", "do",
+    "dp", "dq", "dr", "ds", "dt",
+    "du", "dv", "dw", "dx",
+    "e", "f", "g", "h", "i",
+    "j", "k", "l", "m", "n", 
+    "o", "p", "q", "r", "s",
+    "t", "u", "v", "w", "x", 
+    "y", "z",
   ]
   # List(List(String))
   # [[ "/dev/sdf" , "/dev/xvdf", "/dev/hdf" ], ]
