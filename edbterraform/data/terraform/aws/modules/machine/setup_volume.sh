@@ -72,14 +72,16 @@ do
 	done;
 
 	# Fallback to device names
-	for DEVICE_NAME in "${TARGET_DEVICES[@]}"; do
-		if [[ -e ${DEVICE_NAME} ]]; then
+	for DEVICE_NAME in ${TARGET_DEVICES[*]}
+	do
+		if [ -b "${DEVICE_NAME}" ] || [ -e "${DEVICE_NAME}" ]
+		then
 			TARGET_NVME_DEVICE=${DEVICE_NAME}
 			printf "%s\n" "Warning: Falling back to device name"
 			printf "%s\n" "Warning: Device names might change if instance is stopped or volumes are detached/added"
 			break
 		fi
-	done;
+	done
 
 	if [ "${#TARGET_NVME_DEVICE}" -eq 0 ]; then
 		printf "%s\n" "ERROR: unable to find the NVME device for ${TARGET_DEVICES}" 1>&2
