@@ -98,6 +98,7 @@ variable "spec" {
       # Use jbod_volumes which are meant to represent "Just a bunch of Disks(Volumes)" as an alternative
       # to manually manage per machine instance post-terraform
       additional_volumes = optional(list(object({
+        count         = optional(number, 1)
         mount_point   = optional(string)
         size_gb       = number
         iops          = optional(number)

@@ -19,7 +19,7 @@ aws:
           zone: us-west-2b
           cidr: 10.2.20.0/24
         main:
-          zone: us-west-2b
+          zone: us-west-2a
           cidr: 10.2.30.0/24
       service_ports:
         - port: 22
@@ -48,6 +48,7 @@ aws:
       tags:
         type: dbt2-driver
     pg1:
+      count: 2
       image_name: rocky
       region: us-west-2
       zone_name: main
@@ -72,7 +73,8 @@ aws:
           size_gb: 100
           encrypted: false
       additional_volumes:
-        - size_gb: 20
+        - count: 4
+          size_gb: 20
           type: gp3
           iops: 4000
           throughput: 1000
@@ -89,12 +91,6 @@ aws:
           iops: 5000
           encrypted: false
           filesystem: xfs
-        - size_gb: 20
-          type: gp3
-          iops: 4000
-          throughput: 1000
-          encrypted: false
-          volume_group: data
       volume_groups:
         data:
           /opt/data0:

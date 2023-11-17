@@ -46,6 +46,13 @@ locals {
           # assign zone from mapped names
           zone = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
           cidr = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].cidr
+
+          # expand any additional volumes with count > 1 and then merge the lists as a single list
+          additional_volumes = length(machine_spec.additional_volumes) > 0 ? flatten([
+            for volume in machine_spec.additional_volumes: [
+              for index in range(volume.count): volume
+            ]
+          ]) : machine_spec.additional_volumes
         })
       }
     ]
