@@ -34,13 +34,6 @@ do
 	FSMOUNTOPT=$(_jq_key "$item" '.mount_options')
 	VOLUME_GROUP=$(_jq_key "$item" '.volume_group')
 
-	TARGET_NVME_DEVICE=""
-	FSMOUNTOPT_ARG=""
-
-	if [ ! "${FSMOUNTOPT}" = "" ]; then
-		FSMOUNTOPT_ARG="-o ${FSMOUNTOPT}"
-	fi
-
 	# Wait for the availability of all the NVME devices that should be
 	# present on the system.
 	COUNTER=0
