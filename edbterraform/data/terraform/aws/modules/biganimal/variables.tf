@@ -49,6 +49,7 @@ variable "engine_version" {
 }
 variable "settings" {}
 variable "volume" {}
+variable "wal_volume" {}
 variable "password" {}
 
 variable "publicly_accessible" {
@@ -87,6 +88,7 @@ locals {
   instance_type = !startswith("aws:", var.instance_type) ? format("aws:%s",var.instance_type) : var.instance_type
 
   volume_size = "${var.volume.size_gb} Gi"
+  wal_volume_size = "${var.wal_volume.size_gb} Gi"
 
   cloud_provider = var.cloud_account ? "aws" : "bah:aws"
   cluster_name = format("%s-%s", var.name, var.name_id)
