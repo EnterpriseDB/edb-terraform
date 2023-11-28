@@ -21,6 +21,14 @@ resource "biganimal_cluster" "instance" {
         iops = var.volume.iops
         throughput = var.volume.throughput
     }
+    walStorage {
+	    volume_type = var.wal_volume.type
+        volume_properties = var.wal_volume.properties
+        size = local.wal_volume_size
+        # optional
+        iops = var.wal_volume.iops
+        throughput = var.wal_volume.throughput
+    }
 
     # optional
     dynamic "allowed_ip_ranges" {

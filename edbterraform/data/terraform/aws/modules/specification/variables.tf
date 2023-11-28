@@ -172,6 +172,13 @@ variable "spec" {
         iops      = optional(number)
         throughput = optional(number)
       })
+      wal_volume = optional(object({
+        size_gb   = number
+        type      = string
+        properties = string
+        iops      = optional(number)
+        throughput = optional(number)
+      }))
       password       = string
       settings = optional(list(object({
         name  = string
