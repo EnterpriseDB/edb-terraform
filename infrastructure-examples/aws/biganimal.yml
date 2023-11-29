@@ -21,6 +21,11 @@ aws:
         type: gp3
         properties: gp3
         size_gb: 4
+      # Use this to create a separate volume for the WAL
+      #wal_volume:
+      #  type: gp3
+      #  properties: gp3
+      #  size_gb: 4
       settings:
         - name: max_connections
           value: 300
