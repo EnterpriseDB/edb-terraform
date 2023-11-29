@@ -1,5 +1,5 @@
 resource "biganimal_cluster" "instance" {
-
+    count = length(var.wal_volume) > 0 ? 0 : 1
     # required 
     cloud_provider = local.cloud_provider
     cluster_architecture {
@@ -20,14 +20,6 @@ resource "biganimal_cluster" "instance" {
         # optional
         iops = var.volume.iops
         throughput = var.volume.throughput
-    }
-    walStorage {
-	    volume_type = var.wal_volume.type
-        volume_properties = var.wal_volume.properties
-        size = local.wal_volume_size
-        # optional
-        iops = var.wal_volume.iops
-        throughput = var.wal_volume.throughput
     }
 
     # optional
@@ -51,15 +43,120 @@ resource "biganimal_cluster" "instance" {
     read_only_connections = false
 }
 
+resource "toolbox_external" "api" {
+  count = length(var.wal_volume) > 0 ? 1 : 0
+  create = true
+  read = false
+  update = false
+  delete = true
+  program = [
+    "bash",
+    "-c",
+    <<EOT
+    create_stage() {
+      URI="https://portal.biganimal.com/"
+      ENDPOINT="api/v3/projects/${var.project.id}/clusters"
+      REQUEST_TYPE="POST"
+      DATA='${jsonencode(local.API_DATA)}'
+      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "authorization: Bearer $BA_BEARER_TOKEN" --url "$URI$ENDPOINT" --data "$DATA")
+      RC=$?
+      if [[ $RC -ne 0 ]];
+      then
+        printf "%s\n" "$RESULT" 1>&2
+        exit $RC
+      fi
+
+      CLUSTER_DATA=$RESULT
+
+      # Check cluster status
+      ENDPOINT="api/v3/projects/${var.project.id}/clusters/$(printf %s "$CLUSTER_DATA" | jq -r .data.clusterId)"
+      REQUEST_TYPE="GET"
+      PHASE="creating"
+      COUNT=0
+      COUNT_LIMIT=120
+      SLEEP_TIME=10
+      while [[ $PHASE != *"healthy"* ]]
+      do
+        RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "authorization: Bearer $BA_BEARER_TOKEN" --url "$URI$ENDPOINT")
+        RC=$?
+        if [[ $RC -ne 0 ]]
+        then
+          printf "%s\n" "$RESULT" 1>&2
+          exit $RC
+        fi
+        PHASE=$(printf "$RESULT" | jq -r .data.phase)
+
+        if [[ $COUNT -gt COUNT_LIMIT ]] && [[ $PHASE != *"healthy"* ]]
+        then
+          printf "Cluster creation timed out\n" 1>&2
+          printf "Last phase: $PHASE\n" 1>&2
+          printf "Cluster data: $CLUSTER_DATA\n" 1>&2
+          exit 1
+        fi
+
+        COUNT=$((COUNT+1))
+        sleep $SLEEP_TIME
+      done
+
+      printf "$RESULT"
+    }
+
+    delete_stage() {
+      URI="https://portal.biganimal.com/"
+      ENDPOINT="api/v3/projects/${var.project.id}/clusters/$1"
+      REQUEST_TYPE="DELETE"
+      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "authorization: Bearer $BA_BEARER_TOKEN" --url "$URI$ENDPOINT")
+      RC=$?
+      if [[ $RC -ne 0 ]];
+      then
+        printf "%s\n" "$RESULT" 1>&2
+        exit $RC
+      fi
+
+      printf '{"done":"%s"}' "$RESULT"
+    }
+
+    # Get json object from stdin
+    read input
+
+    # Check CRUD stage from terraform
+    # and make appropriate calls
+    STAGE=$(printf "%s" "$input" | jq -r '.stage')
+    case $STAGE in
+      create)
+        create_stage
+        ;;
+      read)
+        ;;
+      update)
+        ;;
+      delete)
+        CLUSTER_ID=$(printf "%s" "$input" | jq -r '.old_result.data.clusterId')
+        delete_stage "$CLUSTER_ID"
+        ;;
+      *)
+        printf "Input: %s\n" "$input" 1>&2
+        printf "Invalid stage: %s\n" "$STAGE" 1>&2
+        exit 1
+        ;;
+    esac
+
+    EOT
+  ]
+}
+
 locals {
+  cluster_output = length(var.wal_volume) > 0 ? jsondecode(toolbox_external.api.0.result.data) : biganimal_cluster.instance.0
+  cluster_region = try(local.cluster_output.region.regionId, local.cluster_output.region)
+  cluster_id = try(local.cluster_output.clusterId, local.cluster_output.cluster_id)
   /*
   BigAnimal does not output the VPC id as it shares a VPC for all clusters within a project
   - Currently it has the following VPC name format: vpc-<project_id>-<region>
   - the resource will contain the project id: prj_<project_id>
   */
-  base_project_id = trimprefix(biganimal_cluster.instance.project_id, "prj_")
-  vpc_name = format("vpc-%s-%s", local.base_project_id, biganimal_cluster.instance.region)
-  vpc_cmd = "aws ec2 describe-vpcs --filter Name=tag:Name,Values=${local.vpc_name} --query Vpcs[] --output json --region ${biganimal_cluster.instance.region}"
+  base_project_id = trimprefix(var.project.id, "prj_")
+  vpc_name = format("vpc-%s-%s", local.base_project_id, local.cluster_region)
+  vpc_cmd = "aws ec2 describe-vpcs --filter Name=tag:Name,Values=${local.vpc_name} --query Vpcs[] --output json --region ${local.cluster_region}"
   extract_vpc_id = "jq -r .[].VpcId"
   extract_biganimal_id = "jq -r '.[].Tags[] | select(.Key == \"BAID\") | .Value'"
 
@@ -69,15 +166,15 @@ locals {
   */
   // postgres bucket - pg-bucket-<project_id>-<region>/<cluster_id>/
   // Will contain base and wals directory
-  postgres_bucket = format("pg-bucket-%s-%s", local.base_project_id, biganimal_cluster.instance.region)
-  postgres_bucket_prefix = biganimal_cluster.instance.cluster_id
+  postgres_bucket = format("pg-bucket-%s-%s", local.base_project_id, local.cluster_region)
+  postgres_bucket_prefix = local.cluster_id
   // container logs bucket will need to be queried as each node will have a different directory suffix
   // Bucket may not not be available for some time after provisioning completes
-  container_bucket = format("logs-bucket-%s-%s", local.base_project_id, biganimal_cluster.instance.region)
-  partial_container_prefix = format("kubernetes-logs/customer_postgresql_cluster.var.log.containers.%s", biganimal_cluster.instance.cluster_id)
+  container_bucket = format("logs-bucket-%s-%s", local.base_project_id, local.cluster_region)
+  partial_container_prefix = format("kubernetes-logs/customer_postgresql_cluster.var.log.containers.%s", local.cluster_id)
   // metrics logs bucket
   // directory prefix unknown
-  metrics_bucket = format("metrics-bucket-%s-%s", local.base_project_id, biganimal_cluster.instance.region)
+  metrics_bucket = format("metrics-bucket-%s-%s", local.base_project_id, local.cluster_region)
 }
 
 resource "toolbox_external" "vpc" {
@@ -96,11 +193,11 @@ resource "toolbox_external" "vpc" {
       exit $RC
     fi
 
-    VPC_ID=$(printf %s "$RESULT" | ${local.extract_vpc_id})
-    BIGANIMAL_ID=$(printf %s "$RESULT" | ${local.extract_biganimal_id})
+    VPC_ID=$(printf "%s" "$RESULT" | ${local.extract_vpc_id})
+    BIGANIMAL_ID=$(printf "%s" "$RESULT" | ${local.extract_biganimal_id})
 
     # BigAnimal main route table
-    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --query RouteTables[?Associations[0].Main].RouteTableId --output text --region ${biganimal_cluster.instance.region}"
+    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --query RouteTables[?Associations[0].Main].RouteTableId --output text --region ${local.cluster_region}"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
@@ -112,7 +209,7 @@ resource "toolbox_external" "vpc" {
     MAIN_ROUTE_TABLE=$RESULT
 
     # BigAnimal uses private 3 route tables with the tags ManagedBy=BigAnimal and Name=*private*
-    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --filter "Name=tag:ManagedBy,Values=BigAnimal" --filter "Name=tag:Name,Values=*private*"  --query RouteTables[].RouteTableId --output json --region ${biganimal_cluster.instance.region}"
+    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --filter "Name=tag:ManagedBy,Values=BigAnimal" --filter "Name=tag:Name,Values=*private*"  --query RouteTables[].RouteTableId --output json --region ${local.cluster_region}"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
@@ -126,7 +223,7 @@ resource "toolbox_external" "vpc" {
     ROUTE_TABLE_2=$(printf "%s" $RESULT | jq -r .[2])
 
     # BigAnimal has a loadbalancer attached to the projects vpc
-    CMD="aws elbv2 describe-load-balancers --query "LoadBalancers[?VpcId==\'$VPC_ID\']" --region ${biganimal_cluster.instance.region} --output json"
+    CMD="aws elbv2 describe-load-balancers --query "LoadBalancers[?VpcId==\'$VPC_ID\']" --region ${local.cluster_region} --output json"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
