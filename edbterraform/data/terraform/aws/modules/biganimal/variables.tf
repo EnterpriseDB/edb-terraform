@@ -138,5 +138,6 @@ locals {
     backupRetentionPeriod = "1d"
     cspAuth = false
     readOnlyConnections = false
+    superuserAccess = true
   }
 }
