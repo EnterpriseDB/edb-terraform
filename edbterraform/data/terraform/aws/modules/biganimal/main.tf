@@ -41,6 +41,7 @@ resource "biganimal_cluster" "instance" {
     }
     private_networking = !var.publicly_accessible
     read_only_connections = false
+    superuser_access = true
 }
 
 resource "toolbox_external" "api" {
