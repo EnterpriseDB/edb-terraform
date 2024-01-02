@@ -19,6 +19,7 @@ module "biganimal_{{ region_ }}" {
   engine_version            = each.value.spec.engine_version
   instance_type             = each.value.spec.instance_type
   volume                    = each.value.spec.volume
+  wal_volume                = each.value.spec.wal_volume
   password                  = each.value.spec.password
   allowed_ip_ranges         = each.value.spec.allowed_ip_ranges
 
