@@ -118,7 +118,7 @@ resource "null_resource" "ensure_ssh_open" {
       host        = azurerm_linux_virtual_machine.main.public_ip_address
       port        = var.machine.ssh_port
       agent       = var.use_agent # agent and private_key conflict
-      private_key = var.use_agent ? null : var.ssh_priv_key
+      private_key = var.use_agent ? null : var.private_key
     }
   }
 }
