@@ -11,8 +11,8 @@ gcloud:
         id: prj_ziJPLQw3XxpR7nxV
       cloud_account: true
       region: us-east4
-      type: ha # Options: single | ha
-      node_count: 3 # must be 1 when using type: single
+      type: single # Options: single | ha
+      node_count: 1 # must be 1 when using type: single
       engine: epas
       engine_version: 14
       instance_type: e2-highcpu-4
@@ -21,6 +21,12 @@ gcloud:
         type: pd-ssd
         properties: pd-ssd
         size_gb: 10
+      # Not supported for gcloud
+      # Use this to create a separate volume for the WAL
+      #wal_volume:
+      #  type: pd-ssd
+      #  properties: pd-ssd
+      #  size_gb: 10
       settings:
         - name: max_connections
           value: 300
@@ -30,6 +36,7 @@ gcloud:
           value: 16000
       allowed_ip_ranges:
         - cidr_block: 10.0.0.0/24
+        - cidr_block: 10.2.0.0/24
         - cidr_block: 127.0.0.1/32
           description: localhost
       tags:
