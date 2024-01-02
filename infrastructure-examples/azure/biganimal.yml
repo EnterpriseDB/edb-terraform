@@ -11,8 +11,8 @@ azure:
         id: prj_ziJPLQw3XxpR7nxV
       cloud_account: true
       region: eastus
-      type: ha
-      node_count: 3
+      type: single
+      node_count: 1
       engine: epas
       engine_version: 14
       instance_type: Standard_D2s_v3
@@ -21,6 +21,11 @@ azure:
         type: premiumstorage
         properties: P1
         size_gb: 4
+      # Use this to create a separate volume for the WAL
+      #wal_volume:
+      #  type: premiumstorage
+      #  properties: P1
+      #  size_gb: 4
       settings:
         - name: max_connections
           value: 300
