@@ -78,38 +78,51 @@ def save_default_templates(templates_directory):
         logger.error("ERROR: cannot create template directory %s (%s)" % (templates_directory, e))
         sys.exit(1)
 
-def create_project_dir(project_directory, cloud_service_provider, infrastructure_file, hcl_lock_file):
+def create_project_dir(project_directory, cloud_service_provider, infrastructure_file, user_hcl_lock_file):
     '''
     Create new terraform project directory and copy needed files
     - cloud service provider modules
     - infrastructure.yml user file
       - edb-terraform.version key added
     - hcl lock file
+    - empty terraform state file
     '''
-    if os.path.exists(project_directory):
+    SCRIPT_DIRECTORY = Path(__file__).parent.resolve()
+    TERRAFORM_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / cloud_service_provider
+    TERRAFORM_STATE_FILE = project_directory / 'terraform.tfstate'
+    PROJECT_PATH_PERMISSIONS = 0o750
+    TERRAFORM_STATE_PERMISSIONS = 0o600
+    INFRASTRUCTURE_BACKUP_FILE = project_directory / 'infrastructure.yml.bak'
+    HCL_LOCK_FILE = project_directory / '.terraform.lock.hcl'
+    if project_directory.exists():
         sys.exit("ERROR: directory %s already exists" % project_directory)
 
-    script_dir = Path(__file__).parent.resolve()
+    if not TERRAFORM_MODULES_DIRECTORY.exists():
+        sys.exit("ERROR: directory %s does not exist" % TERRAFORM_MODULES_DIRECTORY)
+
     try:
-        terraform_modules_directory = script_dir / 'data' / 'terraform' / cloud_service_provider
-        infrastructure_final_file = project_directory / 'infrastructure.yml.bak'
-        hcl_lock_final_file = project_directory / '.terraform.lock.hcl'
+        logger.info(f'Making directory and copying terraform modules {TERRAFORM_MODULES_DIRECTORY} into {project_directory}')
+        shutil.copytree(TERRAFORM_MODULES_DIRECTORY, project_directory)
+        os.chmod(project_directory, PROJECT_PATH_PERMISSIONS)
 
-        logger.info(f'Copying terraform modules {terraform_modules_directory} into {project_directory}')
-        shutil.copytree(terraform_modules_directory, project_directory)
-        
-        logger.info(f'Copying infrastructure file {infrastructure_file} into {infrastructure_final_file}')
-        shutil.copyfile(infrastructure_file, infrastructure_final_file)
+        # Create the statefile and change file/folder permissions 
+        # since it is not-encrypted by default and may contain secrets
+        TERRAFORM_STATE_FILE.touch()
+        os.chmod(TERRAFORM_STATE_FILE, TERRAFORM_STATE_PERMISSIONS)
 
-        logger.info(f'Adding version to {infrastructure_final_file.name} under keys edb-terraform.version')
-        with open(infrastructure_final_file, 'a') as f:
+        logger.info(f'Copying infrastructure file {infrastructure_file} into {INFRASTRUCTURE_BACKUP_FILE}')
+        shutil.copyfile(infrastructure_file, INFRASTRUCTURE_BACKUP_FILE)
+
+        logger.info(f'Adding version to {INFRASTRUCTURE_BACKUP_FILE.name} under keys edb-terraform.version')
+        with open(INFRASTRUCTURE_BACKUP_FILE, 'a') as f:
             f.write(yaml.dump({'edb-terraform': {'version': __version__}}))
 
-        if hcl_lock_file:
-            logger.info(f'Copying HCL lock file: {hcl_lock_file}')
-            shutil.copyfile(hcl_lock_file, hcl_lock_final_file)
+        if user_hcl_lock_file:
+            logger.info(f'Copying HCL lock file: {user_hcl_lock_file}')
+            shutil.copyfile(user_hcl_lock_file, HCL_LOCK_FILE)
         else:
-            logger.info(f'HCL lock file was not provided. Terraform will create one under {hcl_lock_final_file} during terraform init')
+            logger.info(f'HCL lock file was not provided. Terraform will create one under {HCL_LOCK_FILE} during terraform init')
+            HCL_LOCK_FILE.touch()
 
     except Exception as e:
         logger.error("ERROR: cannot create project directory %s (%s)" % (project_directory, e))
@@ -275,9 +288,6 @@ def generate_terraform(
     - ssh_filename
     """
     SERVERS_OUTPUT_NAME = 'servers'
-    TERRAFORM_STATE_FILE = project_path / 'terraform.tfstate'
-    PROJECT_PATH_PERMISSIONS = 0o750
-    TERRAFORM_STATE_PERMISSIONS = 0o600
     OUTPUT = {
         'terraform_output': '',
         'ssh_filename': '',
@@ -330,12 +340,6 @@ def generate_terraform(
         csp,
         template_vars
     )
-
-    # Create statefile and change file/folder permissions since
-    # it is not-encrypted by default and may contain secrets
-    open(TERRAFORM_STATE_FILE, 'w').close()
-    os.chmod(project_path, PROJECT_PATH_PERMISSIONS)
-    os.chmod(TERRAFORM_STATE_FILE, TERRAFORM_STATE_PERMISSIONS)
 
     # terraform_vars holds the spec object for use in terraform
     OUTPUT['terraform_output'] = SERVERS_OUTPUT_NAME
