@@ -1,16 +1,22 @@
 import yaml
-import os
+from pathlib import Path
 import sys
 
-def load_yaml_file(file_path):
-
-    if not os.path.exists(file_path):
-        sys.exit("ERROR: file %s not found" % file_path)
+def load_yaml_file(input: str):
+    '''
+    Load a yaml or json from a file or a string
+    return a dict
+    '''
+    values = {}
 
     try:
-        with open(file_path) as f:
-            vars = yaml.safe_load(f.read())
-            return vars
+        if Path(input).exists():
+            with open(Path(input), 'r') as file:
+                values = yaml.safe_load(file.read())
+        else:
+            values = yaml.safe_load(input)
+
+        return values
 
     except Exception as e:
-        sys.exit("ERROR: could not read file %s (%s)" % (file_path, e))
+        sys.exit("ERROR: could not read as a file or as a string:%s (%s)" % (input, e))
