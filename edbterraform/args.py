@@ -11,7 +11,7 @@ from datetime import datetime
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
 from edbterraform import __project_name__, __dot_project__, __version__
-from edbterraform.utils import logs
+from edbterraform.utils import logs, files
 
 ENVIRONMENT_PREFIX = 'ET_' # Appended to allow overrides of defaults
 
@@ -128,6 +128,16 @@ InfrastructureFilePath = ArgumentConfig(
     type=Path,
     required=True,
     help="cloud service provider infrastructure file path (YAML format). Default: %(default)s"
+)
+
+InfrastructureVariables = ArgumentConfig(
+    names = ['--infra-variables',],
+    metavar='INFRA_VARIABLES',
+    dest='infra_variables',
+    default='{}',
+    type=files.load_yaml_file,
+    required=False,
+    help="Infrastructure variables file path or a string representing yaml or json. Default: %(default)s"
 )
 
 TerraformLockHcl = ArgumentConfig(
@@ -277,6 +287,7 @@ class Arguments:
         'generate': ['Generate terraform files based on a yaml infrastructure file\n',[
             ProjectName,
             InfrastructureFilePath,
+            InfrastructureVariables,
             WorkPath,
             CloudServiceProvider,
             Validation,
@@ -374,24 +385,26 @@ class Arguments:
         )
         if self.command == 'depreciated':
             outputs = generate_terraform(
-                self.get_env('infra_file'),
-                self.get_env('project_path'),
-                self.get_env('csp'),
-                self.get_env('bin_path'),
-                self.get_env('run_validation'),
+                infra_file=self.get_env('infra_file'),
+                project_path=self.get_env('project_path'),
+                csp=self.get_env('csp'),
+                bin_path=self.get_env('bin_path'),
+                run_validation=self.get_env('run_validation'),
             )
+            return outputs
 
         if self.command == 'generate':
             outputs = generate_terraform(
-                self.get_env('infra_file'),
-                self.get_env('work_path') / self.get_env('project_name'),
-                self.get_env('csp'),
-                self.get_env('bin_path'),
-                self.get_env('user_templates'),
-                self.get_env('lock_hcl_file'),
-                self.get_env('run_validation'),
-                self.get_env('apply'),
-                self.get_env('destroy'),
+                infra_file=self.get_env('infra_file'),
+                infra_variables=self.get_env('infra_variables'),
+                project_path=self.get_env('work_path') / self.get_env('project_name'),
+                csp=self.get_env('csp'),
+                bin_path=self.get_env('bin_path'),
+                user_templates=self.get_env('user_templates'),
+                hcl_lock_file=self.get_env('lock_hcl_file'),
+                run_validation=self.get_env('run_validation'),
+                apply=self.get_env('apply'),
+                destroy=self.get_env('destroy'),
             )
             return outputs
 

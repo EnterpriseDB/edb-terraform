@@ -270,6 +270,7 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
 
 def generate_terraform(
         infra_file: Path,
+        infra_variables: dict,
         project_path: Path,
         csp: str,
         bin_path: Path,
