@@ -15,12 +15,11 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 
-from edbterraform import __version__
+from edbterraform import __version__, __python_version__, __dot_project__
 from edbterraform.utils.dict import change_keys
-from edbterraform.utils.files import load_yaml_file
+from edbterraform.utils.files import load_yaml_file, render_template
 from edbterraform.utils.logs import logger
 from edbterraform.CLI import TerraformCLI
-from edbterraform import __dot_project__
 
 def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
@@ -78,22 +77,40 @@ def save_default_templates(templates_directory):
         logger.error("ERROR: cannot create template directory %s (%s)" % (templates_directory, e))
         sys.exit(1)
 
-def create_project_dir(project_directory, cloud_service_provider, infrastructure_file, user_hcl_lock_file):
+def create_project_dir(
+        project_directory,
+        cloud_service_provider,
+        infrastructure_file,
+        template_variables,
+        infrastructure_variables,
+        user_hcl_lock_file
+    ):
     '''
     Create new terraform project directory and copy needed files
     - cloud service provider modules
-    - infrastructure.yml user file
-      - edb-terraform.version key added
+    - edb-terraform backup files
+      - infrastructure.yml.j2 template file
+      - variables.yml file which is used by the infrastructure.yml.j2 template file
+      - terraform.tfvars.yml file with infrastructure variables after being rendered, if needed.
+      - system.yml file with:
+        - edb-terraform version
+        - python version
+        - terraform version and used stages
+      - hcl lock file
     - hcl lock file
-    - empty terraform state file
+    - empty terraform state file to mark it as a terraform project
     '''
     SCRIPT_DIRECTORY = Path(__file__).parent.resolve()
     TERRAFORM_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / cloud_service_provider
     TERRAFORM_STATE_FILE = project_directory / 'terraform.tfstate'
     PROJECT_PATH_PERMISSIONS = 0o750
     TERRAFORM_STATE_PERMISSIONS = 0o600
-    INFRASTRUCTURE_BACKUP_FILE = project_directory / 'infrastructure.yml.bak'
     HCL_LOCK_FILE = project_directory / '.terraform.lock.hcl'
+    EDB_TERRAFORM_DIRECTORY = project_directory / 'edb-terraform'
+    BACKUP_TEMPLATE = EDB_TERRAFORM_DIRECTORY / 'infrastructure.yml.j2'
+    BACKUP_TEMPLATE_INPUTS = EDB_TERRAFORM_DIRECTORY / 'variables.yml'
+    BACKUP_TEMPLATE_FINAL = EDB_TERRAFORM_DIRECTORY / 'terraform.tfvars.yml'
+    BACKUP_SYSTEM = EDB_TERRAFORM_DIRECTORY / 'system.yml'
     if project_directory.exists():
         sys.exit("ERROR: directory %s already exists" % project_directory)
 
@@ -110,19 +127,27 @@ def create_project_dir(project_directory, cloud_service_provider, infrastructure
         TERRAFORM_STATE_FILE.touch()
         os.chmod(TERRAFORM_STATE_FILE, TERRAFORM_STATE_PERMISSIONS)
 
-        logger.info(f'Copying infrastructure file {infrastructure_file} into {INFRASTRUCTURE_BACKUP_FILE}')
-        shutil.copyfile(infrastructure_file, INFRASTRUCTURE_BACKUP_FILE)
-
-        logger.info(f'Adding version to {INFRASTRUCTURE_BACKUP_FILE.name} under keys edb-terraform.version')
-        with open(INFRASTRUCTURE_BACKUP_FILE, 'a') as f:
-            f.write(yaml.dump({'edb-terraform': {'version': __version__}}))
-
         if user_hcl_lock_file:
             logger.info(f'Copying HCL lock file: {user_hcl_lock_file}')
             shutil.copyfile(user_hcl_lock_file, HCL_LOCK_FILE)
         else:
             logger.info(f'HCL lock file was not provided. Terraform will create one under {HCL_LOCK_FILE} during terraform init')
             HCL_LOCK_FILE.touch()
+
+        logger.info(f'Copying edb-terraform files into {EDB_TERRAFORM_DIRECTORY}')
+        EDB_TERRAFORM_DIRECTORY.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(HCL_LOCK_FILE, EDB_TERRAFORM_DIRECTORY / 'terraform.lock.hcl')
+        shutil.copyfile(infrastructure_file, BACKUP_TEMPLATE)
+        with open(BACKUP_TEMPLATE_INPUTS, 'a') as f:
+            f.write(yaml.dump(template_variables))
+        with open(BACKUP_TEMPLATE_FINAL, 'a') as f:
+            f.write(yaml.dump(infrastructure_variables))
+        with open(BACKUP_SYSTEM, 'a') as f:
+            system_data = {
+                'edb-terraform': {'version': __version__},
+                'python': {'version': __python_version__},
+            }
+            f.write(yaml.dump(system_data))
 
     except Exception as e:
         logger.error("ERROR: cannot create project directory %s (%s)" % (project_directory, e))
@@ -270,7 +295,7 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
 
 def generate_terraform(
         infra_file: Path,
-        infra_variables: dict,
+        infra_template_variables: dict,
         project_path: Path,
         csp: str,
         bin_path: Path,
@@ -297,14 +322,14 @@ def generate_terraform(
     # Destroy existing project before creating a new one
     run_terraform(project_path, bin_path, validate=False, apply=False, destroy=destroy)
 
-    # Load infrastructure variables from the YAML file that was passed
-    infra_vars = load_yaml_file(infra_file)
+    # Get final instrastructure variables after rendering it if it is a jinja2 template
+    infra_vars = load_yaml_file(render_template(template_file=infra_file, values=infra_template_variables))
 
     # Save default templates into dot directory
     save_default_templates(f'{__dot_project__}/templates')
 
     # Duplicate terraform code into target project directory
-    create_project_dir(project_path, csp, infra_file, hcl_lock_file)
+    create_project_dir(project_path, csp, infra_file, infra_template_variables, infra_vars, hcl_lock_file)
 
     # Allow for user supplied templates
     # Terraform does not allow us to copy a template and then reference it within the same run when using templatefile()

@@ -127,17 +127,17 @@ InfrastructureFilePath = ArgumentConfig(
     dest='infra_file',
     type=Path,
     required=True,
-    help="cloud service provider infrastructure file path (YAML format). Default: %(default)s"
+    help="cloud service provider infrastructure file path (YAML format) or a jinja2 template. Default: %(default)s"
 )
 
-InfrastructureVariables = ArgumentConfig(
-    names = ['--infra-variables',],
-    metavar='INFRA_VARIABLES',
-    dest='infra_variables',
+InfrastructureTemplateVariables = ArgumentConfig(
+    names = ['--infra-template-variables',],
+    metavar='INFRA_TEMPLATE_VARIABLES',
+    dest='infra_template_variables',
     default='{}',
     type=files.load_yaml_file,
     required=False,
-    help="Infrastructure variables file path or a string representing yaml or json. Default: %(default)s"
+    help="Infrastructure variables file path or a string representing yaml or json. Only used when the infrastructure file is a jinja2 template. Default: %(default)s"
 )
 
 TerraformLockHcl = ArgumentConfig(
@@ -287,7 +287,7 @@ class Arguments:
         'generate': ['Generate terraform files based on a yaml infrastructure file\n',[
             ProjectName,
             InfrastructureFilePath,
-            InfrastructureVariables,
+            InfrastructureTemplateVariables,
             WorkPath,
             CloudServiceProvider,
             Validation,
@@ -396,7 +396,7 @@ class Arguments:
         if self.command == 'generate':
             outputs = generate_terraform(
                 infra_file=self.get_env('infra_file'),
-                infra_variables=self.get_env('infra_variables'),
+                infra_template_variables=self.get_env('infra_template_variables'),
                 project_path=self.get_env('work_path') / self.get_env('project_name'),
                 csp=self.get_env('csp'),
                 bin_path=self.get_env('bin_path'),
