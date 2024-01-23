@@ -40,7 +40,7 @@ The following components must be installed on the system:
 ## Infrastructure file examples
 
 Infrastructure files describing the target cloud
-can be found inside of the [infrastructure-examples directory](./infrastructure-examples/README.md)
+can be found inside of the [docs/examples](./docs/examples/README.md)
 
 
 ### Prequisites installation on Debian 11
