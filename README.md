@@ -3,6 +3,8 @@
 Terraform templates aimed to provide easy to use YAML configuration file
 describing the target cloud infrastructure.
 
+** Supported [providers and components](./docs/SUPPORTED.md)
+
 ## Prerequisites
 
 The following components must be installed on the system:
@@ -16,7 +18,8 @@ The following components must be installed on the system:
   - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
   - [BigAnimal CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/) currently optional since the terraform provider relies on environment variables `BA_BEARER_TOKEN`
     - For automation, [get-token.sh script](https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh) is an alternative
-** For quick examples of setup, please refer to the [setup guide](./docs/SETUP.md)
+
+** For quick examples of setup, please refer to the [setup guide](./docs/SETUP.md). Please refer to official documentation for credential management.
 
 ## Quick start
 ```bash
@@ -33,30 +36,9 @@ terraform init
 terraform apply
 terraform destroy
 ```
+
 ** More examples of infrastructure files describing target cloud con
 can be found inside of the [docs/examples](./docs/examples/README.md)
-
-## Supported Cloud providers
-
-| Provider | Component                | Supported        |
-|----------|--------------------------|------------------|
-| EDB      | BigAnimal - AWS          |:white_check_mark:|
-| AWS      | EC2 - VM                 |:white_check_mark:|
-| AWS      | EC2 - additional EBS vol.|:white_check_mark:|
-| AWS      | multi-region VPC peering |:white_check_mark:|
-| AWS      | Security (ports)         |:white_check_mark:|
-| AWS      | RDS                      |:white_check_mark:|
-| AWS      | RDS Aurora               |:white_check_mark:|
-| AWS      | Elastic Kubernetes Service |:white_check_mark:|
-| GCloud   | Compute Engine - VM      |:white_check_mark:|
-| GCloud   | CloudSQL                 |:white_check_mark:|
-| GCloud   | AlloyDB                  |:white_check_mark:|
-| GCloud   | Google Kubernetes Engine |:white_check_mark:|
-| EDB      | BigAnimal - Azure        |:white_check_mark:|
-| Azure    | VM                       |:white_check_mark:|
-| Azure    | Database - Flexible      |:white_check_mark:|
-| Azure    | CosmoDB                  |       :x:        |
-| Azure    | Azure Kubernetes Service |:white_check_mark:|
 
 ### edb-terraform installation
 
