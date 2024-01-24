@@ -1,11 +1,11 @@
-# edb-terraform
+# :seedling: edb-terraform
 
-Terraform templates aimed to provide easy to use YAML configuration file
-describing the target cloud infrastructure.
+A tool for generating Terraform projects using pre-defined templates and modules. It simplifies the creation of target cloud resources for automation by leveraging an easy-to-use YAML configuration. This tool supports setting of IPs, image configurations, and the creation of simple clusters which can be divided into subnets. It also provides basic cross-region support.
 
-** Supported [providers and components](./docs/SUPPORTED.md)
+> :information_source:  
+> Supported [providers and components](./docs/SUPPORTED.md)
 
-## Prerequisites
+## :nut_and_bolt: Prerequisites
 
 The following components must be installed on the system:
 - [Terraform >= 1.3.6, <= 1.5.5](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli#install-terraform)
@@ -16,12 +16,16 @@ The following components must be installed on the system:
   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
   - [GCloud CLI](https://cloud.google.com/sdk/docs/install-sdk)
   - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-  - [BigAnimal CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/) currently optional since the terraform provider relies on environment variables `BA_BEARER_TOKEN`
-    - For automation, [get-token.sh script](https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh) is an alternative
+  - [BigAnimal CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/) currently optional since the terraform provider relies on the environment variable `BA_BEARER_TOKEN` and it requires manual authentication.
+    - For automation, [get-token.sh script](https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh) requires manual intervention every:
+      - 30 days
+      - Expired token is reused
 
-** For quick examples of setup, please refer to the [setup guide](./docs/SETUP.md). Please refer to official documentation for credential management.
+> :information_source:  
+> Refer to official documentation for credential management and environment specific installation.  
+> For quick examples of setup, please refer to the [setup guide](./docs/SETUP.md).
 
-## Quick start
+## :zap: Quick start
 ```bash
 git clone https://github.com/EnterpriseDB/edb-terraform.git
 python3 -m venv venv-terraform
@@ -37,81 +41,25 @@ terraform apply
 terraform destroy
 ```
 
-** More examples of infrastructure files describing target cloud con
-can be found inside of the [docs/examples](./docs/examples/README.md)
+> :warning:  
+> Protect your project directory to avoid manual destruction  
+> All resources are tracked with tags `terraform_id` and `terraform_hex`, if manual destruction is needed.
 
-### edb-terraform installation
+> :information_source:  
+> Help command to list all options: `edb-terraform generate --help`  
+> More examples of infrastructure files describing target cloud providers can be found inside of the [docs/examples](./docs/examples/README.md)
 
-```console
-$ git clone https://github.com/EnterpriseDB/edb-terraform.git
-```
-[![asciicast](https://asciinema.org/a/593420.svg)](https://asciinema.org/a/593420)
+### :outbox_tray: Outputs
+After resources are created,
+you can access their attributes for use with other tools or for rendering with any `--user-templates`.
+These values are available as:
+- json with the command `terraform output -json servers`
+  - python pretty print: `terraform output -json servers | python3 -m json.tool`
+- yaml with a file named `servers.yml` under the project directory.
 
-```console
-$ python3 -m pip install edb-terraform/. --upgrade
-```
-[![asciicast](https://asciinema.org/a/593421.svg)](https://asciinema.org/a/593421)
-## Cloud Resources Creation
-
-Once the infrastructure file has been created we can to proceed with cloud
-resources creation:
-
-  1. We can attempt to setup a compatable version of Terraform.
-     This directory will be inside of `~/.edb-terraform/bin`
-     Logs can be found inside of `~/.edb-terraform/logs`
-    
-     ```shell
-     $ edb-terraform setup
-     ```
-
-  2. A new Terraform *project* must be created with the help of the
-     `edb-terraform` script. This script is in charge of creating a dedicated
-     directory for the *project*, generating SSH keys, building Terraform
-     configuration based on the infrastructure file, copying Terraform modules
-     into the *project* directory.
-
-      a. First argument is the *project* path, second argument is the
-     path to the infrastructure file
-     
-     Use option `-c` to specify the cloud provider option: `azure` `aws` `gcloud`
-     
-     Defaults to `aws` if not used
-     ```shell
-     $ edb-terraform generate --project-name aws-terraform \
-                              --cloud-service-provider aws \
-                              --infra-file edb-terraform/infrastructure-examples/aws/edb-ra-3.yml \
-                              --user-templates edb-terraform/infrastructure-examples/templates/inventory.yml.tftpl
-     ```
-
-      b. Step 2 can be skipped if option `--validate` is included with `generate`,
-     which provides basic validations and checks through terraform.
-
-     ```
-
-[![asciicast](https://asciinema.org/a/593423.svg)](https://asciinema.org/a/593423)
-
-  2. Terraform initialisation of the *project*:
-     ```shell
-     $ cd aws-terraform
-     $ terraform init
-     ```
-
-  3. Apply Cloud resources creation:
-     ```shell
-     $ cd aws-terraform
-     $ terraform apply -auto-approve
-     ```
-
-[![asciicast](https://asciinema.org/a/593425.svg)](https://asciinema.org/a/593425)
-
-## SSH access to the machines
-
-Once cloud resources provisioning is completed, machines public and private IPs
-are stored in the `servers.yml` file, located into the project's directory.
-These outputs can be used with a list of templates to generate files for other programs such as ansible.
-See example here which uses the below outputs. 
-
-Example:
+For accessing your machines,
+the `public_ip` and `operating_system.ssh_user` values can be used and
+SSH keys are named `ssh-id_rsa` and `ssh-id_rsa.pub` by default under the project directory.
 
 ```yaml
 ---
@@ -142,28 +90,92 @@ servers:
 [...]
 ```
 
-You can also use `terraform output` to get a json object for use
-```bash
-terraform output -json servers | python3 -m json.tool
+### :page_with_curl: Templates
+Templating is allowed for dynamic configurations:
+- Infrastructure file jinja2 templating which renders during `edb-terraform generate`:
+  - `--infra-file` accepts a single yaml file or jinja2 template.
+  - `--infra-template-variables` accepts yaml/json as a file or string to use with the infrastructure template.
+  - Use-cases:
+    - Updating allowed ssh list
+    - setting a desired AMI from a set of images.
+    - dev, test, prod variations
+- User-provided terraform templates which renders with terraform after all other resources are created:
+  - `--user-templates` accepts a list of template files or template directories with file-extension `.tftpl`.
+  - Use-cases:
+    - config.yml for TPAExec Bare
+    - inventory.yml for EDB-Ansible
+
+### :open_file_folder: Project directory layout
 ```
-
-SSH key files: `ssh-id_rsa` and `ssh-id_rsa.pub`.
-
-## Customizations
-Users can further modify their resources after the initial provisioning.
-If any output files are needed based on the resources,
-terraform templates can be added to the projects `template` directory to have it rendered with any resource outputs once all resources are created.
-Examples of template files can be found here:
-[edb-ansible included inventory.yml](./edbterraform/data/templates/user/inventory.yml.tftpl)
-[sample inventory.yml](./infrastructure-examples/templates/inventory.yml.tftpl)
-
-[![asciicast](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY.svg)](https://asciinema.org/a/2SbGuMyEB2cpJK1QHeac8u5EY)
-
-## Cloud resources destruction
-
-```shell
-$ cd aws-terraform
-$ terraform destroy -auto-approve
+.
+├── edb-terraform # edb-terraform backup directory
+│   ├── infrastructure.yml.j2 # infrastructure file/template
+│   ├── system.yml # edb-terraform/python information
+│   ├── terraform.lock.hcl # original lock file
+│   ├── terraform.tfvars.yml # final terraform vars before conversion to json
+│   └── variables.yml # infrastructure file variables
+├── main.tf # Terraform entrypoint
+├── modules # Cloud Provider Custom Modules including the specification module
+│   ├── aurora
+│   │   ├── main.tf
+│   │   └── outputs.tf
+│   ├── biganimal
+│   │   ├── main.tf
+│   │   ├── outputs.tf
+│   │   ├── providers.tf
+│   │   └── variables.tf
+│   ├── database
+│   │   ├── main.tf
+│   │   └── outputs.tf
+│   ├── key_pair
+│   │   ├── main.tf
+│   │   └── output.tf
+│   ├── kubernetes
+│   │   ├── main.tf
+│   │   ├── outputs.tf
+│   │   ├── providers.tf
+│   │   └── variables.tf
+│   ├── machine
+│   │   ├── lsblk_devices.sh # List resources attached devices and returned to terraform
+│   │   ├── main.tf
+│   │   ├── outputs.tf
+│   │   ├── providers.tf
+│   │   ├── setup_volume.sh # Basic volume management to avoid re-ordering of disks after reboots
+│   │   └── variables.tf
+│   ├── network
+│   │   └── main.tf
+│   ├── routes
+│   │   ├── main.tf
+│   │   └── outputs.tf
+│   ├── security
+│   │   ├── main.tf
+│   │   ├── outputs.tf
+│   │   ├── providers.tf
+│   │   └── variables.tf
+│   ├── specification
+│   │   ├── files.tf
+│   │   ├── main.tf
+│   │   ├── outputs.tf
+│   │   ├── providers.tf
+│   │   └── variables.tf # terraform.tfvars.json variable passed to spec module to validate the data's structure
+│   ├── validation
+│   │   ├── main.tf
+│   │   └── providers.tf
+│   ├── vpc
+│   │   ├── main.tf
+│   │   └── outputs.tf
+│   ├── vpc_peering
+│   │   ├── main.tf
+│   │   └── outputs.tf
+│   ├── vpc_peering_accepter
+│   │   └── main.tf
+│   └── vpc_peering_routes
+│       └── main.tf
+├── providers.tf # Terraform providers
+├── templates # user templates rendered in parent directory with extension `.tftpl` removed
+│   ├── config.yml.tftpl
+│   └── inventory.yml.tftpl
+├── terraform.tfstate # Terraform state
+├── terraform.tfvars.json # Automatically detected Terraform variables. Original values under `edb-terraform/terraform.tfvars.yml`
+└── variables.tf # Terraform placeholder variables
 ```
-
-[![asciicast](https://asciinema.org/a/593427.svg)](https://asciinema.org/a/593427)
