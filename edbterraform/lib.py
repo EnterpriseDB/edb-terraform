@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 
-from edbterraform import __version__, __python_version__, __dot_project__
+from edbterraform import __version__, __python_version__, __virtual_env__, __dot_project__
 from edbterraform.utils.dict import change_keys
 from edbterraform.utils.files import load_yaml_file, render_template
 from edbterraform.utils.logs import logger
@@ -145,7 +145,10 @@ def create_project_dir(
         with open(BACKUP_SYSTEM, 'a') as f:
             system_data = {
                 'edb-terraform': {'version': __version__},
-                'python': {'version': __python_version__},
+                'python': {
+                    'version': __python_version__,
+                    'venv': __virtual_env__,
+                },
             }
             f.write(yaml.dump(system_data))
 

@@ -11,3 +11,5 @@ __python_version__ = '%s.%s.%s-%s.%s' % (
     sys.version_info.releaselevel,
     sys.version_info.serial
 )
+# Check if we are in a python virtual environment
+__virtual_env__ = sys.prefix != sys.base_prefix
