@@ -326,7 +326,7 @@ def generate_terraform(
     run_terraform(project_path, bin_path, validate=False, apply=False, destroy=destroy)
 
     # Get final instrastructure variables after rendering it if it is a jinja2 template
-    infra_vars = load_yaml_file(render_template(template_file=infra_file, values=infra_template_variables))
+    infra_vars = load_yaml_file(render_template(template_file=infra_file, values=infra_template_variables), (dict))
 
     # Save default templates into dot directory
     save_default_templates(f'{__dot_project__}/templates')

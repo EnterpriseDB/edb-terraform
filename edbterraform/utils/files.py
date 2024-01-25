@@ -15,26 +15,32 @@ from jinja2 import (
 MAX_PATH_LENGTH = os.pathconf('/', 'PC_PATH_MAX')
 MAX_NAME_LENGTH = os.pathconf('/', 'PC_NAME_MAX')
 
-def load_yaml_file(input: str) -> dict:
+def load_yaml_file(input: str, top_level_types: tuple = ()) -> dict:
     '''
-    Load a yaml from a file or a string.
+    Load yaml from a file or a string.
     - Valid json accepted as well since it is valid yaml.
+    - Allow restricting the top level type to a list of valid types.
 
     Args:
         input (str): a file path or a string
+        top_level_types (tuple): a tuple of valid format types
     Returns:
         dict: the yaml data
     '''
+    mod_inputs = input
     values = {}
 
     try:
-        if len(str(input)) <= MAX_PATH_LENGTH \
-            and len(str(input).split('/')[-1]) <= MAX_NAME_LENGTH \
-            and Path(input).exists():
-            with open(Path(input), 'r') as file:
-                values = yaml.safe_load(file.read())
-        else:
-            values = yaml.safe_load(input)
+        if len(str(mod_inputs)) <= MAX_PATH_LENGTH \
+            and len(str(mod_inputs).split('/')[-1]) <= MAX_NAME_LENGTH \
+            and Path(mod_inputs).exists():
+                mod_inputs = Path(mod_inputs).read_text()
+
+        values = yaml.safe_load(mod_inputs)
+
+        # Allow restricting the top level type to a list of valid types
+        if top_level_types and not isinstance(values, top_level_types):
+            raise TypeError("ERROR: Invalid format type for the data: %s - %s - (%s)" % (top_level_types, input, type(input)))
 
         return values
 
