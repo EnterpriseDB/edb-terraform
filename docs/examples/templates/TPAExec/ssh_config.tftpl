@@ -1,0 +1,12 @@
+Host *
+    Port 22
+    IdentitiesOnly yes
+    UserKnownHostsFile known_hosts tpa_known_hosts
+    ServerAliveInterval 60
+
+%{ for name, values in servers.machines ~}
+Host ${ name }
+    Hostname ${ values.public_ip }
+    IdentityFile ${ values.operating_system.ssh_private_key_file }
+    User ${ values.operating_system.ssh_user }
+%{ endfor ~}

@@ -1,0 +1,36 @@
+{% set ssh_ips = ssh_ips | default(['0.0.0.0/0']) %}
+aws:
+  tags:
+    cluster_name: SSH-Access-Example
+    created_by: EDB-Terraform-Example
+  images:
+    debian:
+      name: debian-10-amd64
+      owner: 136693071363
+      ssh_user: admin
+  regions:
+    us-west-2:
+      cidr_block: 10.2.0.0/16
+      zones:
+        proxy:
+          zone: us-west-2b
+          cidr: 10.2.20.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+          type: ingress
+          cidrs: {{ ssh_ips | list }}
+  machines:
+    driver:
+      image_name: debian
+      region: us-west-2
+      zone_name: proxy
+      instance_type: t3a.medium
+      volume:
+        type: gp2
+        size_gb: 50
+        iops: 5000
+        encrypted: false
+      tags:
+        type: driver

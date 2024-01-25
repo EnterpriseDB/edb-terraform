@@ -1,0 +1,3 @@
+%{ for name, values in servers.machines ~}
+${ values.public_ip }
+%{ endfor ~}

@@ -1,0 +1,56 @@
+---
+architecture: PGD-Always-ON
+cluster_name: pgdemo
+cluster_tags: {}
+
+cluster_vars:
+  apt_repository_list: []
+  bdr_database: bdrdb
+  bdr_node_group: pgdemo
+  bdr_node_groups:
+  - name: pgdemo
+  - name: first_subgroup
+    options:
+      enable_proxy_routing: true
+      enable_raft: true
+      location: first
+    parent_group_name: pgdemo
+  bdr_version: '5'
+  default_pgd_proxy_options:
+    listen_port: 6432
+  edb_repositories:
+  - standard
+  - postgres_distributed
+  enable_pg_backup_api: false
+  failover_manager: pgd
+  postgres_coredump_filter: '0xff'
+  postgres_flavour: postgresql
+  postgres_version: '15'
+  preferred_python_version: python3
+  use_volatile_subscriptions: false
+  postgres_data_dir: /pgdata
+  postgres_wal_dir: /pgwal
+
+locations:
+- Name: first
+
+instances:
+%{ for name, values in servers.machines ~}
+%{   if lower(try(values.tags.type, "")) == "pgd" ~}
+- Name: ${ name }
+  location: first
+  node: ${ values.tags.index }
+  platform: bare
+  public_ip: ${ values.public_ip }
+  private_ip: ${ values.private_ip }
+  role:
+  - bdr
+  - pgd-proxy
+  vars:
+    ansible_user: ${ values.operating_system.ssh_user }
+    manage_ssh_hostkeys: yes
+    bdr_child_group: first_subgroup
+    bdr_node_options:
+      route_priority: 100
+%{   endif ~}
+%{ endfor ~}

@@ -1,0 +1,26 @@
+---
+all:
+  children:
+    driver:
+      hosts:
+%{ for name, values in servers.machines ~}
+%{   if lower(try(values.tags.type, "")) == "driver" ~}
+        ${ name }:
+          ansible_host: ${ values.public_ip }
+          private_ip: ${ values.private_ip }
+          ansible_user: ${ values.operating_system.ssh_user }
+          ansible_ssh_private_key_file: ${ values.operating_system.ssh_private_key_file }
+%{   endif ~}
+%{ endfor ~}
+    primary:
+      hosts:
+# Primary node
+%{ for name, values in servers.machines ~}
+%{   if lower(try(values.tags.type, "")) == "primary" ~}
+        ${ name }:
+          ansible_host: ${ values.public_ip }
+          private_ip: ${ values.private_ip }
+          ansible_user: ${ values.operating_system.ssh_user }
+          ansible_ssh_private_key_file: ${ values.operating_system.ssh_private_key_file }
+%{   endif ~}
+%{ endfor ~}
