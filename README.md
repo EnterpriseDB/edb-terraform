@@ -105,6 +105,9 @@ Templating is allowed for dynamic configurations:
     - config.yml for TPAExec Bare
     - inventory.yml for EDB-Ansible
 
+> :information_source:  
+> Examples of infrastructure files with templates found inside of [docs/examples/templates](./docs/examples/templates)
+
 ### :open_file_folder: Project directory layout
 ```
 .

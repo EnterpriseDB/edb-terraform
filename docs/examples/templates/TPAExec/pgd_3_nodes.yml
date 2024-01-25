@@ -1,0 +1,134 @@
+aws:
+  tags:
+    cluster_name: TPAExec-Example
+    created_by: EDB-Terraform-Example
+  images:
+    rocky9:
+      name: Rocky-9-EC2-Base-9.3-20231113.0.x86_64-3f230a17-9877-4b16-aa5e-b1ff34ab206b
+      owner: 679593333241
+      ssh_user: rocky
+  regions:
+    us-east-1:
+      cidr_block: 10.0.0.0/16
+      zones:
+        zone0:
+          zone: us-east-1b
+          cidr: 10.0.1.0/24
+        zone1: 
+          zone: us-east-1c
+          cidr: 10.0.2.0/24
+        zone2:
+          zone: us-east-1d
+          cidr: 10.0.3.0/24
+      service_ports:
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+      region_ports:
+        - port: 5432
+          protocol: tcp
+          description: "PostgreSQL"
+        - port: 5444
+          protocol: tcp
+          description: "EPAS"
+        - port: 6432
+          protocol: tcp
+          description: "PGD Proxy"
+
+  machines:
+    driver:
+      image_name: rocky9
+      tags:
+        type: driver
+      region: us-east-1
+      zone_name: zone0
+      instance_type: c6i.4xlarge
+      volume:
+        type: gp3
+        size_gb: 200
+        iops: 3000
+        encrypted: false
+    pgd0:
+      image_name: rocky9
+      tags:
+        type: pgd
+        index: 0
+      region: us-east-1
+      zone_name: zone0
+      instance_type: r6i.4xlarge
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 3000
+        encrypted: false
+      additional_volumes:
+        - mount_point: /pgdata
+          filesystem: xfs
+          size_gb: 200
+          type: gp3
+          iops: 4000
+          throughput: 1000
+          encrypted: false
+        - mount_point: /pgwal
+          filesystem: xfs
+          size_gb: 200
+          type: gp3
+          iops: 4000
+          throughput: 1000
+          encrypted: false
+    pgd1:
+      image_name: rocky9
+      tags:
+        type: pgd
+        index: 1
+      region: us-east-1
+      zone_name: zone1
+      instance_type: r6i.4xlarge
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 3000
+        encrypted: false
+      additional_volumes:
+        - mount_point: /pgdata
+          filesystem: xfs
+          size_gb: 200
+          type: gp3
+          iops: 4000
+          throughput: 1000
+          encrypted: false
+        - mount_point: /pgwal
+          filesystem: xfs
+          size_gb: 200
+          type: gp3
+          iops: 4000
+          throughput: 1000
+          encrypted: false
+    pgd2:
+      image_name: rocky9
+      tags:
+        type: pgd
+        index: 2
+      region: us-east-1
+      zone_name: zone2
+      instance_type: r6i.4xlarge
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 3000
+        encrypted: false
+      additional_volumes:
+        - mount_point: /pgdata
+          filesystem: xfs
+          size_gb: 200
+          type: gp3
+          iops: 4000
+          throughput: 1000
+          encrypted: false
+        - mount_point: /pgwal
+          filesystem: xfs
+          size_gb: 200
+          type: gp3
+          iops: 4000
+          throughput: 1000
+          encrypted: false

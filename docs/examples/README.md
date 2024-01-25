@@ -8,7 +8,9 @@ Each filename should reference the service it is an example for.
 - [Azure](./azure/)
 - [GCloud](./gcloud/)
 
-Templates can be used to create files after all resources are created.
+Templates can be used for the infrastructure file or to create files after all resources are created.
 It will have the the outputs from servers.yml available for use.
-Templates can be passed in with `edb-terraform generate` and option `--user-templates`.
-- [Example template](./templates/inventory.yml.tftpl)
+Templates can be passed in with `edb-terraform generate` and option `--infra-file` or `--user-templates`.
+- [TPAExec Example](./templates/TPAExec/README.md)
+- [EDBAnsible Example](./templates/EDBAnsible/README.md)
+- [SSH-access example](./templates/SSH_Allowed/README.md)
