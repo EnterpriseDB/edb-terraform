@@ -1,5 +1,6 @@
 import yaml
 from pathlib import Path
+import os
 import sys
 from jinja2 import (
     Environment,
@@ -10,6 +11,9 @@ from jinja2 import (
     StrictUndefined,
     UndefinedError,
 )
+
+MAX_PATH_LENGTH = os.pathconf('/', 'PC_PATH_MAX')
+MAX_NAME_LENGTH = os.pathconf('/', 'PC_NAME_MAX')
 
 def load_yaml_file(input: str) -> dict:
     '''
@@ -24,7 +28,9 @@ def load_yaml_file(input: str) -> dict:
     values = {}
 
     try:
-        if Path(input).exists():
+        if len(str(input)) <= MAX_PATH_LENGTH \
+            and len(str(input).split('/')[-1]) <= MAX_NAME_LENGTH \
+            and Path(input).exists():
             with open(Path(input), 'r') as file:
                 values = yaml.safe_load(file.read())
         else:
