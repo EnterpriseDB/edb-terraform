@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from collections import OrderedDict
 from typing import List
 from datetime import datetime
+from functools import partial
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI
@@ -127,7 +128,7 @@ InfrastructureFilePath = ArgumentConfig(
     dest='infra_file',
     type=Path,
     required=True,
-    help="cloud service provider infrastructure file path (YAML format) or a jinja2 template. Default: %(default)s"
+    help="cloud service provider infrastructure file path (YAML format) or a jinja2 template with a top level object. Default: %(default)s"
 )
 
 InfrastructureTemplateVariables = ArgumentConfig(
@@ -135,9 +136,9 @@ InfrastructureTemplateVariables = ArgumentConfig(
     metavar='INFRA_TEMPLATE_VARIABLES',
     dest='infra_template_variables',
     default='{}',
-    type=files.load_yaml_file,
+    type=partial(files.load_yaml_file, top_level_types=(dict)),
     required=False,
-    help="Infrastructure variables file path or a string representing yaml or json. Only used when the infrastructure file is a jinja2 template. Default: %(default)s"
+    help="Infrastructure variables file path or a string representing yaml or json with a top level object. Only used when the infrastructure file is a jinja2 template. Default: %(default)s"
 )
 
 TerraformLockHcl = ArgumentConfig(
