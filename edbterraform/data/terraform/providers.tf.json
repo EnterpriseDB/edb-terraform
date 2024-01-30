@@ -1,0 +1,11 @@
+{
+  "//": "Base configuration blocks for provider and terraform",
+  "terraform": {
+    "backend": {
+      "local": {
+      }
+    }
+  },
+  "provider": {
+  }
+}
