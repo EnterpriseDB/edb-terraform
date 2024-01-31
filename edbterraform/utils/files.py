@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
 import os
-import sys
+from typing import Union, Tuple
 from jinja2 import (
     Environment,
     FileSystemLoader,
@@ -15,14 +15,17 @@ from jinja2 import (
 MAX_PATH_LENGTH = os.pathconf('/', 'PC_PATH_MAX')
 MAX_NAME_LENGTH = os.pathconf('/', 'PC_NAME_MAX')
 
-def load_yaml_file(input: str, top_level_types: tuple = ()) -> dict:
+def load_yaml_file(
+    input: Union[str,Path],
+    top_level_types: Tuple[type] = (dict,),
+) -> Union[list, dict, str, int, float, bool, None,]:
     '''
     Load yaml from a file or a string.
     - Valid json accepted as well since it is valid yaml.
     - Allow restricting the top level type to a list of valid types.
 
     Args:
-        input (str): a file path or a string
+        input (str | Path): a file path or a string
         top_level_types (tuple): a tuple of valid format types
     Returns:
         dict: the yaml data
@@ -31,10 +34,28 @@ def load_yaml_file(input: str, top_level_types: tuple = ()) -> dict:
     values = {}
 
     try:
-        if len(str(mod_inputs)) <= MAX_PATH_LENGTH \
-            and len(str(mod_inputs).split('/')[-1]) <= MAX_NAME_LENGTH \
-            and Path(mod_inputs).exists():
-                mod_inputs = Path(mod_inputs).read_text()
+        if not isinstance(top_level_types, tuple):
+            raise TypeError("ERROR: top_level_types must be a tuple of types: %s - %s" % (top_level_types, type(top_level_types)))
+
+        # Do not allow reading input as a string when the data can be a string as well.
+        if isinstance(input, str) \
+            and (not top_level_types or isinstance("", top_level_types)):
+            raise TypeError("ERROR: When input is a string, the data cannot be a string, use pathlib.Path instead of string for input or restrict top_level_types - %s - %s - (%s)" % (input, type(input), top_level_types))
+
+        # Fallback to reading as a string not set as a Path
+        try:
+            mod_inputs = Path(mod_inputs) \
+                            .resolve(strict=True) \
+                            .read_text()
+
+        except OSError as e:
+            # When input is not an explicit Path,
+            # ignore FileNotFoundError or File name too long
+            if isinstance(input, Path) \
+                or (e.errno != 2 and e.errno != 36):
+                raise
+        except:
+            raise
 
         values = yaml.safe_load(mod_inputs)
 
