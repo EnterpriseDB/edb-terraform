@@ -46,12 +46,25 @@ def tpl(template_name, dest, csp, vars={}):
         logger.error("ERROR: could not render template %s (%s)" % (template_name, e))
         sys.exit(1)
 
-def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provider, blocks=['provider', 'terraform',]):
+def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provider, remote_state_type='local', blocks=['provider', 'terraform',]):
     '''
     Update terraform blocks from a terraform json configuration file:
     - provider
     - terraform
     '''
+    csp_terraform_provider = {
+        'aws': 'aws',
+        'gcloud': 'google',
+        'azure': 'azurerm',
+    }
+    csp_terraform_backend = {
+        'aws': 's3',
+        'gcloud': 'gcs',
+        'azure': 'azurerm',
+        'postgres': 'pg',
+        'postgresql': 'pg',
+        'hashicorp': 'consul',
+    }
     try:
         data = load_yaml_file(file)
         with open(file, 'w') as f:
@@ -64,12 +77,6 @@ def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provi
                     if block not in data:
                         data[block] = dict()
 
-                    csp_terraform_provider = {
-                        'aws': 'aws',
-                        'gcloud': 'google',
-                        'azure': 'azurerm',
-                    }
-
                     provider_name = csp_terraform_provider.get(cloud_service_provider, cloud_service_provider)
                     for region in infra_vars['spec']['regions']:
                         if provider_name not in data[block]:
@@ -79,8 +86,27 @@ def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provi
                             'alias': region.replace('-','_'),
                         })
 
+                # https://developer.hashicorp.com/terraform/language/v1.3.x/settings/backends/configuration
+                # Update the terraform backend block with the remote state type.
+                # Expected as { terraform: { backend: { <remote_state_type>: {} }}
+                # Set as an empty configuration to force the user to configure the resources with:
+                # - CLI options: `terraform init -backend-config="KEY=VALUE"`
+                # - Filepath with recommend filename scheme - `*.<backendname>.tfbackend`: `terraform init -backend-config="PATH"`
+                # - Interactive when `--input=false` is not set.
+                # Credentials can still be exposed in 2 ways:
+                # - terraform.tfstate files
+                # - .terraform/ directory files
                 if block == 'terraform':
-                    pass
+                    if block not in data:
+                        data[block] = dict()
+                    # Setup/Overwrite the backend block
+                    if 'backend' not in data[block] or data[block]['backend']:
+                        data[block]['backend'] = dict()
+                    # Handle the remote state type with the cloud providers storage service
+                    if remote_state_type == 'cloud':
+                        remote_state_type = cloud_service_provider
+
+                    data[block]['backend'][csp_terraform_backend.get(remote_state_type, remote_state_type)] = {}
 
             f.write(json.dumps(data, indent=2, sort_keys=True))
     except Exception as e:
@@ -349,6 +375,7 @@ def generate_terraform(
         run_validation: bool = False,
         apply: bool = False,
         destroy: bool = False,
+        remote_state_type: str = 'local',
     ) -> dict:
     """
     Generates the terraform files from jinja templates and terraform modules and
@@ -412,6 +439,7 @@ def generate_terraform(
         template_vars,
         terraform_vars,
         csp,
+        remote_state_type,
         ['provider', 'terraform'],
     )
 
