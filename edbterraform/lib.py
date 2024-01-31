@@ -624,7 +624,7 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
                 spec_variables['machines'][machine]['zone_name'] = f'depreciated-{spec_variables["machines"][machine]["zone"]}'
 
     if 'kubernetes' in spec_variables:
-        for cluster in spec_variables['kuberenetes']:
+        for cluster in spec_variables['kubernetes']:
             if 'zone_name' not in spec_variables['kubernetes'][cluster] and 'zone' in spec_variables['kubernetes'][cluster]:
                 spec_variables['kubernetes'][cluster]['zone_name'] = f'depreciated-{spec_variables["kubernetes"][machine]["zone"]}'
 
