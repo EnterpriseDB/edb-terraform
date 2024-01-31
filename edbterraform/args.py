@@ -136,7 +136,7 @@ InfrastructureTemplateVariables = ArgumentConfig(
     metavar='INFRA_TEMPLATE_VARIABLES',
     dest='infra_template_variables',
     default='{}',
-    type=partial(files.load_yaml_file, top_level_types=(dict)),
+    type=files.load_yaml_file,
     required=False,
     help="Infrastructure variables file path or a string representing yaml or json with a top level object. Only used when the infrastructure file is a jinja2 template. Default: %(default)s"
 )
