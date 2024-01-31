@@ -62,6 +62,7 @@ setup(
     package_data={
         'edbterraform': [
             'data/terraform/*/*',
+            'data/terraform/providers.tf.json',
             'data/terraform/*/modules/*/*',
             'data/templates/*/*',
             'utils/*'

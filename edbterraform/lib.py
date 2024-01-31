@@ -46,6 +46,46 @@ def tpl(template_name, dest, csp, vars={}):
         logger.error("ERROR: could not render template %s (%s)" % (template_name, e))
         sys.exit(1)
 
+def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provider, blocks=['provider', 'terraform',]):
+    '''
+    Update terraform blocks from a terraform json configuration file:
+    - provider
+    - terraform
+    '''
+    try:
+        data = load_yaml_file(file)
+        with open(file, 'w') as f:
+            for block in blocks:
+
+                # Due to limitations of terraform 1.x,
+                # we need to update the provider block for each region that will be used.
+                # We must set the region and an alias to avoid conflicts for each provider block.
+                if block == 'provider':
+                    if block not in data:
+                        data[block] = dict()
+
+                    csp_terraform_provider = {
+                        'aws': 'aws',
+                        'gcloud': 'google',
+                        'azure': 'azurerm',
+                    }
+
+                    provider_name = csp_terraform_provider.get(cloud_service_provider, cloud_service_provider)
+                    for region in infra_vars['spec']['regions']:
+                        if provider_name not in data[block]:
+                            data[block][provider_name] = list()
+                        data[block][provider_name].append({
+                            'region': region,
+                            'alias': region.replace('-','_'),
+                        })
+
+                if block == 'terraform':
+                    pass
+
+            f.write(json.dumps(data, indent=2, sort_keys=True))
+    except Exception as e:
+        raise Exception('ERROR: could not update terraform blocks in %s - (%s)' % (file, repr(e)))
+
 def save_default_templates(templates_directory):
     '''
     Save any predefined templates into the 'directory/templates' for consistent referencing
@@ -102,6 +142,7 @@ def create_project_dir(
     '''
     SCRIPT_DIRECTORY = Path(__file__).parent.resolve()
     TERRAFORM_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / cloud_service_provider
+    TERRAFORM_PROVIDERS_FILE = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'providers.tf.json'
     TERRAFORM_STATE_FILE = project_directory / 'terraform.tfstate'
     PROJECT_PATH_PERMISSIONS = 0o750
     TERRAFORM_STATE_PERMISSIONS = 0o600
@@ -120,6 +161,7 @@ def create_project_dir(
     try:
         logger.info(f'Making directory and copying terraform modules {TERRAFORM_MODULES_DIRECTORY} into {project_directory}')
         shutil.copytree(TERRAFORM_MODULES_DIRECTORY, project_directory)
+        shutil.copyfile(TERRAFORM_PROVIDERS_FILE, project_directory / TERRAFORM_PROVIDERS_FILE.name)
         os.chmod(project_directory, PROJECT_PATH_PERMISSIONS)
 
         # Create the statefile and change file/folder permissions 
@@ -356,18 +398,21 @@ def generate_terraform(
         project_path, 'terraform.tfvars.json', terraform_vars
     )
 
-    # Generate the main.tf and providers.tf files.
+    # Generate the main.tf files.
     tpl(
         'main.tf.j2',
         project_path / 'main.tf',
         csp,
         template_vars
     )
-    tpl(
-        'providers.tf.j2',
-        project_path / 'providers.tf',
+
+    # Generate provider.tf.json
+    update_terraform_blocks(
+        project_path / 'providers.tf.json',
+        template_vars,
+        terraform_vars,
         csp,
-        template_vars
+        ['provider', 'terraform'],
     )
 
     # terraform_vars holds the spec object for use in terraform

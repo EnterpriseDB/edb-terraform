@@ -1,8 +1,55 @@
 {
-  "//": "Base configuration blocks for provider and terraform",
+  "//": "Terraform Block base configuration for backend replacement and dependabot dependency updates",
   "terraform": {
+    "//": "Terraform Block base configuration - Only 1 backend configuration allowed",
     "backend": {
       "local": {
+      }
+    },
+    "required_providers": {
+      "biganimal": {
+        "source": "registry.terraform.io/EnterpriseDB/biganimal",
+        "version": "<= 0.6.1"
+      },
+      "toolbox": {
+        "source": "registry.terraform.io/bryan-bar/toolbox",
+        "version": "<= 0.2.2"
+      },
+      "aws": {
+        "source": "registry.terraform.io/hashicorp/aws",
+        "version": "<= 5.34.0"
+      },
+      "azurerm": {
+        "source": "registry.terraform.io/hashicorp/azurerm",
+        "version": "<= 3.89.0"
+      },
+      "google": {
+        "source": "registry.terraform.io/hashicorp/google",
+        "version": "<= 5.14.0"
+      },
+      "kubernetes": {
+        "source": "registry.terraform.io/hashicorp/kubernetes",
+        "version": "<= 2.25.2"
+      },
+      "null": {
+        "source": "registry.terraform.io/hashicorp/null",
+        "version": "<= 3.2.2"
+      },
+      "time": {
+        "source": "registry.terraform.io/hashicorp/time",
+        "version": "<= 0.10.0"
+      },
+      "local": {
+        "source": "registry.terraform.io/hashicorp/local",
+        "version": "<= 2.4.1"
+      },
+      "random": {
+        "source": "registry.terraform.io/hashicorp/random",
+        "version": "<= 3.6.0"
+      },
+      "tls": {
+        "source": "registry.terraform.io/hashicorp/tls",
+        "version": "<= 4.0.5"
       }
     }
   },
