@@ -108,6 +108,26 @@ Templating is allowed for dynamic configurations:
 > :information_source:  
 > Examples of infrastructure files with templates found inside of [docs/examples/templates](./docs/examples/templates)
 
+### :lock: State file
+By default, state will be saved locally.
+This can be overwritten when generating the project by passing in the `--remote-state-type` option.
+The backend will be saved with an empty configuration,
+  this forces `terraform init` to prompt the user or requires `-backend-config` as key-values or a filepath with key-values.
+
+Options:
+- `local` - (Default) saves state to `terraform.tfstate`.
+- `cloud` - save state to cloud provider's backend offering.
+- `postgres` | `postgresql` - save state to a Postgres database.
+- `hashicorp` - save state to HashiCorp Consul.
+- Unknown options will be written directly to `providers.tf.json` file
+
+### :factory: Provider Versions
+Terraform provider versions will be locked to a maximum version.
+This version information is available within `providers.tf.json` under `terraform.required_providers` when a project is created.
+Since this is a json file,
+  it can be updated to accomodate new versions or remove the version to get the max version.
+This avoids the need to also maintain a .terraform.hcl.lock file
+
 ### :open_file_folder: Project directory layout
 ```
 .
@@ -174,7 +194,7 @@ Templating is allowed for dynamic configurations:
 │   │   └── main.tf
 │   └── vpc_peering_routes
 │       └── main.tf
-├── providers.tf # Terraform providers
+├── providers.tf.json # Configuration blocks for `provider` and `terraform`
 ├── templates # user templates rendered in parent directory with extension `.tftpl` removed
 │   ├── config.yml.tftpl
 │   └── inventory.yml.tftpl

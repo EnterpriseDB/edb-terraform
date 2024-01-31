@@ -141,6 +141,22 @@ InfrastructureTemplateVariables = ArgumentConfig(
     help="Infrastructure variables file path or a string representing yaml or json with a top level object. Only used when the infrastructure file is a jinja2 template. Default: %(default)s"
 )
 
+RemoteStateType = ArgumentConfig(
+    names = ['--remote-state-type',],
+    metavar='REMOTE_STATE_TYPE',
+    dest='remote_state_type',
+    type=str,
+    default='local',
+    help="""
+    When state is not set to `local`,
+      force configuration of backend with `terraform init -backend-config="<KEY=VALUE | FILEPATH >"`.
+    Use `cloud` to use the set cloud provider as the backend.
+    Any other value can be passed as the backend type for use within providers.tf.json but will not be validated until `terraform init` is run.
+
+    Default: %(default)s
+    """
+)
+
 TerraformLockHcl = ArgumentConfig(
     names = ['--lock-hcl-file',],
     metavar='LOCK_HCL_FILE',
@@ -301,6 +317,7 @@ class Arguments:
             LogStdout,
             UserTemplatesPath,
             TerraformLockHcl,
+            RemoteStateType,
         ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
@@ -406,6 +423,7 @@ class Arguments:
                 run_validation=self.get_env('run_validation'),
                 apply=self.get_env('apply'),
                 destroy=self.get_env('destroy'),
+                remote_state_type = self.get_env('remote_state_type'),
             )
             return outputs
 
