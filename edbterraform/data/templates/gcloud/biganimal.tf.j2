@@ -29,7 +29,4 @@ module "biganimal_{{ region_ }}" {
 
   depends_on = [module.security_{{ region_ }}]
 
-  providers = {
-    biganimal = biganimal.default
-  }
 }
