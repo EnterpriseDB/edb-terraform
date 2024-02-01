@@ -195,10 +195,11 @@ This avoids the need to also maintain a .terraform.hcl.lock file
 │   └── vpc_peering_routes
 │       └── main.tf
 ├── providers.tf.json # Configuration blocks for `provider` and `terraform`
+├── versions.tf # Provider Versioning file
 ├── templates # user templates rendered in parent directory with extension `.tftpl` removed
 │   ├── config.yml.tftpl
 │   └── inventory.yml.tftpl
-├── terraform.tfstate # Terraform state
+├── terraform.tfstate # Terraform state - used as a terraform project marker for edb-terraform when state is remote
 ├── terraform.tfvars.json # Automatically detected Terraform variables. Original values under `edb-terraform/terraform.tfvars.yml`
 └── variables.tf # Terraform placeholder variables
 ```

@@ -169,6 +169,7 @@ def create_project_dir(
     SCRIPT_DIRECTORY = Path(__file__).parent.resolve()
     TERRAFORM_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / cloud_service_provider
     TERRAFORM_PROVIDERS_FILE = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'providers.tf.json'
+    TERRAFORM_VERSIONS_FILE = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'versions.tf'
     TERRAFORM_STATE_FILE = project_directory / 'terraform.tfstate'
     PROJECT_PATH_PERMISSIONS = 0o750
     TERRAFORM_STATE_PERMISSIONS = 0o600
@@ -188,6 +189,7 @@ def create_project_dir(
         logger.info(f'Making directory and copying terraform modules {TERRAFORM_MODULES_DIRECTORY} into {project_directory}')
         shutil.copytree(TERRAFORM_MODULES_DIRECTORY, project_directory)
         shutil.copyfile(TERRAFORM_PROVIDERS_FILE, project_directory / TERRAFORM_PROVIDERS_FILE.name)
+        shutil.copyfile(TERRAFORM_VERSIONS_FILE, project_directory / TERRAFORM_VERSIONS_FILE.name)
         os.chmod(project_directory, PROJECT_PATH_PERMISSIONS)
 
         # Create the statefile and change file/folder permissions 
