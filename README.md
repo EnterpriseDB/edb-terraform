@@ -47,7 +47,8 @@ terraform destroy
 
 > :information_source:  
 > Help command to list all options: `edb-terraform generate --help`  
-> More examples of infrastructure files describing target cloud providers can be found inside of the [docs/examples](./docs/examples/README.md)
+> More examples of infrastructure files describing target cloud providers can be found inside of the [docs/examples](./docs/examples/README.md)  
+> For automation, install without manual cloning: `python3 -m pip install git+https://github.com/EnterpriseDB/edb-terraform.git`
 
 ### :outbox_tray: Outputs
 After resources are created,
