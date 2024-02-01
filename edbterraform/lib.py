@@ -19,7 +19,7 @@ from edbterraform import __version__, __python_version__, __virtual_env__, __dot
 from edbterraform.utils.dict import change_keys
 from edbterraform.utils.files import load_yaml_file, render_template
 from edbterraform.utils.logs import logger
-from edbterraform.CLI import TerraformCLI
+from edbterraform.CLI import TerraformCLI, join_version
 
 def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
@@ -107,6 +107,9 @@ def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provi
                         remote_state_type = cloud_service_provider
 
                     data[block]['backend'][csp_terraform_backend.get(remote_state_type, remote_state_type)] = {}
+
+                    # Set the required terraform version
+                    data[block]['required_version'] = '>= %s, <= %s' % (join_version(TerraformCLI.min_version), join_version(TerraformCLI.max_version))
 
             f.write(json.dumps(data, indent=2, sort_keys=True))
     except Exception as e:
@@ -207,6 +210,8 @@ def create_project_dir(
         logger.info(f'Copying edb-terraform files into {EDB_TERRAFORM_DIRECTORY}')
         EDB_TERRAFORM_DIRECTORY.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(HCL_LOCK_FILE, EDB_TERRAFORM_DIRECTORY / 'terraform.lock.hcl')
+        shutil.copyfile(TERRAFORM_PROVIDERS_FILE, EDB_TERRAFORM_DIRECTORY / TERRAFORM_PROVIDERS_FILE.name)
+        shutil.copyfile(TERRAFORM_VERSIONS_FILE, EDB_TERRAFORM_DIRECTORY / TERRAFORM_VERSIONS_FILE.name)
         shutil.copyfile(infrastructure_file, BACKUP_TEMPLATE)
         with open(BACKUP_TEMPLATE_INPUTS, 'a') as f:
             f.write(yaml.dump(template_variables))

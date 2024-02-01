@@ -14,10 +14,10 @@ from edbterraform.utils.logs import logger
 
 Version = namedtuple('Version', ['major', 'minor', 'patch'])
 
-def parse_version(version, separator):
+def parse_version(version, separator='.'):
     return Version(*[int(x) for x in version.split(separator)])
 
-def join_version(version, separator):
+def join_version(version, separator='.'):
     return separator.join(map(str, version))
 
 def execute_shell(args, environment=os.environ, cwd=None):
