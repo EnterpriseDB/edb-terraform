@@ -1,0 +1,12 @@
+version: 2
+
+updates:
+# Terraform - One entry per directory we want to scan as per https://github.com/dependabot/dependabot-core/issues/649
+  - package-ecosystem: "terraform"
+    directory: "/edbterraform/data/terraform"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependency"
+      - "terraform"
+      - "dependabot"
