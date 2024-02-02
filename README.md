@@ -12,7 +12,7 @@ The following components must be installed on the system:
 - Python >= 3.6
 - Bash
 - [JQ](https://jqlang.github.io/jq/download/)
-- Cloud provider cli tool with credentials set
+- Cloud provider cli tool with credentials configured
   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
   - [GCloud CLI](https://cloud.google.com/sdk/docs/install-sdk)
   - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
@@ -23,7 +23,8 @@ The following components must be installed on the system:
 
 > :information_source:  
 > Refer to official documentation for credential management and environment specific installation.  
-> For quick examples of setup, please refer to the [setup guide](./docs/SETUP.md).
+> For quick examples of setup, please refer to the [setup guide](./docs/SETUP.md).  
+> [Credential setup](./docs/CREDENTIALS.md)  
 
 ## :zap: Quick start
 ```bash
