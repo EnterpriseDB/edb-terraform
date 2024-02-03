@@ -1,0 +1,78 @@
+---
+name: 'Generate'
+description: 'Generate terraform files with edb-terraform'
+inputs:
+  project-name:
+    description: 'Name of the project'
+    required: false
+    default: runner-terraform
+  work-directory:
+    description: 'Path to work directory'
+    required: false
+    default: ${{ github.workspace }}
+  infra-file-path:
+    description: 'Infrastructure file path'
+    required: true
+  infra-template-variables:
+    description: 'Infrastructure template variables'
+    required: false
+    default: '{}'
+  cloud-service-provider:
+    description: 'Cloud service provider'
+    required: false
+    default: aws
+    type: choice
+    options:
+      - aws
+      - azure
+      - gcloud
+  remote-state:
+    description: 'Remote state'
+    required: false
+    default: 'local'
+  user-templates:
+    description: 'Post terraform templates'
+    required: false
+    default: '/dev/null'
+outputs:
+  project-path:
+    description: "Project path"
+    value: ${{ inputs.work-directory }}/${{ inputs.project-name }}
+runs:
+  using: "composite"
+  steps:
+    - name: Check dependencies
+      working-directory: ${{ inputs.repo-directory }}
+      shell: bash
+      run: |
+        programs=("terraform" "edb-terraform" "aws" "jq")
+
+        for program in "${programs[@]}"
+        do
+          if ! builtin type -P "$program" >/dev/null 2>&1
+          then
+            printf "$program not found" >&2
+            exit 1
+          fi
+        done
+
+    - name: Generate terraform files
+      working-directory: ${{ inputs.repo-directory }}
+      shell: bash
+      env:
+        CLOUD_SERVICE_PROVIDER: ${{ inputs.cloud-service-provider }}
+        WORK_PATH: ${{ inputs.work-directory }}
+        PROJECT_NAME: ${{ inputs.project-name }}
+        INFRA_FILE: ${{ inputs.infra-file-path }}
+        INFRA_TEMPLATE_VARIABLES: ${{ inputs.infra-template-variables }}
+        REMOTE_STATE_TYPE: ${{ inputs.remote-state }}
+        USER_TEMPLATES: ${{ inputs.user-templates }}
+      run: |
+        edb-terraform generate \
+          --cloud-service-provider "$CLOUD_SERVICE_PROVIDER" \
+          --work-path "$WORK_PATH" \
+          --project-name "$PROJECT_NAME" \
+          --infra-file "$INFRA_FILE" \
+          --infra-template-variables "$INFRA_TEMPLATE_VARIABLES" \
+          --remote-state-type "$REMOTE_STATE_TYPE" \
+          --user-templates "$USER_TEMPLATES"
