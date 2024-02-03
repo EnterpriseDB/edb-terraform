@@ -1,0 +1,79 @@
+---
+name: 'Setup'
+description: 'Checks out the repo and installs it'
+inputs:
+  repo-directory:
+    description: 'Path to checked out repo'
+    required: true
+  link-path:
+    description: 'Path to link the binary'
+    required: false
+    default: '/usr/local/bin'
+  terraform-version:
+    description: 'Version of terraform to install'
+    required: false
+    default: '1.5.5'
+  run-edbterraform-setup:
+    description: 'Whether to run edb-terraform setup'
+    required: false
+    default: 'false'
+    type: boolean
+  cloud-provider:
+    description: 'Cloud provider to use'
+    required: false
+    default: 'aws'
+    options:
+      - 'aws'
+      - 'azure'
+      - 'gcloud'
+      - 'all'
+      - 'none'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install edb-terraform and link python entry script
+      working-directory: ${{ inputs.repo-directory }}
+      shell: bash
+      env:
+        LINK_PATH: ${{ inputs.link-path }}
+      run: |
+        python3 -m venv venv-terraform
+        source venv-terraform/bin/activate
+        python -m pip install . --upgrade
+        ln -s $(pwd)/venv-terraform/bin/edb-terraform "$LINK_PATH/edb-terraform"
+
+    - name: Install terraform and link binary
+      if: ${{ inputs.run-edbterraform-setup == true || inputs.run-edbterraform-setup == 'true' }}
+      working-directory: ${{ inputs.repo-directory }}
+      shell: bash
+      env:
+        LINK_PATH: ${{ inputs.link-path }}
+      shell: bash
+      run: |
+        edb-terraform setup
+        ln -s $HOME/.edb-terraform/bin/terraform "$LINK_PATH/terraform"
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      if: ${{ inputs.run-edbterraform-setup == false || inputs.run-edbterraform-setup == 'false' }}
+      with:
+        terraform_wrapper: true
+        terraform_version: ${{ inputs.terraform-version }}
+
+    - name: Install JQ
+      if: ${{ inputs.run-edbterraform-setup == false || inputs.run-edbterraform-setup == 'false' }}
+      shell: bash
+      run: apt-get install -y jq
+
+    - name: Install AWS CLI
+      if: ${{ inputs.cloud-provider != 'none' && inputs.cloud-provider == 'aws' || inputs.cloud-provider == 'all' }}
+      working-directory: ${{ inputs.repo-directory }}
+      shell: bash
+      env:
+        LINK_PATH: ${{ inputs.link-path }}
+      run: |
+        python3 -m venv venv-awscli
+        source venv-awscli/bin/activate
+        python -m pip install awscli==1.29.*
+        ln -s $(pwd)/venv-awscli/bin/aws "$LINK_PATH/aws"
