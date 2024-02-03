@@ -1,0 +1,30 @@
+---
+name: 'Destroy'
+description: 'Destroy Terraform resources'
+inputs:
+  project-path:
+    description: "Project path"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check dependencies
+      working-directory: ${{ inputs.repo-directory }}
+      shell: bash
+      run: |
+        programs=("terraform" "edb-terraform" "aws" "jq")
+
+        for program in "${programs[@]}"
+        do
+          if ! builtin type -P "$program" >/dev/null 2>&1
+          then
+            printf "$program not found" >&2
+            exit 1
+          fi
+        done
+
+    - name: Terraform destroy
+      working-directory: ${{ inputs.project-path }}
+      shell: bash
+      run: terraform destroy -input=false -auto-approve
