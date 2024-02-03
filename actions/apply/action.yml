@@ -20,6 +20,10 @@ inputs:
       - aws
       - azure
       - gcloud
+  backend-configs:
+    description: 'List of backend configuration options for terraform init. Expects a series of key-value pairs or a single file when remote state is not `local`. Make sure to mask sensitive values.'
+    required: false
+    default: '[]'
 runs:
   using: "composite"
   steps:
@@ -55,7 +59,18 @@ runs:
     - name: Terraform init
       working-directory: ${{ inputs.project-path }}
       shell: bash
-      run: terraform init -input=false
+      env:
+        BACKEND_CONFIGS: ${{ inputs.backend-configs }}
+      run: |
+      CONFIGS=$(echo $BACKEND_CONFIGS | jq -r .[])
+      OPTION="-backend-config="
+      CONFIG_STR=""
+      for config in $CONFIGS
+      do
+        CONFIG_STR+="$OPTION\"$config\""
+      done
+
+      terraform init -input=false "$CONFIG_STR"
 
     - name: Terraform plan
       working-directory: ${{ inputs.project-path }}
