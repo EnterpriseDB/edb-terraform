@@ -1,0 +1,101 @@
+---
+# This action requires that AWS/Azure/Gcloud credentials are setup
+# AWS: https://github.com/aws-actions/configure-aws-credentials?tab=readme-ov-file#long-term-credentials-warning-10323
+name: 'Apply'
+description: 'Provision Terraform resources'
+inputs:
+  project-path:
+    description: "Project path"
+    required: true
+  plan-filename:
+    description: "Terraform plan filename"
+    required: false
+    default: "plan.out"
+  cloud-service-provider:
+    description: 'Cloud service provider'
+    required: false
+    default: aws
+    type: choice
+    options:
+      - aws
+      - azure
+      - gcloud
+runs:
+  using: "composite"
+  steps:
+    - name: Check dependencies
+      shell: bash
+      run: |
+        programs=("terraform" "edb-terraform" "aws" "jq")
+
+        for program in "${programs[@]}"
+        do
+          if ! builtin type -P "$program" >/dev/null 2>&1
+          then
+            printf "$program not found" >&2
+            exit 1
+          fi
+        done
+
+    - name: Check if csp credentials configured
+      shell: bash
+      env:
+        CLOUD_SERVICE_PROVIDER: ${{ inputs.cloud-service-provider }}
+      run: |
+        case "$CLOUD_SERVICE_PROVIDER" in
+          aws)
+            aws sts get-caller-identity
+            ;;
+          *)
+            printf "Cloud service provider not supported: $CLOUD_SERVICE_PROVIDER" 1>&2
+            exit 1
+            ;;
+        esac
+
+    - name: Terraform init
+      working-directory: ${{ inputs.project-path }}
+      shell: bash
+      run: terraform init -input=false
+
+    - name: Terraform plan
+      working-directory: ${{ inputs.project-path }}
+      shell: bash
+      env:
+        PLAN_FILENAME: ${{ inputs.plan-filename }}
+      run: terraform plan -input=false -out="$PLAN_FILENAME"
+
+    - name: Terraform apply
+      working-directory: ${{ inputs.project-path }}
+      shell: bash
+      env:
+        PLAN_FILENAME: ${{ inputs.plan-filename }}
+      run: terraform apply -input=false -auto-approve "$PLAN_FILENAME"
+
+    - name: Mask secrets
+      working-directory: ${{ inputs.project-path }}
+      shell: bash
+      run: |
+        MASK_PREFIX="::add-mask::"
+        SECRET_KEYS='["password","public_ip","public_dns"]'
+
+        # Muli-line secrets must be escaped or applied per-line.
+        # https://github.com/actions/toolkit/blob/main/docs/commands.md#register-a-secret
+        # - multiline secret failed to mask so we fallback to manual masking
+        for line in $(cat ssh-id_rsa)
+        do
+          echo "$MASK_PREFIX$line"
+        done
+
+        # mask secrets from a list of keynames
+        SECRETS=$( \
+          terraform output -json servers \
+          | jq -r 'paths(scalars) as $path | {key: $path[-1], value: getpath($path)}' \
+          | jq -r --argjson secret_keys "$SECRET_KEYS" \
+            'select(.key as $key | $secret_keys | index($key))' \
+          | jq -r '"\(.value)"'
+        )
+
+        for secret in $SECRETS
+        do
+          echo "$MASK_PREFIX$secret"
+        done
