@@ -193,6 +193,30 @@ ProjectName = ArgumentConfig(
         '''
 )
 
+TerraformVersion = ArgumentConfig(
+    names = ['--terraform-version',],
+    metavar='TERRAFORM_VERSION',
+    dest='terraform_version',
+    required=False,
+    default=TerraformCLI.get_max_version(),
+    help='''
+        Terraform version to install/use. Set to 0 to skip.
+        Default: %(default)s
+        '''
+)
+
+JqVersion = ArgumentConfig(
+    names = ['--jq-version',],
+    metavar='JQ_VERSION',
+    dest='jq_version',
+    required=False,
+    default=JqCLI.get_max_version(),
+    help='''
+        JQ version to install or use. Set to 0 to skip.
+        Default: %(default)s
+        '''
+)
+
 CloudServiceProvider = ArgumentConfig(
     names = ['--cloud-service-provider', '-c',],
     metavar='CLOUD_SERVICE_PROVIDER',
@@ -300,6 +324,8 @@ class Arguments:
             LogFile,
             LogDirectory,
             LogStdout,
+            TerraformVersion,
+            JqVersion,
         ]],
         'generate': ['Generate terraform files based on a yaml infrastructure file\n',[
             ProjectName,
@@ -317,6 +343,8 @@ class Arguments:
             LogStdout,
             UserTemplatesPath,
             TerraformLockHcl,
+            TerraformVersion,
+            JqVersion,
             RemoteStateType,
         ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
@@ -325,6 +353,8 @@ class Arguments:
             LogFile,
             LogDirectory,
             LogStdout,
+            TerraformVersion,
+            JqVersion,
         ]],
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
@@ -408,6 +438,7 @@ class Arguments:
                 csp=self.get_env('csp'),
                 bin_path=self.get_env('bin_path'),
                 run_validation=self.get_env('run_validation'),
+                terraform_version=self.get_env('terraform_version'),
             )
             return outputs
 
@@ -424,13 +455,14 @@ class Arguments:
                 apply=self.get_env('apply'),
                 destroy=self.get_env('destroy'),
                 remote_state_type = self.get_env('remote_state_type'),
+                terraform_version=self.get_env('terraform_version'),
             )
             return outputs
 
         if self.command == 'setup':
-            terraform = TerraformCLI(self.get_env('bin_path'))
+            terraform = TerraformCLI(self.get_env('bin_path'), self.get_env('terraform_version'))
             terraform.install()
-            jq = JqCLI(self.get_env('bin_path'))
+            jq = JqCLI(self.get_env('bin_path'), self.get_env('jq_version'))
             jq.install()
             return {
                 'terraform': terraform.bin_path,
