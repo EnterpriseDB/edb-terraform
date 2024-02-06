@@ -1,6 +1,8 @@
 import yaml
 from pathlib import Path
 import os
+import hashlib
+import base64
 from typing import Union, Tuple
 from jinja2 import (
     Environment,
@@ -127,3 +129,34 @@ def template_variables(template_file: Path, values: dict={}) -> dict:
         }
     except Exception as e:
         raise TemplateError("ERROR: could not parse template variables - %s - (%s)" % (template_file, repr(e))) from e
+
+def compute_hash(filename, hash_type='sha256'):
+    contents = Path(filename).read_bytes()
+
+    hash = None
+    if hash_type == 'sha1':
+        hash = hashlib.sha1(contents)
+    elif hash_type == 'sha256':
+        hash = hashlib.sha256(contents)
+    elif hash_type == 'sha512':
+        hash = hashlib.sha512(contents)
+    elif hash_type == 'md5':
+        hash = hashlib.md5()
+        for segment in range(0, len(contents), 8192):
+            contents.update(contents[segment:segment+8192])
+    else:
+        raise ValueError("ERROR: Invalid hash type: %s" % hash_type)
+
+    return hash.hexdigest()
+
+def checksum_verify(filename, checksum_file, hash_type='sha256', is_base64=False,):
+
+    sha256_hash = compute_hash(filename, hash_type)
+    with Path(checksum_file).open('r') as file:
+        for line in file.readlines():
+            if is_base64:
+                line = base64.b64decode(line)
+            if sha256_hash in line:
+                return True
+
+    return False
