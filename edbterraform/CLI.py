@@ -14,6 +14,7 @@ from typing import Union
 
 from edbterraform import __dot_project__
 from edbterraform.utils.logs import logger
+from edbterraform.utils.files import checksum_verify
 
 Version = namedtuple('Version', ['major', 'minor', 'patch'])
 
@@ -311,10 +312,24 @@ class TerraformCLI:
             bin_path = Path(self.bin_path)
             bin_path.mkdir(parents=True, exist_ok=True)
 
-            url = f'https://releases.hashicorp.com/terraform/{self.version}/terraform_{self.version}_{self.operating_system}_{self.architecture}.zip'
-            zip_file = Request.urlretrieve(url)
-            shutil.unpack_archive(zip_file[0], bin_path, 'zip')
-            Path(zip_file[0]).unlink(missing_ok=True)
+            base = f'https://releases.hashicorp.com/terraform/{self.version}/terraform_{self.version}'
+            source_url = base + f'_{self.operating_system}_{self.architecture}.zip'
+            zip_file = Path(Request.urlretrieve(source_url)[0])
+
+            # Get sha256 checksum file
+            checksum_url = base + f'_SHA256SUMS'
+            checksum_file = Path(Request.urlretrieve(checksum_url)[0])
+
+            # Verify checksum
+            if not checksum_verify(zip_file, checksum_file, 'sha256'):
+                checksum_file.unlink(missing_ok=True)
+                zip_file.unlink(missing_ok=True)
+                raise Exception(f'Failed to verify Terraform {self.version} checksum')
+            logger.info(f'Verified Terrafrom {self.version} checksum')
+            checksum_file.unlink(missing_ok=True)
+
+            shutil.unpack_archive(zip_file, bin_path, 'zip')
+            zip_file.unlink(missing_ok=True)
             full_path.chmod(0o770)
         except Exception as e:
             raise Exception(f'Failed to install Terraform {self.version} - ({e})') from e
@@ -404,24 +419,48 @@ class JqCLI:
             # - jq-osx-amd64 -> jq-macos-amd64
             # - arm/darwin does not exist -> jq-macos-arm64
             base = f"https://github.com/jqlang/jq/releases/download/jq-{self.version}/"
-            url = base + f'jq-{self.operating_system}-{self.architecture}'
+            source_url = base + f'jq-{self.operating_system}-{self.architecture}'
             # Macos release constains macos in the name
             if self.operating_system == "darwin":
-                url = base + f'jq-macos-{self.architecture}'
+                source_url = base + f'jq-macos-{self.architecture}'
             # Handle version 1.6 releases
             if self.format_version(self.version).startswith('1.6'):
                 if self.architecture == "arm64":
                     raise Exception("JQ 1.6 does not support arm64 architecture")
 
                 if self.operating_system == "linux":
-                    url = base + 'jq-linux64'
+                    source_url = base + 'jq-linux64'
 
                 if self.operating_system == "darwin":
-                    url = base + 'jq-osx-amd64'
+                    source_url = base + 'jq-osx-amd64'
 
-            binary_file = Request.urlretrieve(url)
-            shutil.move(binary_file[0], self.binary_full_path)
-            Path(binary_file[0]).unlink(missing_ok=True)
+            binary_file = Path(Request.urlretrieve(source_url)[0])
+
+            # Get sha256 checksum file
+            checksum_url = base + f'sha256sum.txt'
+            checksum_file = ""
+            # unzip file and get signature froms from sig/v1.6/sha256sum.txt
+            if self.format_version(self.version).startswith('1.6'):
+                checksum_url = base + f'jq-1.6.zip'
+                checksum_zip = Path(Request.urlretrieve(checksum_url, '/tmp/jq.zip')[0])
+                checksum_file = Path('/tmp/jq-checksums')
+                temp_dir = Path('/tmp/jq')
+                shutil.unpack_archive(checksum_zip, temp_dir, 'zip')
+                shutil.move(temp_dir / 'jq-1.6/sig/v1.6/sha256sum.txt', checksum_file)
+                shutil.rmtree(temp_dir)
+            else:
+                checksum_file = Path(Request.urlretrieve(checksum_url)[0])
+
+            # Verify checksum
+            if not checksum_verify(binary_file, checksum_file, 'sha256'):
+                binary_file.unlink(missing_ok=True)
+                checksum_file.unlink(missing_ok=True)
+                raise Exception(f'Failed to verify JQ {self.version} checksum')
+            logger.info(f'Verified JQ {self.version} checksum')
+            checksum_file.unlink(missing_ok=True)
+
+            binary_file.rename(full_path)
+            binary_file.unlink(missing_ok=True)
             full_path.chmod(0o770)
         except Exception as e:
             raise Exception(f'Failed to install JQ {self.version} - ({e})') from e
