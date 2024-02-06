@@ -10,7 +10,7 @@ from datetime import datetime
 from functools import partial
 
 from edbterraform.lib import generate_terraform
-from edbterraform.CLI import TerraformCLI
+from edbterraform.CLI import TerraformCLI, JqCLI
 from edbterraform import __project_name__, __dot_project__, __version__
 from edbterraform.utils import logs, files
 
@@ -430,4 +430,9 @@ class Arguments:
         if self.command == 'setup':
             terraform = TerraformCLI(self.get_env('bin_path'))
             terraform.install()
-            return terraform.bin_path
+            jq = JqCLI(self.get_env('bin_path'))
+            jq.install()
+            return {
+                'terraform': terraform.bin_path,
+                'jq': jq.bin_path,
+            }
