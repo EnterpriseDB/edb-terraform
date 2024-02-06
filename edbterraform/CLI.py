@@ -8,6 +8,7 @@ from tempfile import mkstemp
 import stat
 import json
 import textwrap
+from typing import Union
 
 from edbterraform import __dot_project__
 from edbterraform.utils.logs import logger
@@ -314,6 +315,97 @@ class TerraformCLI:
             installation_script.format(
                 path=self.bin_dir,
                 version=self.get_max_version(),
+                os_flavor=self.operating_system,
+                arch=self.architecture,
+            )
+        )
+
+        execute_temporary_script(script_name)
+
+class JqCLI:
+    binary_name = 'jq'
+    min_version = Version(1, 6, 0)
+    max_version = Version(1, 7, 1)
+    arch_alias = {
+        'x86_64': 'amd64',
+    }
+    DEFAULT_PATH = __dot_project__
+
+    def __init__(self, binary_dir=None):
+        self.bin_dir = binary_dir if binary_dir else JqCLI.DEFAULT_PATH
+        self.bin_path = os.path.join(self.bin_dir, 'bin')
+        self.binary_full_path = os.path.join(self.bin_path, JqCLI.binary_name)
+        self.architecture = JqCLI.arch_alias.get(platform.machine().lower(),platform.machine().lower())
+        self.operating_system = platform.system().lower()
+
+    @classmethod
+    def format_version(cls, version: Union[Version, str]) -> str:
+        '''
+        JQ drops the patch number when it is 0
+
+        Returned as a version string
+        '''
+        # Convert Version tuple to string
+        if isinstance(version, Version):
+            version = join_version(version)
+
+        versions = version.split('.')
+        if len(versions) <= 2 or versions[2] == '0':
+            return '.'.join(versions[:2])
+
+        return version
+
+    @classmethod
+    def get_max_version(cls):
+        return join_version(cls.max_version)
+
+    @classmethod
+    def get_min_version(cls):
+        return join_version(cls.min_version)
+
+    def check_version(self):
+        try:
+            jq_path = self.get_jq_binary()
+            jq_prefix = "jq-" # jq --version returns a single string as jq-<version>
+            command = [jq_path, '--version']
+            output = execute_shell(
+                args=command,
+                environment=os.environ.copy(),
+            )
+            result = output.decode("utf-8")
+
+            return result.lstrip(jq_prefix)
+        except KeyError as e:
+            raise e(f'version keyname was not found')
+
+    def get_jq_binary(self):
+        return binary_path(JqCLI.binary_name, self.bin_path)
+
+    def install(self):
+        installation_script = textwrap.dedent('''
+            #!/bin/bash
+            set -eu
+
+            rm -rf {path}/jq/{version}/bin
+            rm -f {path}/bin/jq
+
+            mkdir -p {path}/bin
+            mkdir -p {path}/jq/{version}/bin
+            wget -q https://github.com/jqlang/jq/releases/download/jq-{version}/jq-{os_flavor}-{arch} -O {path}/jq/{version}/bin/jq
+            chmod +x {path}/jq/{version}/bin/jq
+            ln -sf {path}/jq/{version}/bin/jq {path}/bin/.
+        ''')
+
+        jq_bin = self.get_jq_binary()
+        # Skip installation if latest already installed
+        if jq_bin == self.binary_full_path \
+            and join_version(self.check_version()) == self.get_max_version():
+            return
+
+        script_name = build_temporary_script(
+            installation_script.format(
+                path=self.bin_dir,
+                version=self.format_version(self.get_max_version()),
                 os_flavor=self.operating_system,
                 arch=self.architecture,
             )
