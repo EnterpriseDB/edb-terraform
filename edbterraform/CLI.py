@@ -138,15 +138,16 @@ class TerraformCLI:
     DEFAULT_PATH = __dot_project__
     plan_file = 'terraform.plan'
 
-    def __init__(self, binary_dir=None):
-        self.bin_dir = binary_dir if binary_dir else TerraformCLI.DEFAULT_PATH
-        self.bin_path = os.path.join(self.bin_dir, 'bin')
-        self.binary_full_path = os.path.join(self.bin_path, TerraformCLI.binary_name)
-        self.architecture = TerraformCLI.arch_alias.get(platform.machine().lower(),platform.machine().lower())
+    def __init__(self, binary_dir=None, version=None):
+        self.bin_dir = binary_dir if binary_dir else self.DEFAULT_PATH
+        self.version = self.get_max_version() if not version else version
+        self.bin_path = f'{self.bin_dir}/terraform/{self.version}/bin' if self.bin_dir == self.DEFAULT_PATH else os.path.join(self.bin_dir, 'bin')
+        self.binary_full_path = os.path.join(self.bin_path, self.binary_name)
+        self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
 
     def get_terraform_binary(self):
-        return binary_path(TerraformCLI.binary_name, self.bin_path)
+        return binary_path(self.binary_name, self.bin_path)
 
     def get_compatible_terraform(self):
         version = self.check_version()
@@ -294,32 +295,36 @@ class TerraformCLI:
             #!/bin/bash
             set -eu
 
-            rm -rf {path}/terraform/{version}/bin
+            rm -rf {full_path}
             rm -f /tmp/terraform.zip
-            rm -f {path}/bin/terraform
 
-            mkdir -p {path}/bin
-            mkdir -p {path}/terraform/{version}/bin
+            mkdir -p {bin_path}
             wget -q https://releases.hashicorp.com/terraform/{version}/terraform_{version}_{os_flavor}_{arch}.zip -O /tmp/terraform.zip
-            unzip /tmp/terraform.zip -d {path}/terraform/{version}/bin
-            ln -sf {path}/terraform/{version}/bin/terraform {path}/bin/.
+            unzip /tmp/terraform.zip -d {bin_path}
         ''')
 
+        if self.version == "0":
+            logger.info('Terraform 0 version used, skipping installation')
+            return
+
         terraform_bin = self.get_terraform_binary()
-        # Skip installation if latest already installed
+        # Skip installation if version is already installed
         if terraform_bin == self.binary_full_path \
-            and join_version(self.check_version(), '.') == self.get_max_version():
+            and join_version(self.check_version()) == self.version:
+            logger.info(f'Terraform {self.version} is already installed')
             return
 
         script_name = build_temporary_script(
             installation_script.format(
-                path=self.bin_dir,
-                version=self.get_max_version(),
+                bin_path=self.bin_path,
+                full_path=self.binary_full_path,
+                version=self.version,
                 os_flavor=self.operating_system,
                 arch=self.architecture,
             )
         )
 
+        logger.info(f'Installing Terraform {self.version} in {self.binary_full_path}')
         execute_temporary_script(script_name)
 
 class JqCLI:
@@ -331,11 +336,12 @@ class JqCLI:
     }
     DEFAULT_PATH = __dot_project__
 
-    def __init__(self, binary_dir=None):
-        self.bin_dir = binary_dir if binary_dir else JqCLI.DEFAULT_PATH
-        self.bin_path = os.path.join(self.bin_dir, 'bin')
-        self.binary_full_path = os.path.join(self.bin_path, JqCLI.binary_name)
-        self.architecture = JqCLI.arch_alias.get(platform.machine().lower(),platform.machine().lower())
+    def __init__(self, binary_dir=None, version=None):
+        self.bin_dir = binary_dir if binary_dir else self.DEFAULT_PATH
+        self.version = self.get_max_version() if not version else version
+        self.bin_path = f'{self.bin_dir}/jq/{self.version}/bin' if self.bin_dir == self.DEFAULT_PATH else os.path.join(self.bin_dir, 'bin')
+        self.binary_full_path = os.path.join(self.bin_path, self.binary_name)
+        self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
 
     @classmethod
@@ -366,49 +372,52 @@ class JqCLI:
     def check_version(self):
         try:
             jq_path = self.get_jq_binary()
-            jq_prefix = "jq-" # jq --version returns a single string as jq-<version>
+            jq_prefix = "jq-" # jq --version returns a single string as jq-<version> and newline
             command = [jq_path, '--version']
             output = execute_shell(
                 args=command,
                 environment=os.environ.copy(),
             )
             result = output.decode("utf-8")
-
-            return result.lstrip(jq_prefix)
+            return result.lstrip(jq_prefix).rstrip("\n\s")
         except KeyError as e:
             raise e(f'version keyname was not found')
 
     def get_jq_binary(self):
-        return binary_path(JqCLI.binary_name, self.bin_path)
+        return binary_path(self.binary_name, self.bin_path)
 
     def install(self):
         installation_script = textwrap.dedent('''
             #!/bin/bash
             set -eu
 
-            rm -rf {path}/jq/{version}/bin
-            rm -f {path}/bin/jq
+            rm -rf {full_path}
+            mkdir -p {bin_path}
 
-            mkdir -p {path}/bin
-            mkdir -p {path}/jq/{version}/bin
-            wget -q https://github.com/jqlang/jq/releases/download/jq-{version}/jq-{os_flavor}-{arch} -O {path}/jq/{version}/bin/jq
-            chmod +x {path}/jq/{version}/bin/jq
-            ln -sf {path}/jq/{version}/bin/jq {path}/bin/.
+            wget -q https://github.com/jqlang/jq/releases/download/jq-{version}/jq-{os_flavor}-{arch} -O {full_path}
+            chmod +x {full_path}
         ''')
+
+        if self.version == "0":
+            logger.info('JQ 0 version used, skipping installation')
+            return
 
         jq_bin = self.get_jq_binary()
         # Skip installation if latest already installed
         if jq_bin == self.binary_full_path \
-            and join_version(self.check_version()) == self.get_max_version():
+            and self.check_version() == self.version:
+            logger.info(f'JQ {self.version} is already installed')
             return
 
         script_name = build_temporary_script(
             installation_script.format(
-                path=self.bin_dir,
-                version=self.format_version(self.get_max_version()),
+                bin_path=self.bin_path,
+                full_path=self.binary_full_path,
+                version=self.format_version(self.version),
                 os_flavor=self.operating_system,
                 arch=self.architecture,
             )
         )
 
+        logger.info(f'Installing JQ {self.version} in {self.binary_full_path}')
         execute_temporary_script(script_name)
