@@ -3,6 +3,8 @@ from collections import namedtuple
 import sys
 import os
 from pathlib import Path
+import shutil
+from urllib import request as Request
 import subprocess
 from tempfile import mkstemp
 import stat
@@ -291,18 +293,6 @@ class TerraformCLI:
         return join_version(cls.max_version, '.')
 
     def install(self):
-        installation_script = textwrap.dedent('''
-            #!/bin/bash
-            set -eu
-
-            rm -rf {full_path}
-            rm -f /tmp/terraform.zip
-
-            mkdir -p {bin_path}
-            wget -q https://releases.hashicorp.com/terraform/{version}/terraform_{version}_{os_flavor}_{arch}.zip -O /tmp/terraform.zip
-            unzip /tmp/terraform.zip -d {bin_path}
-        ''')
-
         if self.version == "0":
             logger.info('Terraform 0 version used, skipping installation')
             return
@@ -314,18 +304,21 @@ class TerraformCLI:
             logger.info(f'Terraform {self.version} is already installed')
             return
 
-        script_name = build_temporary_script(
-            installation_script.format(
-                bin_path=self.bin_path,
-                full_path=self.binary_full_path,
-                version=self.version,
-                os_flavor=self.operating_system,
-                arch=self.architecture,
-            )
-        )
+        try:
+            logger.info(f'Installing Terraform {self.version} in {self.binary_full_path}')
+            full_path = Path(self.binary_full_path)
+            full_path.unlink(missing_ok=True)
+            bin_path = Path(self.bin_path)
+            bin_path.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f'Installing Terraform {self.version} in {self.binary_full_path}')
-        execute_temporary_script(script_name)
+            url = f'https://releases.hashicorp.com/terraform/{self.version}/terraform_{self.version}_{self.operating_system}_{self.architecture}.zip'
+            zip_file = Request.urlretrieve(url)
+            shutil.unpack_archive(zip_file[0], bin_path, 'zip')
+            Path(zip_file[0]).unlink(missing_ok=True)
+            full_path.chmod(0o770)
+        except Exception as e:
+            raise Exception(f'Failed to install Terraform {self.version} - ({e})') from e
+
 
 class JqCLI:
     binary_name = 'jq'
@@ -387,16 +380,6 @@ class JqCLI:
         return binary_path(self.binary_name, self.bin_path)
 
     def install(self):
-        installation_script = textwrap.dedent('''
-            #!/bin/bash
-            set -eu
-
-            rm -rf {full_path}
-            mkdir -p {bin_path}
-
-            wget -q {url} -O {full_path}
-            chmod +x {full_path}
-        ''')
 
         if self.version == "0":
             logger.info('JQ 0 version used, skipping installation')
@@ -409,33 +392,36 @@ class JqCLI:
             logger.info(f'JQ {self.version} is already installed')
             return
 
-        # Starting with version jq 1.7, the artifact release names have changed:
-        # - jq-linux64 -> jq-linux-amd64
-        # - jq-osx-amd64 -> jq-macos-amd64
-        # - arm/darwin does not exist -> jq-macos-arm64
-        base = f"https://github.com/jqlang/jq/releases/download/jq-{self.version}/"
-        url = base + f'jq-{self.operating_system}-{self.architecture}'
-        # Macos release constains macos in the name
-        if self.operating_system == "darwin":
-            url = base + f'jq-macos-{self.architecture}'
-        # Handle version 1.6 releases
-        if self.format_version(self.version).startswith('1.6'):
-            if self.architecture == "arm64":
-                raise Exception("JQ 1.6 does not support arm64 architecture")
+        try:
+            logger.info(f'Installing JQ {self.version} in {self.binary_full_path}')
+            full_path = Path(self.binary_full_path)
+            full_path.unlink(missing_ok=True)
+            bin_path = Path(self.bin_path)
+            bin_path.mkdir(parents=True, exist_ok=True)
 
-            if self.operating_system == "linux":
-                url = base + 'jq-linux64'
-
+            # Starting with version jq 1.7, the artifact release names have changed:
+            # - jq-linux64 -> jq-linux-amd64
+            # - jq-osx-amd64 -> jq-macos-amd64
+            # - arm/darwin does not exist -> jq-macos-arm64
+            base = f"https://github.com/jqlang/jq/releases/download/jq-{self.version}/"
+            url = base + f'jq-{self.operating_system}-{self.architecture}'
+            # Macos release constains macos in the name
             if self.operating_system == "darwin":
-                url = base + 'jq-osx-amd64'
+                url = base + f'jq-macos-{self.architecture}'
+            # Handle version 1.6 releases
+            if self.format_version(self.version).startswith('1.6'):
+                if self.architecture == "arm64":
+                    raise Exception("JQ 1.6 does not support arm64 architecture")
 
-        script_name = build_temporary_script(
-            installation_script.format(
-                bin_path=self.bin_path,
-                full_path=self.binary_full_path,
-                url=url,
-            )
-        )
+                if self.operating_system == "linux":
+                    url = base + 'jq-linux64'
 
-        logger.info(f'Installing JQ {self.version} in {self.binary_full_path}')
-        execute_temporary_script(script_name)
+                if self.operating_system == "darwin":
+                    url = base + 'jq-osx-amd64'
+
+            binary_file = Request.urlretrieve(url)
+            shutil.move(binary_file[0], self.binary_full_path)
+            Path(binary_file[0]).unlink(missing_ok=True)
+            full_path.chmod(0o770)
+        except Exception as e:
+            raise Exception(f'Failed to install JQ {self.version} - ({e})') from e
