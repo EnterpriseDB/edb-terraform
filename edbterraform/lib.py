@@ -377,6 +377,7 @@ def generate_terraform(
         project_path: Path,
         csp: str,
         bin_path: Path,
+        terraform_version: str = TerraformCLI.get_max_version(),
         user_templates: Optional[List[Path]]=[],
         hcl_lock_file: Optional[Path]=None,
         run_validation: bool = False,
@@ -399,7 +400,7 @@ def generate_terraform(
     }
 
     # Destroy existing project before creating a new one
-    run_terraform(project_path, bin_path, validate=False, apply=False, destroy=destroy)
+    run_terraform(project_path, bin_path, terraform_version, validate=False, apply=False, destroy=destroy)
 
     # Get final instrastructure variables after rendering it if it is a jinja2 template
     infra_vars = load_yaml_file(render_template(template_file=infra_file, values=infra_template_variables))
@@ -455,7 +456,7 @@ def generate_terraform(
     if 'ssh_key' in terraform_vars['spec'] and 'output_name' in terraform_vars['spec']['ssh_key']:
         OUTPUT['ssh_filename'] = terraform_vars['spec']['ssh_key']['output_name']
 
-    run_terraform(project_path, bin_path, run_validation, apply)
+    run_terraform(project_path, bin_path, terraform_version, run_validation, apply)
 
     logger.info(textwrap.dedent('''
     Success!
@@ -474,8 +475,8 @@ def generate_terraform(
 
     return OUTPUT
 
-def run_terraform(cwd, bin_path, validate=False, apply=False, destroy=False):
-        terraform = TerraformCLI(bin_path)
+def run_terraform(cwd, bin_path, version, validate=False, apply=False, destroy=False):
+        terraform = TerraformCLI(bin_path, version)
         if destroy:
             try:
                 if terraform.destroy_command(cwd):
@@ -542,7 +543,7 @@ def run_terraform(cwd, bin_path, validate=False, apply=False, destroy=False):
                     min_version=terraform.min_version,
                 ))
                 logger.error(f'Error: ({e.output})')
-                run_terraform(cwd, bin_path, validate=False, apply=False, destroy=True)
+                run_terraform(cwd, bin_path, version, validate=False, apply=False, destroy=True)
                 sys.exit(e.returncode)
 
 """
