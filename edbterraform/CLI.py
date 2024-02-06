@@ -394,7 +394,7 @@ class JqCLI:
             rm -rf {full_path}
             mkdir -p {bin_path}
 
-            wget -q https://github.com/jqlang/jq/releases/download/jq-{version}/jq-{os_flavor}-{arch} -O {full_path}
+            wget -q {url} -O {full_path}
             chmod +x {full_path}
         ''')
 
@@ -409,13 +409,31 @@ class JqCLI:
             logger.info(f'JQ {self.version} is already installed')
             return
 
+        # Starting with version jq 1.7, the artifact release names have changed:
+        # - jq-linux64 -> jq-linux-amd64
+        # - jq-osx-amd64 -> jq-macos-amd64
+        # - arm/darwin does not exist -> jq-macos-arm64
+        base = f"https://github.com/jqlang/jq/releases/download/jq-{self.version}/"
+        url = base + f'jq-{self.operating_system}-{self.architecture}'
+        # Macos release constains macos in the name
+        if self.operating_system == "darwin":
+            url = base + f'jq-macos-{self.architecture}'
+        # Handle version 1.6 releases
+        if self.format_version(self.version).startswith('1.6'):
+            if self.architecture == "arm64":
+                raise Exception("JQ 1.6 does not support arm64 architecture")
+
+            if self.operating_system == "linux":
+                url = base + 'jq-linux64'
+
+            if self.operating_system == "darwin":
+                url = base + 'jq-osx-amd64'
+
         script_name = build_temporary_script(
             installation_script.format(
                 bin_path=self.bin_path,
                 full_path=self.binary_full_path,
-                version=self.format_version(self.version),
-                os_flavor=self.operating_system,
-                arch=self.architecture,
+                url=url,
             )
         )
 
