@@ -4,11 +4,20 @@ variable "region" {}
 variable "ports" {
     type = list
 }
-variable "ingress_cidrs" {
-    type = list(string)
+variable "public_cidrblocks" {
+  type = list(string)
+  default = ["0.0.0.0/0"]
+  nullable = false
 }
-variable "egress_cidrs" {
-    type = list(string)
+variable "internal_cidrblocks" {
+  type = list(string)
+  default = []
+  nullable = false
+}
+variable "service_cidrblocks" {
+  type = list(string)
+  default = ["0.0.0.0/0"]
+  nullable = false
 }
 variable "name_id" {
     type = string

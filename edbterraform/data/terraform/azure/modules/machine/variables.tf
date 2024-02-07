@@ -29,6 +29,9 @@ variable "machine" {
     })
   })
 }
+variable "public_cidrblocks" {}
+variable "service_cidrblocks" {}
+variable "internal_cidrblocks" {}
 variable "ports" {
   type = list
   default = []
