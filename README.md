@@ -58,6 +58,9 @@ These values are available as:
 - json with the command `terraform output -json servers`
   - python pretty print: `terraform output -json servers | python3 -m json.tool`
 - yaml with a file named `servers.yml` under the project directory.
+  - can be disabled with `TF_VAR_create_servers_yml=false terraform apply`
+    - Created by default but will be disabled by default in a future release.
+    - export for all commands: `export TF_CLI_ARGS="-var='create_servers_yml=false'"`
 
 For accessing your machines,
 the `public_ip` and `operating_system.ssh_user` values can be used and
