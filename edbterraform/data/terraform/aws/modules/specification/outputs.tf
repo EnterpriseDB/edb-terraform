@@ -14,22 +14,9 @@ locals {
       values.cidr_block
   ])
 
-  # Set defaults when cidrs list is not set
-  # service ports should be set to service_cidrblocks
-  # region ports should be set to region_cidrblocks
+  # save ports per region
   region_ports = {
-    for region, values in var.spec.regions: region => flatten([
-      [
-        for port in values.service_ports: merge(port, {
-          cidrs = coalesce(port.cidrs, var.service_cidrblocks)
-        })
-      ],
-      [
-        for port in values.region_ports: merge(port, {
-          cidrs = coalesce(port.cidrs, local.region_cidrblocks)
-        })
-      ]
-    ])
+    for region, values in var.spec.regions: region => values.ports
   }
 }
 
