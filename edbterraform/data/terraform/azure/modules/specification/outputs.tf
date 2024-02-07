@@ -13,6 +13,24 @@ locals {
     for region, values in var.spec.regions:
       values.cidr_block
   ])
+
+  # Set defaults when cidrs list is not set
+  # service ports should be set to service_cidrblocks
+  # region ports should be set to region_cidrblocks
+  region_ports = {
+    for region, values in var.spec.regions: region => flatten([
+      [
+        for port in values.service_ports: merge(port, {
+          cidrs = coalesce(port.cidrs, var.service_cidrblocks)
+        })
+      ],
+      [
+        for port in values.region_ports: merge(port, {
+          cidrs = coalesce(port.cidrs, local.region_cidrblocks)
+        })
+      ]
+    ])
+  }
 }
 
 output "base" {
@@ -34,9 +52,6 @@ output "public_key" {
 }
 
 locals {
-  # Set the default cidr to the rules region cidr block if one is not set by the optional's default or by the user
-  region_ports = { for region, values in var.spec.regions: region => [ 
-    for port in flatten([values.service_ports, values.region_ports]): length(port.cidrs) == 0 ? merge(port,{"cidrs": local.region_cidrblocks}) : port ] } 
   # Extend machine's count as of list objects, with an index in the name only when count over 1
   machines_extended = flatten([
     for name, machine_spec in var.spec.machines : [

@@ -5,6 +5,7 @@ module "spec" {
   source = "./modules/specification"
 
   spec = var.spec
+  service_cidrblocks = var.service_cidrblocks
 }
 
 # All modules should use the last created module in their depends_on through jinja

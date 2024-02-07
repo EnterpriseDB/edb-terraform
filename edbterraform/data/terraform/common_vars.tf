@@ -9,7 +9,6 @@ variable "spec" {
   nullable    = false
 }
 
-# VPC
 variable "public_cidrblock" {
   description = "Public CIDR block"
   type        = string
