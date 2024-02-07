@@ -1,7 +1,7 @@
 module "vpc_{{ region_ }}"{
   source = "./modules/vpc"
 
-  network_name = "${var.vpc_tag}-{{ region }}-${module.spec.hex_id}"
+  network_name = "{{ region }}-${module.spec.hex_id}"
 
   providers = {
     google = google.{{ region_ }}

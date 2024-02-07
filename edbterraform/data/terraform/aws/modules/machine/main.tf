@@ -18,7 +18,6 @@ module "machine_ports" {
   source = "../security"
 
   vpc_id           = var.vpc_id
-  project_tag      = "machine_rules"
   cluster_name     = var.machine.name
   ports            = local.machine_ports
   tags             = var.tags

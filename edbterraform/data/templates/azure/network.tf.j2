@@ -1,7 +1,7 @@
 module "vpc_{{ region_ }}"{
   source = "./modules/vpc"
 
-  name          = "${var.vpc_tag}-{{ region }}-${module.spec.hex_id}"
+  name          = "{{ region }}-${module.spec.hex_id}"
   cidr_blocks = [ lookup(lookup(module.spec.base.regions, "{{ region }}"), "cidr_block") ]
   region = "{{ region }}"
   tags          = module.spec.base.tags

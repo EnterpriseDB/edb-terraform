@@ -1,4 +1,3 @@
-variable "public_subnet_tag" {}
 variable "vpc_id" {}
 variable "cidr_block" {}
 variable "availability_zone" {}
@@ -20,7 +19,7 @@ resource "aws_subnet" "public_subnets" {
   availability_zone       = var.availability_zone
 
   tags = merge({
-    Name = format("%s_%s_%s", var.public_subnet_tag, var.availability_zone, var.cidr_block)
+    Name = format("%s_%s", var.availability_zone, var.cidr_block)
   }, var.tags)
 }
 
