@@ -6,6 +6,7 @@ module "spec" {
   source = "./modules/specification"
 
   spec = var.spec
+  service_cidrblocks = var.service_cidrblocks
 }
 
 resource "null_resource" "validation" {

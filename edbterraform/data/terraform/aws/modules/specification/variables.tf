@@ -47,7 +47,7 @@ variable "spec" {
         protocol    = string
         description = optional(string, "default")
         type = optional(string, "ingress")
-        cidrs = optional(list(string), ["0.0.0.0/0"])
+        cidrs = optional(list(string))
       })), [])
       region_ports = optional(list(object({
         port        = optional(number)
@@ -197,6 +197,12 @@ variable "spec" {
       tags          = optional(map(string), {})
     })), {})
   })
+}
+
+variable "service_cidrblocks" {
+  default = ["0.0.0.0/0"]
+  type = list(string)
+  nullable = false
 }
 
 locals {

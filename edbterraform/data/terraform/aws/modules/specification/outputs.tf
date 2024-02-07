@@ -7,6 +7,30 @@ locals {
     created_by      = local.created_by
     cluster_name    = local.cluster_name
   })
+
+  # each regions cidrblock, should not overlap since we perform VPC peering
+  region_cidrblocks = flatten([
+    for region, values in var.spec.regions:
+      values.cidr_block
+  ])
+
+  # Set defaults when cidrs list is not set
+  # service ports should be set to service_cidrblocks
+  # region ports should be set to region_cidrblocks
+  region_ports = {
+    for region, values in var.spec.regions: region => flatten([
+      [
+        for port in values.service_ports: merge(port, {
+          cidrs = coalesce(port.cidrs, var.service_cidrblocks)
+        })
+      ],
+      [
+        for port in values.region_ports: merge(port, {
+          cidrs = coalesce(port.cidrs, local.region_cidrblocks)
+        })
+      ]
+    ])
+  }
 }
 
 output "base" {
@@ -144,16 +168,10 @@ output "region_zone_networks" {
 
 output "region_cidrblocks" {
   description = "list of all cidrs from each defined zone"
-  value = flatten([
-    for region, values in var.spec.regions:
-      values.cidr_block
-  ])
+  value = local.region_cidrblocks
 }
 
 output "region_ports" {
   description = "mapping of region to its list of port rules"
-  value = {
-    for region, values in var.spec.regions:
-      region => flatten([values.service_ports, values.region_ports])
-  }
+  value = local.region_ports
 }
