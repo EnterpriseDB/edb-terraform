@@ -130,6 +130,16 @@ Since this is a json file,
   it can be updated to accomodate new versions or remove the version to get the max version.
 This avoids the need to also maintain a .terraform.hcl.lock file
 
+### :handbag: Setup tools
+There is a `setup` command available to download terraform or jq.
+The final line in the output will be stringified json with any found binaries: `{"terraform":"/home/user/.edb-terraform/terraform/1.5.5/bin/terraform","jq":"/home/user/.edb-terraform/jq/1.7.1/bin/jq"}`
+  These should be added to the path by linking, moving or manually installing the needed tool.
+By default the maximum allowed versions are installed and to skip the installation of any tool, set `--<tool>-version` to `0`.
+```
+edb-terraform setup --help
+edb-terraform setup
+```
+
 ### :open_file_folder: Project directory layout
 ```
 .
