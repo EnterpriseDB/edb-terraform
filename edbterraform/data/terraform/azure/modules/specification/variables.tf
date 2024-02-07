@@ -44,16 +44,8 @@ variable "spec" {
       # 0.0.0.0/0 defaults can be blocked by IT.
       # Instead, use region_ports as the default and if user wants access,
       # they will need to specify the allowed ranges: home ip, elastic IPs, VPN/Proxy IPs
-      service_ports = optional(list(object({
-        port        = optional(number)
-        to_port     = optional(number)
-        protocol    = string
-        description = optional(string, "default")
-        type = optional(string, "ingress")
-        access      = optional(string, "allow")
-        cidrs = optional(list(string))
-      })), [])
-      region_ports = optional(list(object({
+      ports = optional(list(object({
+        defaults    = optional(string, "service")
         port        = optional(number)
         to_port     = optional(number)
         protocol    = string
@@ -72,6 +64,7 @@ variable "spec" {
       instance_type = string
       ssh_port      = optional(number, 22)
       ports         = optional(list(object({
+        defaults    = optional(string, "internal")
         port        = optional(number)
         to_port     = optional(number)
         protocol    = string
@@ -164,12 +157,6 @@ variable "spec" {
     })), {})
   })
 
-}
-
-variable "service_cidrblocks" {
-  default = ["0.0.0.0/0"]
-  type = list(string)
-  nullable = false
 }
 
 locals {

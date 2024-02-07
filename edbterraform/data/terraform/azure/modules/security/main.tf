@@ -18,9 +18,21 @@ resource "azurerm_network_security_rule" "rules" {
     each.value.port != null ? each.value.port : "*"
     )
   direction                  = lower(each.value.type) == "ingress" ? "Inbound" : "Outbound"
-  destination_address_prefixes = lower(each.value.type) == "egress" && each.value.cidrs != null ? each.value.cidrs : var.egress_cidrs
   source_port_range          = "*"
-  source_address_prefixes    = lower(each.value.type) == "ingress" && each.value.cidrs != null ? each.value.cidrs : var.ingress_cidrs
+  source_address_prefixes    = lower(each.value.type) != "ingress" ? var.public_cidrblocks :
+                                 coalesce(each.value.cidrs,
+                                           try(port.defaults, "") == "service" ? var.service_cidrblocks :
+                                           try(port.defaults, "") == "public" ? var.public_cidrblocks :
+                                           try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+                                           []
+                                         )...
+  destination_address_prefixes = lower(each.value.type) != "egress" ? var.public_cidrblocks :
+                                   coalesce(each.value.cidrs,
+                                             try(port.defaults, "") == "service" ? var.service_cidrblocks :
+                                             try(port.defaults, "") == "public" ? var.public_cidrblocks :
+                                             try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+                                             []
+                                           )...
   access                     = lower(each.value.access) == "deny" ? "Deny" : "Allow"
   priority                   = tonumber(each.key)
 

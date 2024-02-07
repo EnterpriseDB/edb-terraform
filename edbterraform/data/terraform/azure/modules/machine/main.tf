@@ -96,8 +96,9 @@ module "machine_ports" {
   region           = var.machine.region
   resource_name    = var.resource_name
   ports            = var.ports
-  ingress_cidrs    = flatten([azurerm_linux_virtual_machine.main.public_ip_address, azurerm_linux_virtual_machine.main.private_ip_addresses])  
-  egress_cidrs     = flatten([azurerm_linux_virtual_machine.main.public_ip_address, azurerm_linux_virtual_machine.main.private_ip_addresses])
+  public_cidrblocks = var.public_cidrblocks
+  service_cidrblocks = var.service_cidrblocks
+  internal_cidrblocks = var.internal_cidrblocks
   tags             = var.tags
 }
 
