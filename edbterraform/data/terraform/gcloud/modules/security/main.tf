@@ -28,8 +28,20 @@ resource "google_compute_firewall" "rules" {
     }
   }
   direction = lower(each.value.type) == "ingress" ? "INGRESS" : "EGRESS"
-  source_ranges = lower(each.value.type) == "ingress" && each.value.cidrs != null ? each.value.cidrs : var.ingress_cidrs
-  destination_ranges = lower(each.value.type) == "egress" && each.value.cidrs != null ? each.value.cidrs : var.egress_cidrs
+  source_ranges = lower(each.value.type) != "ingress" ? var.public_cidrblocks :
+                    coalesce(each.value.cidrs,
+                              try(port.defaults, "") == "service" ? var.service_cidrblocks :
+                              try(port.defaults, "") == "public" ? var.public_cidrblocks :
+                              try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+                              []
+                            )...
+  destination_ranges = lower(each.value.type) != "egress" ? var.public_cidrblocks :
+                         coalesce(each.value.cidrs,
+                                   try(port.defaults, "") == "service" ? var.service_cidrblocks :
+                                   try(port.defaults, "") == "public" ? var.public_cidrblocks :
+                                   try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+                                   []
+                                 )...
 
   lifecycle {
     precondition {

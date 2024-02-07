@@ -60,8 +60,9 @@ module "machine_ports" {
 
   network_name     = var.network_name
   ports            = var.machine.spec.ports
-  ingress_cidrs    = flatten([google_compute_instance.machine.network_interface.*.network_ip, google_compute_instance.machine.network_interface[*].access_config.*.nat_ip])
-  egress_cidrs     = flatten([google_compute_instance.machine.network_interface.*.network_ip, google_compute_instance.machine.network_interface[*].access_config.*.nat_ip])
+  public_cidrblocks = var.public_cidrblocks
+  service_cidrblocks = var.service_cidrblocks
+  internal_cidrblocks = var.internal_cidrblocks
   region           = var.machine.spec.region
   name_id          = "${var.machine.name}-${var.name_id}"
 }

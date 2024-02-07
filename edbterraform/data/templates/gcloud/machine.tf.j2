@@ -17,6 +17,9 @@ module "machine_{{ region_ }}" {
   subnet_name                     = module.network_{{ region_ }}[each.value.spec.zone_name].name
   name_id                         = module.spec.hex_id
   tags                            = each.value.spec.tags
+  public_cidrblocks               = [var.public_cidrblock]
+  service_cidrblocks              = var.service_cidrblocks
+  internal_cidrblocks             = module.spec.region_cidrblocks
 
   depends_on = [module.security_{{ region_ }}]
 
