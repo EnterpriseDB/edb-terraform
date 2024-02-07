@@ -2,7 +2,6 @@ module "vpc_{{ region_ }}" {
   source = "./modules/vpc"
 
   vpc_cidr_block = try(module.spec.base.regions["{{ region }}"].cidr_block, null)
-  vpc_tag        = var.vpc_tag
   name_id        = module.spec.hex_id
   tags           = module.spec.base.tags
 
@@ -19,7 +18,6 @@ module "network_{{ region_ }}" {
   for_each = lookup(module.spec.region_zone_networks, "{{ region }}", null)
 
   vpc_id             = module.vpc_{{ region_ }}.vpc_id
-  public_subnet_tag  = var.public_subnet_tag
   cidr_block         = each.value.cidr
   availability_zone  = each.value.zone
   tags               = module.spec.base.tags
@@ -36,7 +34,6 @@ module "routes_{{ region_ }}" {
 
   subnet_count       = length([for a, s in lookup(module.spec.region_zone_networks, "{{ region }}", {}) : a])
   vpc_id             = module.vpc_{{ region_ }}.vpc_id
-  project_tag        = var.project_tag
   public_cidrblock   = var.public_cidrblock
   cluster_name       = module.spec.base.tags.cluster_name
   tags               = module.spec.base.tags
@@ -52,7 +49,6 @@ module "security_{{ region_ }}" {
   source = "./modules/security"
 
   vpc_id           = module.vpc_{{ region_ }}.vpc_id
-  project_tag      = var.project_tag
   cluster_name     = module.spec.base.tags.cluster_name
   ports            = try(module.spec.region_ports["{{ region }}"], [])
   ingress_cidrs    = module.spec.region_cidrblocks
