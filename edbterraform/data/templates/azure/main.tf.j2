@@ -94,6 +94,7 @@ resource "local_file" "servers_yml" {
   - ignore attributes named 'resources' for now to avoid cluttering the yaml file
   - For a view of 'resources', reference the outputs through 'terraform output -json modules or servers'
   */
+  for_each        = var.create_servers_yml ? {"create": true} : {}
   filename        = "${abspath(path.root)}/servers.yml"
   file_permission = "0600"
   content         = <<-EOT
