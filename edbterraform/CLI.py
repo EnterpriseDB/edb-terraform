@@ -128,6 +128,13 @@ def binary_path(name, bin_path=None):
     
     return ''
 
+def get_binary(binary_name, bin_path=None, default_path=None):
+    binary = ""
+    if bin_path:
+        binary = binary_path(binary_name, bin_path)
+    if not binary and not default_path:
+        binary = binary_path(binary_name, default_path)
+    return binary
 
 class TerraformCLI:
     binary_name = 'terraform'
@@ -143,18 +150,20 @@ class TerraformCLI:
 
     def __init__(self, binary_dir=None, version=None):
         self.bin_dir = binary_dir if binary_dir else self.DEFAULT_PATH
-        self.version = self.get_max_version() if not version else version
-        self.bin_path = f'{self.bin_dir}/terraform/{self.version}/bin' if self.bin_dir == self.DEFAULT_PATH else os.path.join(self.bin_dir, 'bin')
+        self.skip_install = str(version) == "0"
+        self.version = self.get_max_version() if not version or self.skip_install else version
+        self.default_path = f'{self.bin_dir}/terraform/{self.version}/bin'
+        self.bin_path = self.default_path if self.bin_dir == self.DEFAULT_PATH else os.path.join(self.bin_dir, 'bin')
         self.binary_full_path = os.path.join(self.bin_path, self.binary_name)
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
 
-    def get_terraform_binary(self):
-        return binary_path(self.binary_name, self.bin_path)
+    def get_binary(self):
+        return get_binary(self.binary_name, self.bin_path, self.default_path)
 
     def get_compatible_terraform(self):
         version = self.check_version()
-        binary = self.get_terraform_binary()
+        binary = self.get_binary()
 
         if self.min_version > version \
             or version > self.max_version:
@@ -179,7 +188,7 @@ class TerraformCLI:
     def check_version(self):
         try:
             version_keyname = 'terraform_version'
-            terraform_path = self.get_terraform_binary()
+            terraform_path = self.get_binary()
             command = [terraform_path, '--version', '-json']
             output = execute_shell(
                 args=command,
@@ -294,11 +303,11 @@ class TerraformCLI:
         return join_version(cls.max_version, '.')
 
     def install(self):
-        if self.version == "0":
+        if self.skip_install:
             logger.info('Terraform 0 version used, skipping installation')
             return
 
-        terraform_bin = self.get_terraform_binary()
+        terraform_bin = self.get_binary()
         # Skip installation if version is already installed
         if terraform_bin == self.binary_full_path \
             and join_version(self.check_version()) == self.version:
@@ -346,8 +355,10 @@ class JqCLI:
 
     def __init__(self, binary_dir=None, version=None):
         self.bin_dir = binary_dir if binary_dir else self.DEFAULT_PATH
-        self.version = self.get_max_version() if not version else version
-        self.bin_path = f'{self.bin_dir}/jq/{self.version}/bin' if self.bin_dir == self.DEFAULT_PATH else os.path.join(self.bin_dir, 'bin')
+        self.skip_install = str(version) == "0"
+        self.version = self.get_max_version() if not version or self.skip_install else version
+        self.default_path = f'{self.bin_dir}/jq/{self.version}/bin'
+        self.bin_path =  self.default_path if self.bin_dir == self.DEFAULT_PATH else os.path.join(self.bin_dir, 'bin')
         self.binary_full_path = os.path.join(self.bin_path, self.binary_name)
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
@@ -379,7 +390,7 @@ class JqCLI:
 
     def check_version(self):
         try:
-            jq_path = self.get_jq_binary()
+            jq_path = self.get_binary()
             jq_prefix = "jq-" # jq --version returns a single string as jq-<version> and newline
             command = [jq_path, '--version']
             output = execute_shell(
@@ -391,16 +402,16 @@ class JqCLI:
         except KeyError as e:
             raise e(f'version keyname was not found')
 
-    def get_jq_binary(self):
-        return binary_path(self.binary_name, self.bin_path)
+    def get_binary(self):
+        return get_binary(self.binary_name, self.bin_path, self.default_path)
 
     def install(self):
 
-        if self.version == "0":
+        if self.skip_install:
             logger.info('JQ 0 version used, skipping installation')
             return
 
-        jq_bin = self.get_jq_binary()
+        jq_bin = self.get_binary()
         # Skip installation if latest already installed
         if jq_bin == self.binary_full_path \
             and self.check_version() == self.version:

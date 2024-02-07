@@ -8,6 +8,7 @@ from collections import OrderedDict
 from typing import List
 from datetime import datetime
 from functools import partial
+import json
 
 from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI, JqCLI
@@ -464,7 +465,9 @@ class Arguments:
             terraform.install()
             jq = JqCLI(self.get_env('bin_path'), self.get_env('jq_version'))
             jq.install()
-            return {
-                'terraform': terraform.bin_path,
-                'jq': jq.bin_path,
+            installed = {
+                'terraform': terraform.get_binary(),
+                'jq': jq.get_binary(),
             }
+            print(json.dumps(installed, separators=(',', ':')))
+            return installed
