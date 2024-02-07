@@ -629,6 +629,19 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
                         'cidr': cidr,
                     }
                 spec_variables['regions'][region]['zones'] = temp
+            # Handle ports as a single list of ports
+            ports = []
+            for port in spec_variables['regions'][region].get('service_ports', []):
+                ports.append({'defaults': 'service' ,**port})
+            if spec_variables['regions'][region].get('service_ports', []):
+                del spec_variables['regions'][region]['service_ports']
+            for port in spec_variables['regions'][region].get('region_ports', []):
+                ports.append({'defaults': 'internal' ,**port})
+            if spec_variables['regions'][region].get('region_ports', []):
+                del spec_variables['regions'][region]['region_ports']
+            if 'ports' not in spec_variables['regions'][region]:
+                spec_variables['regions'][region]['ports'] = []
+            spec_variables['regions'][region]['ports'].extend(ports)
 
     if 'machines' in spec_variables:
         for machine in spec_variables['machines']:
