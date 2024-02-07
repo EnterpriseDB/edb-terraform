@@ -1,4 +1,8 @@
 variable "machine" {}
+variable "public_cidrblocks" {}
+variable "service_cidrblocks" {}
+variable "internal_cidrblocks" {}
+
 locals {
   # Allow machine default outbound access if no egress is defined
   egress_defined = anytrue([for port in var.machine.spec.ports: port.type=="egress"])

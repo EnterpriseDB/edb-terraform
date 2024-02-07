@@ -2,13 +2,20 @@ variable "vpc_id" {}
 variable "tags" {}
 variable "ports" {}
 variable "cluster_name" {}
-variable "ingress_cidrs" {
+variable "public_cidrblocks" {
   type = list(string)
-  default = [ "0.0.0.0/0" ]
+  default = ["0.0.0.0/0"]
+  nullable = false
 }
-variable "egress_cidrs" {
+variable "internal_cidrblocks" {
   type = list(string)
-  default = [ "0.0.0.0/0" ]
+  default = []
+  nullable = false
+}
+variable "service_cidrblocks" {
+  type = list(string)
+  default = ["0.0.0.0/0"]
+  nullable = false
 }
 
 locals {
@@ -16,20 +23,29 @@ locals {
   # Collapse duplicate rules so only one rule will be created
   # Use protocol, port and type to create a key
   # Use group_by to gather cidrs and description as a list
-  # Create mapping with new key and collapse protocol, port, description and ingress_cidrs
+  # Create mapping with new key and collapse protocol, port, description and cidrs
+  ports = [
+    for port in var.ports : merge(port, {
+        cidrs = coalesce(port.cidrs,
+          try(port.defaults, "") == "service" ? var.service_cidrblocks :
+          try(port.defaults, "") == "public" ? var.public_cidrblocks :
+          try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+          []
+    )})
+  ]
   port_rules_cidr_blocks = {
-    for port in var.ports:
+    for port in local.ports:
       join("_", formatlist("%#v", [port.protocol, port.port, port.to_port, port.type])) 
-      => coalesce(port.cidrs, var.ingress_cidrs)...
+      => port.cidrs...
     }
 
   port_rules_descriptions = {
-    for port in var.ports:
+    for port in local.ports:
       join("_", formatlist("%#v", [port.protocol, port.port, port.to_port, port.type])) 
       => coalesce(port.description, "default")...
     }
   port_rules_mapping = {
-    for port in var.ports:
+    for port in local.ports:
       join("_", formatlist("%#v", [port.protocol, port.port, port.to_port, port.type])) 
        => port...
   }

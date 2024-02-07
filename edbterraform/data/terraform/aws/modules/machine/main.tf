@@ -21,6 +21,10 @@ module "machine_ports" {
   cluster_name     = var.machine.name
   ports            = local.machine_ports
   tags             = var.tags
+  public_cidrblocks = var.public_cidrblocks
+  service_cidrblocks = var.service_cidrblocks
+  internal_cidrblocks = var.internal_cidrblocks
+
 }
 
 resource "aws_instance" "machine" {

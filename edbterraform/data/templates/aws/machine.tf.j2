@@ -15,6 +15,9 @@ module "machine_{{ region_ }}" {
   use_agent                = module.spec.base.ssh_key.use_agent
   key_name                 = module.key_pair_{{ region_ }}.key_pair_id
   tags                     = each.value.spec.tags
+  public_cidrblocks        = [var.public_cidrblock]
+  service_cidrblocks       = var.service_cidrblocks
+  internal_cidrblocks      = module.spec.region_cidrblocks
 
   depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
 
