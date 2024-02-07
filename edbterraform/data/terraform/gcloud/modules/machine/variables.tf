@@ -1,4 +1,7 @@
 variable "machine" {}
+variable "public_cidrblocks" {}
+variable "service_cidrblocks" {}
+variable "internal_cidrblocks" {}
 variable "zone" {}
 variable "ssh_priv_key" {}
 variable "ssh_pub_key" {}
