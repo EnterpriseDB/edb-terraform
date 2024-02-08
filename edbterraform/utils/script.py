@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import subprocess
 from tempfile import mkstemp
 import stat
@@ -85,34 +86,38 @@ def execute_temporary_script(script_name):
             "logs for details: %s" % e.cmd
         )
 
-def binary_path(name, bin_path=None):
+def binary_path(name, bin_path=None, default_path=None, env_path="PATH",):
     """Returns the first seen binary
 
     Order:
     1. bin_path + name if it exists
     2. PATH + name if it exists
+    3. default_path + name if it exists
     3. Empty string
 
     :param name: name of the binary
-    :param path: path to the binary
+    :param bin_path: path to look for the binary
+    :param env_path: environments PATH variable
+    :param default_path: default path to look for the binary
     """
-    if bin_path and os.path.exists(bin_path):
-        binary_path = os.path.join(bin_path, name)
-        if os.path.exists(binary_path) and os.access(binary_path, os.X_OK):
-            return binary_path
-        
-    paths = os.getenv("PATH",'').split(os.pathsep)
-    for path in paths:
-        binary_path = os.path.join(path, name)
-        if os.path.exists(binary_path) and os.access(binary_path, os.X_OK):
-            return binary_path    
-    
-    return ''
+    if not name:
+        return ''
 
-def get_binary(binary_name, bin_path=None, default_path=None):
-    binary = ""
     if bin_path:
-        binary = binary_path(binary_name, bin_path)
-    if not binary and not default_path:
-        binary = binary_path(binary_name, default_path)
-    return binary
+        binary_path = Path(bin_path) / name
+        if binary_path.exists() and os.access(binary_path, os.X_OK):
+            return binary_path
+
+    if env_path:
+        paths = os.getenv("PATH",'').split(os.pathsep)
+        for path in paths:
+            binary_path = Path(path) / name
+            if binary_path.exists() and os.access(binary_path, os.X_OK):
+                return binary_path
+
+    if default_path:
+        binary_path = Path(default_path) / name
+        if binary_path.exists() and os.access(binary_path, os.X_OK):
+            return binary_path
+
+    return ''
