@@ -79,11 +79,11 @@ class ArgumentConfig:
 BinPath = ArgumentConfig(
     names = ['--bin-path'],
     dest  = 'bin_path',
-    default = TerraformCLI.DEFAULT_PATH,
+    default = __dot_project__,
     required = False,
     help = '''
-            Default location to install binaries.
-            It will default to users home directory.
+            Default location to install/check binaries.
+            When using the default, it will be updated per tool under $HOME/.edb-terraform/<TOOLNAME>/<VERSION>/bin/<TOOLNAME>
             Default: %(default)s
            ''',
 )

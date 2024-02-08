@@ -6,7 +6,6 @@ from pathlib import Path
 import shutil
 from urllib import request as Request
 import subprocess
-import stat
 import json
 import textwrap
 from typing import Union
@@ -14,7 +13,7 @@ from typing import Union
 from edbterraform import __dot_project__
 from edbterraform.utils.logs import logger
 from edbterraform.utils.files import checksum_verify
-from edbterraform.utils.script import execute_shell, get_binary
+from edbterraform.utils.script import execute_shell, binary_path
 
 Version = namedtuple('Version', ['major', 'minor', 'patch'])
 
@@ -33,21 +32,21 @@ class TerraformCLI:
     arch_alias = {
         'x86_64': 'amd64',
     }
-    DEFAULT_PATH = __dot_project__
+    DOT_PATH = __dot_project__
     plan_file = 'terraform.plan'
 
     def __init__(self, binary_dir=None, version=None):
-        self.bin_dir = binary_dir if binary_dir else self.DEFAULT_PATH
+        self.bin_dir = binary_dir if binary_dir else self.DOT_PATH
         self.skip_install = str(version) == "0"
         self.version = self.get_max_version() if not version or self.skip_install else version
-        self.default_path = f'{self.bin_dir}/terraform/{self.version}/bin'
-        self.bin_path = self.default_path if self.bin_dir == self.DEFAULT_PATH else os.path.join(self.bin_dir, 'bin')
+        self.default_path = f'{self.bin_dir}/{self.binary_name}/{self.version}/bin'
+        self.bin_path = self.default_path if self.bin_dir == self.DOT_PATH else os.path.join(self.bin_dir, 'bin')
         self.binary_full_path = os.path.join(self.bin_path, self.binary_name)
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
 
     def get_binary(self):
-        return get_binary(self.binary_name, self.bin_path, self.default_path)
+        return binary_path(self.binary_name, self.bin_path, self.default_path)
 
     def get_compatible_terraform(self):
         version = self.check_version()
@@ -190,6 +189,10 @@ class TerraformCLI:
     def get_max_version(cls):
         return join_version(cls.max_version, '.')
 
+    @classmethod
+    def get_min_version(cls):
+        return join_version(cls.min_version)
+
     def install(self):
         if self.skip_install:
             logger.info('Terraform 0 version used, skipping installation')
@@ -239,14 +242,14 @@ class JqCLI:
     arch_alias = {
         'x86_64': 'amd64',
     }
-    DEFAULT_PATH = __dot_project__
+    DOT_PATH = __dot_project__
 
     def __init__(self, binary_dir=None, version=None):
-        self.bin_dir = binary_dir if binary_dir else self.DEFAULT_PATH
+        self.bin_dir = binary_dir if binary_dir else self.DOT_PATH
         self.skip_install = str(version) == "0"
         self.version = self.get_max_version() if not version or self.skip_install else version
-        self.default_path = f'{self.bin_dir}/jq/{self.version}/bin'
-        self.bin_path =  self.default_path if self.bin_dir == self.DEFAULT_PATH else os.path.join(self.bin_dir, 'bin')
+        self.default_path = f'{self.bin_dir}/{self.binary_name}/{self.version}/bin'
+        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else os.path.join(self.bin_dir, 'bin')
         self.binary_full_path = os.path.join(self.bin_path, self.binary_name)
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
@@ -291,7 +294,7 @@ class JqCLI:
             raise e(f'version keyname was not found')
 
     def get_binary(self):
-        return get_binary(self.binary_name, self.bin_path, self.default_path)
+        return binary_path(self.binary_name, self.bin_path, self.default_path)
 
     def install(self):
 
