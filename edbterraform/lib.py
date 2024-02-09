@@ -19,7 +19,7 @@ from edbterraform import __version__, __python_version__, __virtual_env__, __dot
 from edbterraform.utils.dict import change_keys
 from edbterraform.utils.files import load_yaml_file, render_template
 from edbterraform.utils.logs import logger
-from edbterraform.CLI import TerraformCLI, join_version
+from edbterraform.CLI import TerraformCLI
 
 def tpl(template_name, dest, csp, vars={}):
     # Renders and saves a jinja2 template based on a given template name and
@@ -109,7 +109,7 @@ def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provi
                     data[block]['backend'][csp_terraform_backend.get(remote_state_type, remote_state_type)] = {}
 
                     # Set the required terraform version
-                    data[block]['required_version'] = '>= %s, <= %s' % (join_version(TerraformCLI.min_version), join_version(TerraformCLI.max_version))
+                    data[block]['required_version'] = '>= %s, <= %s' % (TerraformCLI.min_version.to_string(), TerraformCLI.max_version.to_string())
 
             f.write(json.dumps(data, indent=2, sort_keys=True))
     except Exception as e:
@@ -379,7 +379,7 @@ def generate_terraform(
         project_path: Path,
         csp: str,
         bin_path: Path,
-        terraform_version: str = TerraformCLI.get_max_version(),
+        terraform_version: str = TerraformCLI.max_version.to_string(),
         user_templates: Optional[List[Path]]=[],
         hcl_lock_file: Optional[Path]=None,
         run_validation: bool = False,

@@ -199,7 +199,7 @@ TerraformVersion = ArgumentConfig(
     metavar='TERRAFORM_VERSION',
     dest='terraform_version',
     required=False,
-    default=TerraformCLI.get_max_version(),
+    default=TerraformCLI.max_version.to_string(),
     help='''
         Terraform version to install/use. Set to 0 to skip.
         Default: %(default)s
@@ -211,7 +211,7 @@ JqVersion = ArgumentConfig(
     metavar='JQ_VERSION',
     dest='jq_version',
     required=False,
-    default=JqCLI.get_max_version(),
+    default=JqCLI.max_version.to_string(),
     help='''
         JQ version to install or use. Set to 0 to skip.
         Default: %(default)s
@@ -466,8 +466,8 @@ class Arguments:
             jq = JqCLI(self.get_env('bin_path'), self.get_env('jq_version'))
             jq.install()
             installed = {
-                'terraform': terraform.get_binary(),
-                'jq': jq.get_binary(),
+                'terraform': str(terraform.get_binary()),
+                'jq': str(jq.get_binary()),
             }
             print(json.dumps(installed, separators=(',', ':')))
             return installed

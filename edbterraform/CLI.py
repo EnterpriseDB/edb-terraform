@@ -1,5 +1,4 @@
 import platform
-from collections import namedtuple
 import sys
 import os
 from pathlib import Path
@@ -13,22 +12,14 @@ from typing import Union
 from edbterraform import __dot_project__
 from edbterraform.utils.logs import logger
 from edbterraform.utils.files import checksum_verify
-from edbterraform.utils.script import execute_shell, binary_path
-
-Version = namedtuple('Version', ['major', 'minor', 'patch'])
-
-def parse_version(version, separator='.'):
-    return Version(*[int(x) for x in version.split(separator)])
-
-def join_version(version, separator='.'):
-    return separator.join(map(str, version))
+from edbterraform.utils.script import execute_shell, binary_path, Version
 
 class TerraformCLI:
     binary_name = 'terraform'
-    min_version = Version(1, 3, 6)
+    min_version = Version("1.3.6")
     # Version temporarily locked to 1.5.5
     # Ref PR: https://github.com/EnterpriseDB/edb-terraform/pull/88
-    max_version = Version(1, 5, 5)
+    max_version = Version("1.5.5")
     arch_alias = {
         'x86_64': 'amd64',
     }
@@ -37,11 +28,11 @@ class TerraformCLI:
 
     def __init__(self, binary_dir=None, version=None):
         self.bin_dir = binary_dir if binary_dir else self.DOT_PATH
-        self.skip_install = str(version) == "0"
-        self.version = self.get_max_version() if not version or self.skip_install else version
-        self.default_path = f'{self.bin_dir}/{self.binary_name}/{self.version}/bin'
-        self.bin_path = self.default_path if self.bin_dir == self.DOT_PATH else os.path.join(self.bin_dir, 'bin')
-        self.binary_full_path = os.path.join(self.bin_path, self.binary_name)
+        self.version = self.max_version if not version else Version(version)
+        self.skip_install = self.version == Version("0")
+        self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
+        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
 
@@ -63,9 +54,9 @@ class TerraformCLI:
                 Version: {current}
                 Binary: {binary}
                 ''').format(
-                    min = join_version(self.min_version, '.'),
-                    max = join_version(self.max_version, '.'),
-                    current = join_version(version, '.'),
+                    min = self.min_version.to_string(),
+                    max = self.max_version.to_string(),
+                    current = version.to_string(),
                     binary = binary
                 ),
                 returncode=1
@@ -83,7 +74,7 @@ class TerraformCLI:
             )
             result = json.loads(output.decode("utf-8"))
 
-            version = parse_version(result[version_keyname], '.')
+            version = Version(result[version_keyname])
             return version
         except KeyError as e:
             raise e(f'version keyname was not found')
@@ -185,14 +176,6 @@ class TerraformCLI:
 
         return True
 
-    @classmethod
-    def get_max_version(cls):
-        return join_version(cls.max_version, '.')
-
-    @classmethod
-    def get_min_version(cls):
-        return join_version(cls.min_version)
-
     def install(self):
         if self.skip_install:
             logger.info('Terraform 0 version used, skipping installation')
@@ -201,7 +184,7 @@ class TerraformCLI:
         terraform_bin = self.get_binary()
         # Skip installation if version is already installed
         if terraform_bin == self.binary_full_path \
-            and join_version(self.check_version()) == self.version:
+            and self.check_version().to_tuple() == self.version.to_tuple():
             logger.info(f'Terraform {self.version} is already installed')
             return
 
@@ -212,7 +195,7 @@ class TerraformCLI:
             bin_path = Path(self.bin_path)
             bin_path.mkdir(parents=True, exist_ok=True)
 
-            base = f'https://releases.hashicorp.com/terraform/{self.version}/terraform_{self.version}'
+            base = f'https://releases.hashicorp.com/terraform/{self.version.to_string()}/terraform_{self.version.to_string()}'
             source_url = base + f'_{self.operating_system}_{self.architecture}.zip'
             zip_file = Path(Request.urlretrieve(source_url)[0])
 
@@ -225,7 +208,7 @@ class TerraformCLI:
                 checksum_file.unlink(missing_ok=True)
                 zip_file.unlink(missing_ok=True)
                 raise Exception(f'Failed to verify Terraform {self.version} checksum')
-            logger.info(f'Verified Terrafrom {self.version} checksum')
+            logger.info(f'Verified Terraform {self.version} checksum')
             checksum_file.unlink(missing_ok=True)
 
             shutil.unpack_archive(zip_file, bin_path, 'zip')
@@ -234,11 +217,10 @@ class TerraformCLI:
         except Exception as e:
             raise Exception(f'Failed to install Terraform {self.version} - ({e})') from e
 
-
 class JqCLI:
     binary_name = 'jq'
-    min_version = Version(1, 6, 0)
-    max_version = Version(1, 7, 1)
+    min_version = Version("1.6.0")
+    max_version = Version("1.7.1")
     arch_alias = {
         'x86_64': 'amd64',
     }
@@ -246,38 +228,15 @@ class JqCLI:
 
     def __init__(self, binary_dir=None, version=None):
         self.bin_dir = binary_dir if binary_dir else self.DOT_PATH
-        self.skip_install = str(version) == "0"
-        self.version = self.get_max_version() if not version or self.skip_install else version
-        self.default_path = f'{self.bin_dir}/{self.binary_name}/{self.version}/bin'
-        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else os.path.join(self.bin_dir, 'bin')
-        self.binary_full_path = os.path.join(self.bin_path, self.binary_name)
+        self.version = self.max_version if not version else Version(version)
+        self.skip_install = self.version == Version("0")
+        # JQ drops the patch version when it is 0 and may include a tainted patch
+        self.format_version = self.version.to_string(tainted=True, include_zero_patch=False)
+        self.default_path = Path(self.bin_dir) / self.binary_name / self.format_version / 'bin'
+        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
-
-    @classmethod
-    def format_version(cls, version: Union[Version, str]) -> str:
-        '''
-        JQ drops the patch number when it is 0
-
-        Returned as a version string
-        '''
-        # Convert Version tuple to string
-        if isinstance(version, Version):
-            version = join_version(version)
-
-        versions = version.split('.')
-        if len(versions) <= 2 or versions[2] == '0':
-            return '.'.join(versions[:2])
-
-        return version
-
-    @classmethod
-    def get_max_version(cls):
-        return join_version(cls.max_version)
-
-    @classmethod
-    def get_min_version(cls):
-        return join_version(cls.min_version)
 
     def check_version(self):
         try:
@@ -289,7 +248,7 @@ class JqCLI:
                 environment=os.environ.copy(),
             )
             result = output.decode("utf-8")
-            return result.lstrip(jq_prefix).rstrip("\n\s")
+            return Version(result.lstrip(jq_prefix).rstrip("\n\s"))
         except KeyError as e:
             raise e(f'version keyname was not found')
 
@@ -305,7 +264,7 @@ class JqCLI:
         jq_bin = self.get_binary()
         # Skip installation if latest already installed
         if jq_bin == self.binary_full_path \
-            and self.check_version() == self.version:
+            and self.check_version().to_tuple() == self.version.to_tuple():
             logger.info(f'JQ {self.version} is already installed')
             return
 
@@ -320,13 +279,13 @@ class JqCLI:
             # - jq-linux64 -> jq-linux-amd64
             # - jq-osx-amd64 -> jq-macos-amd64
             # - arm/darwin does not exist -> jq-macos-arm64
-            base = f"https://github.com/jqlang/jq/releases/download/jq-{self.version}/"
+            base = f"https://github.com/jqlang/jq/releases/download/jq-{self.format_version}/"
             source_url = base + f'jq-{self.operating_system}-{self.architecture}'
             # Macos release constains macos in the name
             if self.operating_system == "darwin":
                 source_url = base + f'jq-macos-{self.architecture}'
             # Handle version 1.6 releases
-            if self.format_version(self.version).startswith('1.6'):
+            if self.version.to_string().startswith('1.6'):
                 if self.architecture == "arm64":
                     raise Exception("JQ 1.6 does not support arm64 architecture")
 
@@ -342,7 +301,7 @@ class JqCLI:
             checksum_url = base + f'sha256sum.txt'
             checksum_file = ""
             # unzip file and get signature froms from sig/v1.6/sha256sum.txt
-            if self.format_version(self.version).startswith('1.6'):
+            if self.version == Version("1.6"):
                 checksum_url = base + f'jq-1.6.zip'
                 checksum_zip = Path(Request.urlretrieve(checksum_url, '/tmp/jq.zip')[0])
                 checksum_file = Path('/tmp/jq-checksums')
