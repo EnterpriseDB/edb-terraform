@@ -8,6 +8,7 @@ import subprocess
 import json
 import textwrap
 from typing import Union
+import venv
 
 from edbterraform import __dot_project__
 from edbterraform.utils.logs import logger
@@ -325,3 +326,79 @@ class JqCLI:
             full_path.chmod(0o770)
         except Exception as e:
             raise Exception(f'Failed to install JQ {self.version} - ({e})') from e
+
+class AwsCLI:
+    binary_name = 'aws'
+    min_version = Version("2.11.18")
+    max_version = Version("2.15.18")
+
+    DOT_PATH = __dot_project__
+
+    def __init__(self, binary_dir=None, version=None):
+        self.bin_dir = binary_dir if binary_dir else self.DOT_PATH
+        self.version = self.max_version if not version else Version(version)
+        self.skip_install = self.version == Version("0")
+        self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
+        self.default_venv = self.default_path.parents[0] / 'venv'
+        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir) / 'bin'
+        self.binary_full_path = Path(self.bin_path) / self.binary_name
+        self.operating_system = platform.system().lower()
+
+    def check_version(self):
+        try:
+            path = self.get_binary()
+            command = [path, '--version']
+            output = execute_shell(
+                args=command,
+                environment=os.environ.copy(),
+            )
+            result = output.decode("utf-8")
+            return Version(result.lstrip('aws-cli/').rstrip("\n\s"))
+        except KeyError as e:
+            raise e(f'version keyname was not found')
+
+    def get_binary(self):
+        return binary_path(self.binary_name, self.bin_path, self.default_path)
+
+    def install(self):
+
+        if self.skip_install:
+            logger.info('AwsCLIv2 0 version used, skipping installation')
+            return
+
+        # Skip installation if latest already installed
+        if self.get_binary() == self.binary_full_path \
+            and self.check_version().to_tuple() == self.version.to_tuple():
+            logger.info(f'AwsCLIv2 {self.version} is already installed')
+            return
+
+        try:
+            logger.info(f'Installing AwsCLIv2 {self.version} in {self.binary_full_path}')
+            full_path = Path(self.binary_full_path)
+            full_path.unlink(missing_ok=True)
+            bin_path = Path(self.bin_path)
+            bin_path.mkdir(parents=True, exist_ok=True)
+
+            base = f"https://github.com/aws/aws-cli/archive/refs/tags/{self.version.to_string()}.zip"
+            source_url = base
+
+            logger.info(f'AwsCLIv2 {self.version} checksum not available')
+
+            # Create a clean virtual environment with pip available
+            builder = venv.EnvBuilder(with_pip=True, system_site_packages=False)
+            builder.create(self.default_venv)
+            pip_cmd = str(self.default_venv / 'bin' / 'pip')
+            aws_cmd = str(self.default_venv / 'bin' / 'aws')
+            command = [pip_cmd, 'install', source_url]
+            output = execute_shell(
+                args=command,
+                environment=os.environ.copy(),
+            )
+            command = ['ln', '-s', aws_cmd, full_path]
+            output = execute_shell(
+                args=command,
+                environment=os.environ.copy(),
+            )
+            full_path.chmod(0o770)
+        except Exception as e:
+            raise Exception(f'Failed to install AwsCLIv2 {self.version} - ({e})') from e
