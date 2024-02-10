@@ -11,7 +11,7 @@ from functools import partial
 import json
 
 from edbterraform.lib import generate_terraform
-from edbterraform.CLI import TerraformCLI, JqCLI
+from edbterraform.CLI import TerraformCLI, JqCLI, AwsCLI, AzureCLI, GoogleCLI
 from edbterraform import __project_name__, __dot_project__, __version__
 from edbterraform.utils import logs, files
 
@@ -218,6 +218,42 @@ JqVersion = ArgumentConfig(
         '''
 )
 
+AwsVersion = ArgumentConfig(
+    names = [f'--{AwsCLI.binary_name.lower()}-cli-version',],
+    metavar=f'--{AwsCLI.binary_name.upper()}_CLI_VERSION',
+    dest=f'--{AwsCLI.binary_name.lower()}_cli_version',
+    required=False,
+    default=AwsCLI.max_version.to_string(),
+    help='''
+        AwsCLIv2 version to install or use. Set to 0 to skip.
+        Default: %(default)s
+        '''
+)
+
+AzureVersion = ArgumentConfig(
+    names = [f'--{AzureCLI.binary_name.lower()}-cli-version',],
+    metavar=f'{AzureCLI.binary_name.upper()}_CLI_VERSION',
+    dest=f'{AzureCLI.binary_name.lower()}_cli_version',
+    required=False,
+    default=AzureCLI.max_version.to_string(),
+    help='''
+        AzureCLI version to install or use. Set to 0 to skip.
+        Default: %(default)s
+        '''
+)
+
+GcloudVersion = ArgumentConfig(
+    names = [f'--{GoogleCLI.binary_name.lower()}-cli-version',],
+    metavar=f'{GoogleCLI.binary_name.upper()}_CLI_VERSION',
+    dest=f'{GoogleCLI.binary_name.lower()}_cli_version',
+    required=False,
+    default=GoogleCLI.max_version.to_string(),
+    help='''
+        GoogleCLI version to install or use. Set to 0 to skip.
+        Default: %(default)s
+        '''
+)
+
 CloudServiceProvider = ArgumentConfig(
     names = ['--cloud-service-provider', '-c',],
     metavar='CLOUD_SERVICE_PROVIDER',
@@ -345,7 +381,6 @@ class Arguments:
             UserTemplatesPath,
             TerraformLockHcl,
             TerraformVersion,
-            JqVersion,
             RemoteStateType,
         ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
@@ -356,6 +391,9 @@ class Arguments:
             LogStdout,
             TerraformVersion,
             JqVersion,
+            AwsVersion,
+            AzureVersion,
+            GcloudVersion,
         ]],
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
@@ -461,13 +499,11 @@ class Arguments:
             return outputs
 
         if self.command == 'setup':
-            terraform = TerraformCLI(self.get_env('bin_path'), self.get_env('terraform_version'))
-            terraform.install()
-            jq = JqCLI(self.get_env('bin_path'), self.get_env('jq_version'))
-            jq.install()
-            installed = {
-                'terraform': str(terraform.get_binary()),
-                'jq': str(jq.get_binary()),
-            }
+            installed = {}
+            for tool in [TerraformCLI, JqCLI, AwsCLI, AzureCLI, GoogleCLI]:
+                name = tool.binary_name
+                tool = tool(self.get_env('bin_path'), self.get_env(f'{name}_cli_version'))
+                tool.install()
+                installed[name] = str(tool.get_binary())
             print(json.dumps(installed, separators=(',', ':')))
             return installed
