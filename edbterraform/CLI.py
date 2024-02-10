@@ -340,7 +340,7 @@ class AwsCLI:
         self.skip_install = self.version == Version("0")
         self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
         self.default_venv = self.default_path.parents[0] / 'venv'
-        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir) / 'bin'
+        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
         self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.operating_system = platform.system().lower()
 
@@ -394,11 +394,76 @@ class AwsCLI:
                 args=command,
                 environment=os.environ.copy(),
             )
-            command = ['ln', '-s', aws_cmd, full_path]
+
+            full_path.symlink_to(aws_cmd)
+            full_path.chmod(0o770)
+        except Exception as e:
+            raise Exception(f'Failed to install AwsCLIv2 {self.version} - ({e})') from e
+
+class AzureCLI:
+    binary_name = 'az'
+    min_version = Version("2.1.0")
+    max_version = Version("2.57.0")
+
+    DOT_PATH = __dot_project__
+
+    def __init__(self, binary_dir=None, version=None):
+        self.bin_dir = binary_dir if binary_dir else self.DOT_PATH
+        self.version = self.max_version if not version else Version(version)
+        self.skip_install = self.version == Version("0")
+        self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
+        self.default_venv = self.default_path.parents[0] / 'venv'
+        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.binary_full_path = Path(self.bin_path) / self.binary_name
+        self.operating_system = platform.system().lower()
+
+    def check_version(self):
+        try:
+            path = self.get_binary()
+            command = [path, '--version']
             output = execute_shell(
                 args=command,
                 environment=os.environ.copy(),
             )
+            result = output.decode("utf-8")
+            return Version(result.split('\n')[0].split()[-1])
+        except KeyError as e:
+            raise e(f'version keyname was not found')
+
+    def get_binary(self):
+        return binary_path(self.binary_name, self.bin_path, self.default_path)
+
+    def install(self):
+
+        if self.skip_install:
+            logger.info('AzCLI 0 version used, skipping installation')
+            return
+
+        # Skip installation if latest already installed
+        if self.get_binary() == self.binary_full_path \
+            and self.check_version().to_tuple() == self.version.to_tuple():
+            logger.info(f'AzCLI {self.version} is already installed')
+            return
+
+        try:
+            logger.info(f'Installing AzCLI {self.version} in {self.binary_full_path}')
+            full_path = Path(self.binary_full_path)
+            full_path.unlink(missing_ok=True)
+            bin_path = Path(self.bin_path)
+            bin_path.mkdir(parents=True, exist_ok=True)
+
+            logger.info(f'AzCLI {self.version} checksum not available, pip installation')
+
+            builder = venv.EnvBuilder(with_pip=True, system_site_packages=False)
+            builder.create(self.default_venv)
+            pip_cmd = str(self.default_venv / 'bin' / 'pip')
+            az_cmd = str(self.default_venv / 'bin' / 'az')
+            command = [pip_cmd, 'install', f'azure-cli=={self.version.to_string()}']
+            output = execute_shell(
+                args=command,
+                environment=os.environ.copy(),
+            )
+            full_path.symlink_to(az_cmd)
             full_path.chmod(0o770)
         except Exception as e:
-            raise Exception(f'Failed to install AwsCLIv2 {self.version} - ({e})') from e
+            raise Exception(f'Failed to install AzCLIv2 {self.version} - ({e})') from e
