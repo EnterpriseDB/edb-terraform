@@ -310,9 +310,10 @@ LogLevel = ArgumentConfig(
     names = ['--log-level',],
     dest='log_level',
     required=False,
-    default="INFO",
-    help='''
-        Default: %(default)s
+    default=logs.LogLevel.INFO,
+    help=f'''
+        Default: %(default)s |
+        Options - {logs.LogLevel.available_options()}
         '''
 )
 
