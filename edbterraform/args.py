@@ -200,8 +200,9 @@ TerraformVersion = ArgumentConfig(
     dest='terraform_version',
     required=False,
     default=TerraformCLI.max_version.to_string(),
-    help='''
+    help=f'''
         Terraform version to install/use. Set to 0 to skip.
+        Compatible versions: {TerraformCLI.min_version.to_string()} <= x <= {TerraformCLI.max_version.to_string()}
         Default: %(default)s
         '''
 )
@@ -212,8 +213,9 @@ JqVersion = ArgumentConfig(
     dest='jq_version',
     required=False,
     default=JqCLI.max_version.to_string(),
-    help='''
+    help=f'''
         JQ version to install or use. Set to 0 to skip.
+        Compatible versions: {JqCLI.min_version.to_string()} <= x <= {JqCLI.max_version.to_string()}
         Default: %(default)s
         '''
 )
@@ -224,8 +226,9 @@ AwsVersion = ArgumentConfig(
     dest=f'--{AwsCLI.binary_name.lower()}_cli_version',
     required=False,
     default=AwsCLI.max_version.to_string(),
-    help='''
+    help=f'''
         AwsCLIv2 version to install or use. Set to 0 to skip.
+        Compatible versions: {AwsCLI.min_version.to_string()} <= x <= {AwsCLI.max_version.to_string()}
         Default: %(default)s
         '''
 )
@@ -236,8 +239,9 @@ AzureVersion = ArgumentConfig(
     dest=f'{AzureCLI.binary_name.lower()}_cli_version',
     required=False,
     default=AzureCLI.max_version.to_string(),
-    help='''
+    help=f'''
         AzureCLI version to install or use. Set to 0 to skip.
+        Compatible versions: {AzureCLI.min_version.to_string()} <= x <= {AzureCLI.max_version.to_string()}
         Default: %(default)s
         '''
 )
@@ -248,8 +252,9 @@ GcloudVersion = ArgumentConfig(
     dest=f'{GoogleCLI.binary_name.lower()}_cli_version',
     required=False,
     default=GoogleCLI.max_version.to_string(),
-    help='''
+    help=f'''
         GoogleCLI version to install or use. Set to 0 to skip.
+        Compatible versions: {GoogleCLI.min_version.to_string()} <= x <= {GoogleCLI.max_version.to_string()}
         Default: %(default)s
         '''
 )
@@ -269,8 +274,8 @@ Validation = ArgumentConfig(
     action='store_true',
     required=False,
     default=False,
-    help='''
-        Requires terraform >= 1.3.6
+    help=f'''
+        Requires terraform {TerraformCLI.min_version} <= x <= {TerraformCLI.max_version}
         Validates the generated files by running:
         `terraform apply -target=null_resource.validation`
         If invalid, error will be displayed and project directory destroyed
@@ -285,7 +290,7 @@ Apply = ArgumentConfig(
     required=False,
     default=False,
     help='''
-        Requires terraform >= 1.3.6
+        Requires terraform {TerraformCLI.min_version} <= x <= {TerraformCLI.max_version}
         `terraform apply`
         If invalid, error will be displayed and project directory destroyed
         Default: %(default)s
@@ -299,7 +304,7 @@ Destroy = ArgumentConfig(
     required=False,
     default=False,
     help='''
-        Requires terraform >= 1.3.6
+        Requires terraform {TerraformCLI.min_version} <= x <= {TerraformCLI.max_version}
         Attempt to remove an existing project before creating a new one.
         If invalid, error will be displayed and project directory destroyed
         Default: %(default)s
