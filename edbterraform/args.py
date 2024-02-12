@@ -11,7 +11,7 @@ from functools import partial
 import json
 
 from edbterraform.lib import generate_terraform
-from edbterraform.CLI import TerraformCLI, JqCLI, AwsCLI, AzureCLI, GoogleCLI
+from edbterraform.CLI import TerraformCLI, JqCLI, AwsCLI, AzureCLI, GoogleCLI, BigAnimalCLI
 from edbterraform import __project_name__, __dot_project__, __version__
 from edbterraform.utils import logs, files
 
@@ -222,7 +222,7 @@ JqVersion = ArgumentConfig(
 
 AwsVersion = ArgumentConfig(
     names = [f'--{AwsCLI.binary_name.lower()}-cli-version',],
-    metavar=f'--{AwsCLI.binary_name.upper()}_CLI_VERSION',
+    metavar=f'{AwsCLI.binary_name.upper()}_CLI_VERSION',
     dest=f'--{AwsCLI.binary_name.lower()}_cli_version',
     required=False,
     default=AwsCLI.max_version.to_string(),
@@ -255,6 +255,19 @@ GcloudVersion = ArgumentConfig(
     help=f'''
         GoogleCLI version to install or use. Set to 0 to skip.
         Compatible versions: {GoogleCLI.min_version.to_string()} <= x <= {GoogleCLI.max_version.to_string()}
+        Default: %(default)s
+        '''
+)
+
+BigAnimalVersion = ArgumentConfig(
+    names = [f'--{BigAnimalCLI.binary_name.lower()}-cli-version',],
+    metavar=f'{BigAnimalCLI.binary_name.upper()}_CLI_VERSION',
+    dest=f'{BigAnimalCLI.binary_name.lower()}_cli_version',
+    required=False,
+    default=BigAnimalCLI.max_version.to_string(),
+    help=f'''
+        BigAnimalCLI version to install or use. Set to 0 to skip.
+        Compatible versions: {BigAnimalCLI.min_version.to_string()} <= x <= {BigAnimalCLI.max_version.to_string()}
         Default: %(default)s
         '''
 )
@@ -400,6 +413,7 @@ class Arguments:
             AwsVersion,
             AzureVersion,
             GcloudVersion,
+            BigAnimalVersion,
         ]],
         'version': ['Print the version of edb-terraform\n', []],
     })
@@ -520,7 +534,7 @@ class Arguments:
 
         if self.command == 'setup':
             installed = {}
-            for tool in [TerraformCLI, JqCLI, AwsCLI, AzureCLI, GoogleCLI]:
+            for tool in [TerraformCLI, JqCLI, AwsCLI, AzureCLI, GoogleCLI, BigAnimalCLI]:
                 name = tool.binary_name
                 tool = tool(self.get_env('bin_path'), self.get_env(f'{name}_cli_version'))
                 tool.install()
