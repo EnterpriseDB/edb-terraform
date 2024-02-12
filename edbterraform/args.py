@@ -401,6 +401,7 @@ class Arguments:
             AzureVersion,
             GcloudVersion,
         ]],
+        'version': ['Print the version of edb-terraform\n', []],
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
     VERSION_MESSAGE=f'Version: {__version__}\n'
@@ -432,22 +433,32 @@ class Arguments:
         # Set default subparser if not provided
         sys.argv = args
         program_name = self.parser.prog
-        program_index = 0
-        command_index = program_index+1
+        program_index = 0 # programs index
+        command_index = program_index+1 # First argument after program name
 
+        # Find the programs initial index since it may not be the first argument
         for index, argument in enumerate(sys.argv):
             if argument == program_name:
                 program_index = index
                 command_index = index+1
                 break
 
-        # Set default if not provided
         if program_index < len(sys.argv)-1 and \
             sys.argv[command_index] not in Arguments.COMMANDS and \
-            sys.argv[command_index] not in ['-h', '--help']:
+            not any(x in sys.argv for x in ['-h', '--help', '-v', '--version']):
             sys.argv.insert(command_index, Arguments.DEFAULT_COMMAND)
             return sys.argv[command_index]
-        # Set help if not provided
+        # Set help if seen
+        elif program_index < len(sys.argv)-1 and \
+            '-h' in sys.argv or '--help' in sys.argv:
+            sys.argv = sys.argv[:command_index+1] + ['--help']
+            return sys.argv[command_index]
+        # Set version command if seen
+        elif program_index < len(sys.argv)-1 and \
+            '-v' in sys.argv or '--version' in sys.argv:
+            sys.argv = sys.argv[:command_index] + ['version']
+            return sys.argv[command_index]
+        # Set help if no arguments are provided
         elif program_index == len(sys.argv)-1:
             sys.argv.insert(command_index, '-h')
             return sys.argv[command_index]
@@ -470,6 +481,11 @@ class Arguments:
         return self.env.__dict__.copy()
 
     def process_args(self):
+        if self.command == 'version':
+            outputs = __version__
+            print(outputs)
+            return outputs
+
         logs.setup_logs(
             level=self.get_env('log_level'),
             file_name=self.get_env('log_file'),
@@ -485,7 +501,6 @@ class Arguments:
                 run_validation=self.get_env('run_validation'),
                 terraform_version=self.get_env('terraform_version'),
             )
-            return outputs
 
         if self.command == 'generate':
             outputs = generate_terraform(
@@ -502,7 +517,6 @@ class Arguments:
                 remote_state_type = self.get_env('remote_state_type'),
                 terraform_version=self.get_env('terraform_version'),
             )
-            return outputs
 
         if self.command == 'setup':
             installed = {}
@@ -512,4 +526,6 @@ class Arguments:
                 tool.install()
                 installed[name] = str(tool.get_binary())
             print(json.dumps(installed, separators=(',', ':')))
-            return installed
+            outputs = installed
+
+        return outputs
