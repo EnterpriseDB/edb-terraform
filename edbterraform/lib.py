@@ -397,6 +397,7 @@ def generate_terraform(
     """
     SERVERS_OUTPUT_NAME = 'servers'
     OUTPUT = {
+        'project_path': '',
         'terraform_output': '',
         'ssh_filename': '',
     }
@@ -457,6 +458,7 @@ def generate_terraform(
     OUTPUT['terraform_output'] = SERVERS_OUTPUT_NAME
     if 'ssh_key' in terraform_vars['spec'] and 'output_name' in terraform_vars['spec']['ssh_key']:
         OUTPUT['ssh_filename'] = terraform_vars['spec']['ssh_key']['output_name']
+    OUTPUT['project_path'] = str(project_path.resolve())
 
     run_terraform(project_path, bin_path, terraform_version, run_validation, apply)
 
