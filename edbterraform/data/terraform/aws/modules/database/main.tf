@@ -57,6 +57,13 @@ resource "aws_db_instance" "rds_server" {
   skip_final_snapshot     = true
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      # Tags appear as null during re-applys
+      tags["Owner"],
+    ]
+  }
 }
 
 resource "aws_db_parameter_group" "edb_rds_db_params" {

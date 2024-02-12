@@ -54,9 +54,14 @@ resource "aws_instance" "machine" {
   tags = var.tags
 
   lifecycle {
-    # AMI is ignored because the data source
-    # forces the resource to be re-created when apply is used again
-    ignore_changes = [ami]
+    ignore_changes = [
+      # AMI is ignored because the data source forces the resource to be re-created when apply is used again
+      ami,
+      # Tags appear as null during re-applys
+      tags["Owner"],
+      root_block_device[0].tags["Owner"],
+      root_block_device[0].tags["AttachedInstance"],
+    ]
   }
 }
 
