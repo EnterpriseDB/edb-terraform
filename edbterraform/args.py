@@ -531,6 +531,7 @@ class Arguments:
                 remote_state_type = self.get_env('remote_state_type'),
                 terraform_version=self.get_env('terraform_version'),
             )
+            print(json.dumps(outputs, separators=(',', ':')))
 
         if self.command == 'setup':
             installed = {}
