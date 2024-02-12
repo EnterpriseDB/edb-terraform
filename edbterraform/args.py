@@ -356,11 +356,11 @@ LogDirectory = ArgumentConfig(
 )
 
 LogStdout = ArgumentConfig(
-    names = ['--log-stdout',],
-    dest='log_stdout',
+    names = ['--no-console-log',],
+    dest='no_console_log',
     action='store_true',
     required=False,
-    default=True,
+    default=False,
     help='''
         Default: %(default)s
         '''
@@ -504,7 +504,7 @@ class Arguments:
             level=self.get_env('log_level'),
             file_name=self.get_env('log_file'),
             directory=self.get_env('log_directory'),
-            stdout=self.get_env('log_stdout'),
+            stdout=not self.get_env('no_console_log'),
         )
         if self.command == 'depreciated':
             outputs = generate_terraform(

@@ -1,6 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+from pathlib import Path
 import sys
 from datetime import datetime
 from enum import Enum, EnumMeta
@@ -67,15 +68,15 @@ def setup_logs(level=LogLevel.INFO, file_name=datetime.now().strftime('%Y-%m-%d'
     try:
         log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         date_format = '%Y-%m-%dT%H:%M:%S%z'
-
+        directory = Path(directory).resolve()
+        file_name = directory / file_name
         log_level = LogLevel(level, logging.WARNING)
 
         if stdout:
             logging.basicConfig(level=log_level.value, stream=sys.stdout, datefmt=date_format, format=log_format)
         else:
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            log_handler = RotatingFileHandler(file_name, maxBytes=10*1024*1024, backupCount=10, mode='a')
+            directory.mkdir(parents=True, exist_ok=True)
+            log_handler = RotatingFileHandler(str(file_name), maxBytes=10*1024*1024, backupCount=10, mode='a')
             logging.basicConfig(level=log_level.value, datefmt=date_format, format=log_format, handlers=[log_handler])
     except Exception as e:
         logger.error(f"Trouble setting up logger - ({e})")
