@@ -59,7 +59,12 @@ resource "aws_rds_cluster" "aurora_cluster" {
     # We recommend specifying 3 AZs or using the lifecycle configuration block ignore_changes argument if necessary.
     # cluster_identifier_prefix - (Optional, Forces new resources)
     # Source: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster
-    ignore_changes = [availability_zones, cluster_identifier_prefix]
+    ignore_changes = [
+      availability_zones,
+      cluster_identifier_prefix,
+      # Tags appear as null during re-applys
+      tags["Owner"],
+    ]
   }
 }
 
