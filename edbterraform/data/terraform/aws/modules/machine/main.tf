@@ -61,6 +61,11 @@ resource "aws_instance" "machine" {
       tags["Owner"],
       root_block_device[0].tags["Owner"],
       root_block_device[0].tags["AttachedInstance"],
+      # Block devices are attached after this resource but fail to be ignored
+      # Using terraform apply a second time will track the devices within this resource and will no longer appear as a diff.
+      # No workaround available at this time.
+      # https://github.com/hashicorp/terraform-provider-aws/issues/33850
+      # ebs_block_device,
     ]
   }
 }
