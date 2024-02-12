@@ -480,7 +480,7 @@ class GoogleCLI:
     def __init__(self, binary_dir=None, version=None):
         self.bin_dir = binary_dir if binary_dir else self.DOT_PATH
         self.version = self.max_version if not version else Version(version)
-        self.skip_install = self.version.to_tuple() == (0, 0, 0)
+        self.skip_install = self.version == Version("0")
         self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
         self.default_venv = self.default_path.parents[0]
         self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
@@ -539,3 +539,80 @@ class GoogleCLI:
             full_path.chmod(0o770)
         except Exception as e:
             raise Exception(f'Failed to install GcloudCLI {self.version} - ({e})') from e
+
+class BigAnimalCLI:
+    binary_name = 'biganimal'
+    min_version = Version("3.4.0")
+    max_version = Version("3.5.1")
+    arch_alias = {
+        'amd64': 'x86_64',
+    }
+    DOT_PATH = __dot_project__
+
+    def __init__(self, binary_dir=None, version=None):
+        self.bin_dir = binary_dir if binary_dir else self.DOT_PATH
+        self.version = self.max_version if not version else Version(version)
+        self.skip_install = self.version == Version("0")
+        self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
+        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.binary_full_path = Path(self.bin_path) / self.binary_name
+        self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
+        self.operating_system = platform.system().lower()
+
+    def check_version(self):
+        try:
+            path = self.get_binary()
+            command = [path, '--version']
+            output = execute_shell(
+                args=command,
+                environment=os.environ.copy(),
+            )
+            result = output.decode("utf-8")
+            return Version(result.split('\n')[0].split()[-2])
+        except KeyError as e:
+            raise e(f'version keyname was not found')
+
+    def get_binary(self):
+        return binary_path(self.binary_name, self.bin_path, self.default_path)
+
+    def install(self):
+
+        if self.skip_install:
+            logger.info('BigAnimalCLI 0 version used, skipping installation')
+            return
+
+        biganimal_bin = self.get_binary()
+        # Skip installation if latest already installed
+        if biganimal_bin == self.binary_full_path \
+            and self.check_version() == self.version:
+            logger.info(f'BigAnimalCLI {self.version} is already installed')
+            return
+
+        try:
+            logger.info(f'Installing BigAnimalCLI {self.version} in {self.binary_full_path}')
+            full_path = Path(self.binary_full_path)
+            full_path.unlink(missing_ok=True)
+            bin_path = Path(self.bin_path)
+            bin_path.mkdir(parents=True, exist_ok=True)
+            script_path = Path(self.bin_path) / 'get-token.sh'
+            script_path.unlink(missing_ok=True)
+
+            base = f"https://cli.biganimal.com/download/{self.operating_system.capitalize()}/{self.architecture}/v{self.version.to_string()}/biganimal"
+            get_token = "https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh"
+            source_url = base
+
+            binary_file = Path(Request.urlretrieve(source_url)[0])
+            script_file = Path(Request.urlretrieve(get_token)[0])
+
+            # Verify checksum
+            logger.info(f'BigAnimalCLI {self.version} checksum not verified')
+
+            binary_file.rename(full_path)
+            binary_file.unlink(missing_ok=True)
+            script_file.rename(script_path)
+            script_file.unlink(missing_ok=True)
+            full_path.chmod(0o770)
+            script_path.chmod(0o770)
+
+        except Exception as e:
+            raise Exception(f'Failed to install BigAnimalCLI {self.version} - ({e})') from e
