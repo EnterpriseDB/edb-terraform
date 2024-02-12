@@ -10,7 +10,7 @@ import itertools
 logger = logging.getLogger(__project_name__)
 
 class EnumDefaults(EnumMeta):
-    def __call__(cls, value, default=None, *args, **kwargs):
+    def __call__(cls, value='', default=None, *args, **kwargs):
         '''
         Always passthrough the initial call to super.
         If default is defined, attempt a second call with default instead of raising the error.
@@ -34,7 +34,7 @@ class LogLevel(Enum, metaclass=EnumDefaults):
 
     @classmethod
     def _missing_(cls, value):
-        if value is None or value == '':
+        if value == '':
             return cls.NOTSET
 
         if isinstance(value, str):
