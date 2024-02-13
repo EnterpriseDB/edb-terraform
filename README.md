@@ -217,5 +217,5 @@ edb-terraform setup
 │   └── inventory.yml.tftpl
 ├── terraform.tfstate # Terraform state - used as a terraform project marker for edb-terraform when state is remote
 ├── terraform.tfvars.json # Automatically detected Terraform variables. Original values under `edb-terraform/terraform.tfvars.yml`
-└── variables.tf # Terraform placeholder variables
+└── common_vars.tf # Terraform placeholder variables used by all providers
 ```
