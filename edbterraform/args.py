@@ -195,9 +195,9 @@ ProjectName = ArgumentConfig(
 )
 
 TerraformVersion = ArgumentConfig(
-    names = ['--terraform-version',],
-    metavar='TERRAFORM_VERSION',
-    dest='terraform_version',
+    names = [f'--{TerraformCLI.binary_name.lower()}-cli-version',],
+    metavar=f'{TerraformCLI.binary_name.upper()}_CLI_VERSION',
+    dest=f'{TerraformCLI.binary_name.lower()}_cli_version',
     required=False,
     default=TerraformCLI.max_version.to_string(),
     help=f'''
@@ -208,9 +208,9 @@ TerraformVersion = ArgumentConfig(
 )
 
 JqVersion = ArgumentConfig(
-    names = ['--jq-version',],
-    metavar='JQ_VERSION',
-    dest='jq_version',
+    names = [f'--{JqCLI.binary_name.lower()}-cli-version',],
+    metavar=f'{JqCLI.binary_name.upper()}_CLI_VERSION',
+    dest=f'{JqCLI.binary_name.lower()}_cli_version',
     required=False,
     default=JqCLI.max_version.to_string(),
     help=f'''
@@ -223,7 +223,7 @@ JqVersion = ArgumentConfig(
 AwsVersion = ArgumentConfig(
     names = [f'--{AwsCLI.binary_name.lower()}-cli-version',],
     metavar=f'{AwsCLI.binary_name.upper()}_CLI_VERSION',
-    dest=f'--{AwsCLI.binary_name.lower()}_cli_version',
+    dest=f'{AwsCLI.binary_name.lower()}_cli_version',
     required=False,
     default=AwsCLI.max_version.to_string(),
     help=f'''
