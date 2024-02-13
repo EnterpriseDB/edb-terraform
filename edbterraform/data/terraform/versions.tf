@@ -7,7 +7,7 @@ terraform {
 
     biganimal = {
       source = "registry.terraform.io/EnterpriseDB/biganimal"
-      version = "<= 0.6.1"
+      version = "<= 0.7.1"
     }
     # https://github.com/EnterpriseDB/terraform-provider-toolbox/issues/44
     toolbox = {
