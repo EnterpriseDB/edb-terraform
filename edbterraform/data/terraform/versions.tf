@@ -9,7 +9,7 @@ terraform {
       source = "registry.terraform.io/EnterpriseDB/biganimal"
       version = "<= 0.6.1"
     }
-
+    # https://github.com/EnterpriseDB/terraform-provider-toolbox/issues/44
     toolbox = {
       source = "registry.terraform.io/bryan-bar/toolbox"
       version = "<= 0.2.2"
