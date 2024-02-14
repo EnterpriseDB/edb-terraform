@@ -28,20 +28,18 @@ resource "google_compute_firewall" "rules" {
     }
   }
   direction = lower(each.value.type) == "ingress" ? "INGRESS" : "EGRESS"
-  source_ranges = lower(each.value.type) != "ingress" ? var.public_cidrblocks :
-                    coalesce(each.value.cidrs,
-                              try(port.defaults, "") == "service" ? var.service_cidrblocks :
-                              try(port.defaults, "") == "public" ? var.public_cidrblocks :
-                              try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+  source_ranges = lower(each.value.type) == "ingress" ? concat(each.value.cidrs,
+                              try(each.value.defaults, "") == "service" ? var.service_cidrblocks :
+                              try(each.value.defaults, "") == "public" ? var.public_cidrblocks :
+                              try(each.value.defaults, "") == "internal" ? var.internal_cidrblocks :
                               []
-                            )...
-  destination_ranges = lower(each.value.type) != "egress" ? var.public_cidrblocks :
-                         coalesce(each.value.cidrs,
-                                   try(port.defaults, "") == "service" ? var.service_cidrblocks :
-                                   try(port.defaults, "") == "public" ? var.public_cidrblocks :
-                                   try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+                            ) : local.target_cidrblocks
+  destination_ranges = lower(each.value.type) == "ingress" ? local.target_cidrblocks : concat(each.value.cidrs,
+                                   try(each.value.defaults, "") == "service" ? var.service_cidrblocks :
+                                   try(each.value.defaults, "") == "public" ? var.public_cidrblocks :
+                                   try(each.value.defaults, "") == "internal" ? var.internal_cidrblocks :
                                    []
-                                 )...
+                                 )
 
   lifecycle {
     precondition {
