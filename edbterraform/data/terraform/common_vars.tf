@@ -9,10 +9,10 @@ variable "spec" {
   nullable    = false
 }
 
-variable "public_cidrblock" {
+variable "public_cidrblocks" {
   description = "Public CIDR block"
-  type        = string
-  default     = "0.0.0.0/0"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
 }
 
 variable "service_cidrblocks" {
@@ -52,7 +52,7 @@ data "http" "instance_ip" {
 
 locals {
   # format the ip with the mask to get a valid cidr block
-  # ex: cidrhost("1.2.3.4/32",0) => 1.2.3.4 | cidrhost("1.2.3.4/24",0) => 1.2.3.0 | cidrhost("1.2.3.4/16",0) => 1.2.0.0 | cidrhost("1.2.3.4/32",0) => 1.0.0.0
+  # ex: cidrhost("1.2.3.4/32",0) => 1.2.3.4 | cidrhost("1.2.3.4/24",0) => 1.2.3.0 | cidrhost("1.2.3.4/16",0) => 1.2.0.0 | cidrhost("1.2.3.4/8",0) => 1.0.0.0
   dynamic_ip = var.force_dynamic_ip ? [
     "${cidrhost(
         format("%s/%s",
