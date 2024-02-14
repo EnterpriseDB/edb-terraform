@@ -63,6 +63,10 @@ module "machine_ports" {
   public_cidrblocks = var.public_cidrblocks
   service_cidrblocks = var.service_cidrblocks
   internal_cidrblocks = var.internal_cidrblocks
+  target_cidrblocks = formatlist("%s/32", [
+    google_compute_instance.machine.network_interface.0.access_config.0.nat_ip,
+    google_compute_instance.machine.network_interface.0.network_ip,
+  ])
   region           = var.machine.spec.region
   name_id          = "${var.machine.name}-${var.name_id}"
 }

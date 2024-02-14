@@ -59,7 +59,7 @@ module "security_{{ region_ }}" {
   network_name  = module.vpc_{{ region_ }}.vpc_id
   ports         = try(module.spec.region_ports["{{ region }}"], [])
   public_cidrblocks        = [var.public_cidrblock]
-  service_cidrblocks       = var.service_cidrblocks
+  service_cidrblocks       = local.service_cidrblocks
   internal_cidrblocks      = module.spec.region_cidrblocks
   region        = "{{ region }}"
   name_id       = module.spec.hex_id
