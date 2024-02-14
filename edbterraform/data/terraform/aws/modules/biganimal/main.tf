@@ -73,9 +73,10 @@ resource "toolbox_external" "api" {
       ENDPOINT="api/v3/projects/${var.project.id}/clusters/$(printf %s "$CLUSTER_DATA" | jq -r .data.clusterId)"
       REQUEST_TYPE="GET"
       PHASE="creating"
+      # Wait 30 minutes for cluster to be healthy
       COUNT=0
       COUNT_LIMIT=120
-      SLEEP_TIME=10
+      SLEEP_TIME=15
       while [[ $PHASE != *"healthy"* ]]
       do
         RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "authorization: Bearer $BA_BEARER_TOKEN" --url "$URI$ENDPOINT")
