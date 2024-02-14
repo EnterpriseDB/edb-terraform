@@ -52,7 +52,7 @@ module "security_{{ region_ }}" {
   cluster_name     = module.spec.base.tags.cluster_name
   ports            = try(module.spec.region_ports["{{ region }}"], [])
   public_cidrblocks = [var.public_cidrblock]
-  service_cidrblocks = var.service_cidrblocks
+  service_cidrblocks = local.service_cidrblocks
   internal_cidrblocks = module.spec.region_cidrblocks
   tags             = module.spec.base.tags
 
