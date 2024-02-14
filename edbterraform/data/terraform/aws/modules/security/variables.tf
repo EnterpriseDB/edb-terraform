@@ -14,7 +14,7 @@ variable "internal_cidrblocks" {
 }
 variable "service_cidrblocks" {
   type = list(string)
-  default = ["0.0.0.0/0"]
+  default = []
   nullable = false
 }
 
@@ -24,15 +24,18 @@ locals {
   # Use protocol, port and type to create a key
   # Use group_by to gather cidrs and description as a list
   # Create mapping with new key and collapse protocol, port, description and cidrs
-  ports = [
+  mod_ports = [
     for port in var.ports : merge(port, {
-        cidrs = coalesce(port.cidrs,
+        cidrs = concat(port.cidrs,
           try(port.defaults, "") == "service" ? var.service_cidrblocks :
           try(port.defaults, "") == "public" ? var.public_cidrblocks :
           try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
           []
     )})
   ]
+  # Remove any 'service' rules that define an empty list of cidrblocks since it is meant for temporary use and might be empty
+  ports = [for port in local.mod_ports: port if length(port.cidrs) > 0 || try(port.defaults, "") != "service"]
+
   port_rules_cidr_blocks = {
     for port in local.ports:
       join("_", formatlist("%#v", [port.protocol, port.port, port.to_port, port.type])) 

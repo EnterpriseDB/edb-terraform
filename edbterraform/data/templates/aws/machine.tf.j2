@@ -16,7 +16,7 @@ module "machine_{{ region_ }}" {
   key_name                 = module.key_pair_{{ region_ }}.key_pair_id
   tags                     = each.value.spec.tags
   public_cidrblocks        = [var.public_cidrblock]
-  service_cidrblocks       = var.service_cidrblocks
+  service_cidrblocks       = local.service_cidrblocks
   internal_cidrblocks      = module.spec.region_cidrblocks
 
   depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
