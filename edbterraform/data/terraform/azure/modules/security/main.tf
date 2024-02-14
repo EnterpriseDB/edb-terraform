@@ -19,20 +19,18 @@ resource "azurerm_network_security_rule" "rules" {
     )
   direction                  = lower(each.value.type) == "ingress" ? "Inbound" : "Outbound"
   source_port_range          = "*"
-  source_address_prefixes    = lower(each.value.type) != "ingress" ? var.public_cidrblocks :
-                                 coalesce(each.value.cidrs,
-                                           try(port.defaults, "") == "service" ? var.service_cidrblocks :
-                                           try(port.defaults, "") == "public" ? var.public_cidrblocks :
-                                           try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+  source_address_prefixes    = lower(each.value.type) == "ingress" ? concat(each.value.cidrs,
+                                           try(each.value.defaults, "") == "service" ? var.service_cidrblocks :
+                                           try(each.value.defaults, "") == "public" ? var.public_cidrblocks :
+                                           try(each.value.defaults, "") == "internal" ? var.internal_cidrblocks :
                                            []
-                                         )...
-  destination_address_prefixes = lower(each.value.type) != "egress" ? var.public_cidrblocks :
-                                   coalesce(each.value.cidrs,
-                                             try(port.defaults, "") == "service" ? var.service_cidrblocks :
-                                             try(port.defaults, "") == "public" ? var.public_cidrblocks :
-                                             try(port.defaults, "") == "internal" ? var.internal_cidrblocks :
+                                         ) : local.target_cidrblocks
+  destination_address_prefixes = lower(each.value.type) == "ingress" ? local.target_cidrblocks : concat(each.value.cidrs,
+                                             try(each.value.defaults, "") == "service" ? var.service_cidrblocks :
+                                             try(each.value.defaults, "") == "public" ? var.public_cidrblocks :
+                                             try(each.value.defaults, "") == "internal" ? var.internal_cidrblocks :
                                              []
-                                           )...
+                                            )
   access                     = lower(each.value.access) == "deny" ? "Deny" : "Allow"
   priority                   = tonumber(each.key)
 

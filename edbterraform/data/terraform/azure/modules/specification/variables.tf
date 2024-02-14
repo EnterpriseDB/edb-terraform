@@ -40,10 +40,6 @@ variable "spec" {
         zone = optional(string)
         cidr = optional(string)
       })), {})
-      # TODO: Collapse service and regions ports into one
-      # 0.0.0.0/0 defaults can be blocked by IT.
-      # Instead, use region_ports as the default and if user wants access,
-      # they will need to specify the allowed ranges: home ip, elastic IPs, VPN/Proxy IPs
       ports = optional(list(object({
         defaults    = optional(string, "service")
         port        = optional(number)
@@ -52,7 +48,7 @@ variable "spec" {
         description = optional(string, "default")
         type = optional(string, "ingress")
         access      = optional(string, "allow")
-        cidrs = optional(list(string))
+        cidrs = optional(list(string), [])
       })), [])
     }))
     machines = optional(map(object({
@@ -71,7 +67,7 @@ variable "spec" {
         description = optional(string, "default")
         type        = optional(string, "ingress")
         access      = optional(string, "allow")
-        cidrs       = optional(list(string))
+        cidrs       = optional(list(string), [])
         })), []
       )
       volume = object({

@@ -99,6 +99,10 @@ module "machine_ports" {
   public_cidrblocks = var.public_cidrblocks
   service_cidrblocks = var.service_cidrblocks
   internal_cidrblocks = var.internal_cidrblocks
+  target_cidrblocks = formatlist("%s/32",[
+    azurerm_linux_virtual_machine.main.public_ip_address,
+    azurerm_linux_virtual_machine.main.private_ip_address,
+  ])
   tags             = var.tags
 }
 
