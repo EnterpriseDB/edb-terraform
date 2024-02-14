@@ -34,7 +34,7 @@ module "routes_{{ region_ }}" {
 
   subnet_count       = length([for a, s in lookup(module.spec.region_zone_networks, "{{ region }}", {}) : a])
   vpc_id             = module.vpc_{{ region_ }}.vpc_id
-  public_cidrblock   = var.public_cidrblock
+  public_cidrblock   = "0.0.0.0/0" # Allow all routing
   cluster_name       = module.spec.base.tags.cluster_name
   tags               = module.spec.base.tags
 
@@ -51,7 +51,7 @@ module "security_{{ region_ }}" {
   vpc_id           = module.vpc_{{ region_ }}.vpc_id
   cluster_name     = module.spec.base.tags.cluster_name
   ports            = try(module.spec.region_ports["{{ region }}"], [])
-  public_cidrblocks = [var.public_cidrblock]
+  public_cidrblocks = var.public_cidrblocks
   service_cidrblocks = local.service_cidrblocks
   internal_cidrblocks = module.spec.region_cidrblocks
   tags             = module.spec.base.tags
