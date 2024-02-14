@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SSH_CONNECTION="$1"
-SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=240"
 CMD="sudo lsblk -o NAME,KNAME,SIZE,TYPE,MOUNTPOINT,FSTYPE,SERIAL,MODEL,VENDOR,REV,LABEL,UUID,PARTTYPE,PARTLABEL,PARTUUID,SCHED --json 2>&1"
 
 RESULT=$(ssh $SSH_OPTIONS $SSH_CONNECTION $CMD)

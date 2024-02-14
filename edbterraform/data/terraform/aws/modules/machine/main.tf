@@ -193,6 +193,10 @@ locals {
   }
 }
 
+locals {
+  ssh_timeout = 240
+}
+
 resource "toolbox_external" "setup_volumes" {
   count = local.additional_volumes_count
   query = {
@@ -204,7 +208,7 @@ resource "toolbox_external" "setup_volumes" {
     "-c",
     <<-EOT
     CONNECTION="${var.operating_system.ssh_user}@${aws_instance.machine.public_ip}"
-    SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=${local.ssh_timeout}"
     SFTP_OPTIONS="-P ${var.machine.spec.ssh_port} -i ${var.machine.spec.operating_system.ssh_private_key_file} $SSH_OPTIONS"
 
     # Copy script to /tmp directory
