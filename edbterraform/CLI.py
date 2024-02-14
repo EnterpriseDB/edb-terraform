@@ -149,19 +149,26 @@ class TerraformCLI:
             if not (cwd / 'terraform.tfstate').exists():
                 raise IOError('terraform.tfstate not found.')
 
-            if (cwd / 'terraform.tfstate').stat().st_size == 0:
-                logger.info('terraform.tfstate is empty, no destruction needed')
-                return True
-
             terraform_path = self.get_compatible_terraform()
             command = [terraform_path, 'state', 'list',]
-            output = execute_shell(
-                    args=command,
-                    environment=os.environ.copy(),
-                    cwd=cwd,
+            fmt_args = ' '.join([str(x) for x in command])
+            logger.info("Executing command: %s", fmt_args)
+            process = subprocess.run(
+                fmt_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,
+                cwd=cwd,
+                env=os.environ.copy(),
             )
 
-            if len(output.decode("utf-8").split('\n'))-1 == 0:
+            if "No state file was found!" in process.stderr.decode("utf-8") \
+                    or "Backend initialization required" in process.stderr.decode("utf-8") \
+                and (cwd / 'terraform.tfstate').stat().st_size == 0:
+                logger.info('Backend not initialized, no resource destruction needed')
+                return True
+
+            if len(process.stdout.decode("utf-8").split('\n'))-1 == 0 and process.returncode == 0:
                 logger.info('state list return 0 results, no destruction needed')
                 return True
 
