@@ -21,16 +21,21 @@ aws:
         main:
           zone: us-west-2a
           cidr: 10.2.30.0/24
-      service_ports:
+      ports:
         - port: 22
+          defaults: 'service'
           protocol: tcp
           description: "SSH"
           type: ingress
           cidrs:
             - 0.0.0.0/0
-      region_ports:
+        - port: 443
+          defaults: 'public'
+          protocol: tcp
+          description: "HTTPS"
         - port: 22
           to_port: 65
+          defaults: 'internal'
           protocol: tcp
           description: "ranges"
   machines:

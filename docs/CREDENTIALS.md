@@ -9,8 +9,11 @@
 
 ## AWS
 #### CLI Installation
+PIPY's v2 release is `NOT` maintained by AWS
+Instead, install it directly from git or through your package manager.
+If v1 is installled it will have the same executable name as v2.
 ```console
-$ sudo pip3 install awscli
+$ sudo pip3 install https://github.com/aws/aws-cli/archive/refs/heads/v2.zip
 ```
 
 #### CLI Credentials

@@ -38,7 +38,7 @@ edb-terraform generate \
   --infra-file edb-terraform/docs/examples/aws/edb-ra-3.yml
 cd example
 terraform init
-terraform apply
+terraform apply -var "force_dynamic_ip=true"
 terraform destroy
 ```
 
@@ -219,3 +219,98 @@ edb-terraform setup
 ├── terraform.tfvars.json # Automatically detected Terraform variables. Original values under `edb-terraform/terraform.tfvars.yml`
 └── common_vars.tf # Terraform placeholder variables used by all providers
 ```
+
+## Configurations
+Each provider has a:
+- set of example configurations available under the docs directory.
+- spec object within `variables.tf` of its specification module.
+
+AWS
+- [spec](./edbterraform/data/terraform/aws/modules/specification/variables.tf)
+- [examples](./docs/examples/aws/machines-v2.yml)
+
+Azure
+- [spec](./edbterraform/data/terraform/azure/modules/specification/variables.tf)
+- [examples](./docs/examples/azure/machines-v2.yml)
+
+GCloud
+- [spec](./edbterraform/data/terraform/gcloud/modules/specification/variables.tf)
+- [examples](./docs/examples/gcloud/machines-v2.yml)
+
+### Networking
+To open up ports,
+they must be defined per region or per instance under the keyname `ports`.
+
+> :warning:  
+> SSH is currently required when configuring `machines` so that volumes can be formatted and mounted.  
+> In the near future, we will attempt to move to provider-specific connection agents to:  
+> - remove ssh requirement for machines  
+> - avoid blocked connections due to improperly configured port rules or account policy restricitions.
+
+Example:
+```yaml
+      # If defined under a region configuration, it will apply the rules to that region's address space.
+      # If defined under a machine configuration, it will apply the rules to that instance's address space.
+      ports:
+        # Allow ssh access without cidrs defined since the service IPs are unknown.
+        # This will require the use of cli arguments, service_cidrblocks or force_dynamic_ip, to setup the allow list.
+        - port: 22
+          protocol: tcp
+          description: "SSH"
+          defaults: service
+        # Allow instances, including cross-region, to ping.
+        # Allow 9.8.7.6 to ping.
+        - protocol: icmp
+          description: ping
+          defaults: internal
+          cidrs:
+            - 9.8.7.6/32
+        # Allow https connections from anywhere
+        - port: 443
+          protocol: tcp
+          description: Web service
+          defaults: public
+        # Allow 1.2.3.4 to connect to the postgres service
+        - protocol: 5432
+          protocol: tcp
+          description: Postgres service
+          cidrs:
+            - 1.2.3.4/32
+```
+
+The keyname `defaults` can be set to reference a set of cidrblocks.
+It will append a set of predefined cidrblocks to the rule's `cidrs` list:
+- [`public`](./edbterraform/data/terraform/common_vars.tf) - Public cidrblocks
+- [`service`](./edbterraform/data/terraform/common_vars.tf) - Service cidrblocks and dynamic ip, if configured
+- `internal` - All Region cidrblocks defined within the configuration: `regions.*.cidr_block`
+- `""` - No Defaults (Default)
+
+When defining `service` ports,
+users can use 2 variables to dynamically update the allowed ips on top of adding values under the `cidrs` key.
+This is meant for single time use and in most cases you should set the expected cidr ranges.
+- `service_cidrblocks` - a list of cidrblocks for service access.
+- `force_dynamic_ip` - use an http endpoint to get the current public ip and appended to service_cidrblocks.
+
+> :warning:  
+> Policy rules might block generic rules such as `0.0.0.0/0`,  
+>   which is often used by users with changing ips.  
+> This can cause unexpected ssh errors since resources are available before policies are applied.  
+> If possible, make use of a jump host to have a set of persistent ips.  
+> Otherwise, make use of the `force_dynamic_ip` or `service_cidrblocks` options to dynamically set service ips.
+
+> :warning:  
+> Only AWS supports security groups, which allows for more flexibility with port configurations.  
+> We mimic the functionality of security groups for Azure and GCloud to allow ports to be defined per instance.  
+
+### Environment variables
+Terraform allows for top-level variables to be defined with cli arguments or environment variables.
+
+For any variable you can define:
+- Environment variables for all stages: `TF_VAR_ARGS=<CLI ARGS>`
+- Environment variables for a targetted stage: `TF_VAR_ARGS_<stage>=<CLI ARGS>`
+- Environment variables for root variables: `TF_VAR_<variable>=<ARGS>`
+- CLI Arguments for root variables: `-var <variable>=<ARGS>`
+
+Example variable:
+- `TF_VAR_force_dynamic_ip=true` is the same as `-var force_dynamic_ip=true`
+- `TF_VAR_service_cidrblocks='["0.0.0.0/0"]'`
