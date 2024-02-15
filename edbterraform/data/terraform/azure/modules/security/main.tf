@@ -39,5 +39,10 @@ resource "azurerm_network_security_rule" "rules" {
       condition     = each.value.type == "ingress" || each.value.type == "egress"
       error_message = "${each.key} has type ${each.value.type}. Must be ingress or egress."
     }
+
+    precondition {
+      error_message = "port defaults must be one of: service, public, internal or an empty string ('')"
+      condition = contains(["service", "internal", "public", ""], try(each.value.defaults, ""))
+    }
   }
 }

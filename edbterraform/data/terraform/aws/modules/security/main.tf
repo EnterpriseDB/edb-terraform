@@ -28,6 +28,11 @@ resource "aws_security_group_rule" "rule" {
     }
 
     precondition {
+      error_message = "port defaults must be one of: service, public, internal or an empty string ('')"
+      condition = contains(["service", "internal", "public", ""], try(each.value.defaults, ""))
+    }
+
+    precondition {
       condition     = each.value.cidrs != null && length(each.value.cidrs) > 0
       error_message = <<-EOT
         Cidr blocks cannot be an empty list.

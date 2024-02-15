@@ -41,7 +41,7 @@ variable "spec" {
         cidr = optional(string)
       })), {})
       ports = optional(list(object({
-        defaults    = optional(string, "service")
+        defaults    = optional(string, "")
         port        = optional(number)
         to_port     = optional(number)
         protocol    = string
@@ -60,7 +60,7 @@ variable "spec" {
       instance_type = string
       ssh_port      = optional(number, 22)
       ports         = optional(list(object({
-        defaults    = optional(string, "internal")
+        defaults    = optional(string, "")
         port        = optional(number)
         to_port     = optional(number)
         protocol    = string
