@@ -81,10 +81,22 @@ def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provi
                     for region in infra_vars['spec']['regions']:
                         if provider_name not in data[block]:
                             data[block][provider_name] = list()
-                        data[block][provider_name].append({
-                            'region': region,
-                            'alias': region.replace('-','_'),
-                        })
+                            # Azure requires a generic features block otherwise it fails with '"features" block is required'
+                            if cloud_service_provider == 'azure':
+                                data[block][provider_name].append({'features': {'resource_group': {'prevent_deletion_if_contains_resources': False}}})
+
+                        items = {'alias': region.replace('-','_')}
+
+                        # Allow force destruction of resources in the resource group
+                        if cloud_service_provider == 'azure':
+                                items['features'] = {'resource_group': {'prevent_deletion_if_contains_resources': False}}
+
+                        # Azure and Gcloud don't require a region to be set in the provider block,
+                        #   but assume region restrictions due to AWS
+                        if cloud_service_provider != 'azure':
+                            items['region'] = region
+                        data[block][provider_name].append(items)
+
 
                 # https://developer.hashicorp.com/terraform/language/v1.3.x/settings/backends/configuration
                 # Update the terraform backend block with the remote state type.
