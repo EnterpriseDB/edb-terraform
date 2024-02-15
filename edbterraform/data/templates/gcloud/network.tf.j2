@@ -61,6 +61,7 @@ module "security_{{ region_ }}" {
   public_cidrblocks        = var.public_cidrblocks
   service_cidrblocks       = local.service_cidrblocks
   internal_cidrblocks      = module.spec.region_cidrblocks
+  target_cidrblocks        = [module.spec.base.regions["{{ region }}"].cidr_block]
   region        = "{{ region }}"
   name_id       = module.spec.hex_id
 
