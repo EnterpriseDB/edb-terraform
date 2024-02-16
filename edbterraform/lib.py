@@ -127,37 +127,6 @@ def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provi
     except Exception as e:
         raise Exception('ERROR: could not update terraform blocks in %s - (%s)' % (file, repr(e)))
 
-def save_default_templates(templates_directory):
-    '''
-    Save any predefined templates into the 'directory/templates' for consistent referencing
-    If the filename already exists, it should be skipped to avoid overriding user customizations.
-    '''
-    # Templates are located in parent_directory/data/templates/user
-    script_dir = Path(__file__).parent.resolve()
-    predefined_templates = script_dir / 'data' / 'templates' / 'user'
-    templates_directory = Path(templates_directory)
-    logger.info(f'Copy templates from {predefined_templates} into {templates_directory}')
-    try:
-        if not templates_directory.exists():
-            logger.info(f'Creating predefined template directory: {templates_directory}')
-            templates_directory.mkdir(parents=True, exist_ok=True)
-
-        for template in predefined_templates.iterdir():
-            if not template.is_file():
-                logger.warning(f'Skipping {template} as it is not a file')
-                continue
-
-            if not (templates_directory / template.name).exists():
-                shutil.copy2(str(template), str(templates_directory))
-            else:
-                logger.info(f'''
-                Skipping: {template} already exists in {templates_directory}.
-                To copy the latest pre-defined templates, erase any conflicting template file names.
-                ''')
-    except Exception as e:
-        logger.error("ERROR: cannot create template directory %s (%s)" % (templates_directory, e))
-        sys.exit(1)
-
 def create_project_dir(
         project_directory,
         cloud_service_provider,
@@ -419,9 +388,6 @@ def generate_terraform(
 
     # Get final instrastructure variables after rendering it if it is a jinja2 template
     infra_vars = load_yaml_file(render_template(template_file=infra_file, values=infra_template_variables))
-
-    # Save default templates into dot directory
-    save_default_templates(f'{__dot_project__}/templates')
 
     # Duplicate terraform code into target project directory
     create_project_dir(project_path, csp, infra_file, infra_template_variables, infra_vars, hcl_lock_file)
