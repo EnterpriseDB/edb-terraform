@@ -2,12 +2,10 @@ import sys
 import os
 import argparse
 from pathlib import Path
-import textwrap
 from dataclasses import dataclass, field
 from collections import OrderedDict
 from typing import List
 from datetime import datetime
-from functools import partial
 import json
 
 from edbterraform.lib import generate_terraform
@@ -41,9 +39,8 @@ class ArgumentConfig:
 
     def __post_init__(self) -> None:
         # Allow overriding of variables with environment variables
-        self.default = os.getenv(self.default_env_var(), self.default)
         self.help += f'''
-        | Default Environment variable: {self.default_env_var()}
+        | Environment variable: {self.default_env_var()}
         '''
 
         tempdict = self.__dict__.items()
@@ -288,7 +285,7 @@ Validation = ArgumentConfig(
     required=False,
     default=False,
     help=f'''
-        Requires terraform {TerraformCLI.min_version} <= x <= {TerraformCLI.max_version}
+        Requires terraform {TerraformCLI.min_version.to_string()} <= x <= {TerraformCLI.max_version.to_string()}
         Validates the generated files by running:
         `terraform apply -target=null_resource.validation`
         If invalid, error will be displayed and project directory destroyed
@@ -302,8 +299,8 @@ Apply = ArgumentConfig(
     action='store_true',
     required=False,
     default=False,
-    help='''
-        Requires terraform {TerraformCLI.min_version} <= x <= {TerraformCLI.max_version}
+    help=f'''
+        Requires terraform {TerraformCLI.min_version.to_string()} <= x <= {TerraformCLI.max_version.to_string()}
         `terraform apply`
         If invalid, error will be displayed and project directory destroyed
         Default: %(default)s
@@ -316,8 +313,8 @@ Destroy = ArgumentConfig(
     action='store_true',
     required=False,
     default=False,
-    help='''
-        Requires terraform {TerraformCLI.min_version} <= x <= {TerraformCLI.max_version}
+    help=f'''
+        Requires terraform {TerraformCLI.min_version.to_string()} <= x <= {TerraformCLI.max_version.to_string()}
         Attempt to remove an existing project before creating a new one.
         If invalid, error will be displayed and project directory destroyed
         Default: %(default)s
@@ -434,6 +431,21 @@ class Arguments:
                     *(config.get_names()),
                     **(config.get_args())
                 )
+                # Argparse does not handle environment variables
+                # Add environment variables as cli arguments if it is not already set.
+                # argparse.defaults can be used to set defaults with environment variables, 
+                #   but it will fail if is required and not set as a cli argument.
+                if name == self.command \
+                    and os.getenv(config.default_env_var()) \
+                    and not any([name in args for name in config.get_names()]):
+                    env_value = os.getenv(config.default_env_var())
+                    # If it is a 'store' action, we need to check if the value is not false and only add the argument without the value.
+                    if (config.action == 'store_true' or config.action == 'store_false'):
+                        if env_value.lower() not in ['false', '0', 'no', 'none', 'null', '']:
+                            args += [config.get_names()[0]]
+                    else:
+                        args += [config.get_names()[0], os.getenv(config.default_env_var())]
+
             subparser.usage = arg_configs[0]+self.VERSION_MESSAGE+subparser.format_usage()
 
         self.env = self.parser.parse_args()
@@ -495,6 +507,7 @@ class Arguments:
         return self.env.__dict__.copy()
 
     def process_args(self):
+        outputs = {}
         if self.command == 'version':
             outputs = __version__
             print(outputs)
