@@ -1,5 +1,4 @@
 cryptography
-dataclasses~=0.8;python_version~="3.6.0"
 PyYaml >= 6.0.1, < 7.0.0
 jinja2 >= 3.0.0, < 4.0.0
 python-hcl2~=4.3.0
