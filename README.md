@@ -9,9 +9,9 @@ A tool for generating Terraform projects using pre-defined templates and modules
 
 The following components must be installed on the system:
 - [Terraform >= 1.3.6, <= 1.5.5](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli#install-terraform)
-- Python >= 3.6
+- Python >= 3.8
 - Bash
-- [JQ](https://jqlang.github.io/jq/download/)
+- [JQ >= 1.6](https://jqlang.github.io/jq/download/)
 - Cloud provider cli tool with credentials configured
   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
   - [GCloud CLI](https://cloud.google.com/sdk/docs/install-sdk)

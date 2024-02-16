@@ -55,7 +55,7 @@ setup(
         "Topic :: Database",
     ],
     keywords="terraform cloud yaml edb cli aws rds aurora azure aks gcloud gke kubernetes k8s",
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=get_requirements(),
     extras_require={},
     data_files=[],
