@@ -66,7 +66,8 @@ setup(
             'data/terraform/*.tf.json',
             'data/terraform/*/modules/*/*',
             'data/templates/*/*',
-            'utils/*'
+            'utils/*',
+            'parser/*',
         ]
     }
 )

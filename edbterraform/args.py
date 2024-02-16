@@ -12,6 +12,7 @@ from edbterraform.lib import generate_terraform
 from edbterraform.CLI import TerraformCLI, JqCLI, AwsCLI, AzureCLI, GoogleCLI, BigAnimalCLI
 from edbterraform import __project_name__, __dot_project__, __version__
 from edbterraform.utils import logs, files
+from edbterraform.parser import hcl2
 
 ENVIRONMENT_PREFIX = 'ET_' # Appended to allow overrides of defaults
 
@@ -107,6 +108,15 @@ WorkPath = ArgumentConfig(
     default=Path.cwd(),
     required=False,
     help="Project path. Default: %(default)s",
+)
+
+ProjectPath = ArgumentConfig(
+    names = ['--project-path',],
+    metavar='PROJECT_PATH',
+    dest='project_path',
+    type=Path,
+    required=True,
+    help="Path to a terraform project",
 )
 
 UserTemplatesPath = ArgumentConfig(
@@ -413,6 +423,13 @@ class Arguments:
             BigAnimalVersion,
         ]],
         'version': ['Print the version of edb-terraform\n', []],
+        'help': ['(experimental) Print variable information about a given terraform project\n', [
+            LogLevel,
+            LogFile,
+            LogDirectory,
+            LogStdout,
+            ProjectPath,
+        ]],
     })
     DEFAULT_COMMAND = next(iter(COMMANDS))
     VERSION_MESSAGE=f'Version: {__version__}\n'
@@ -528,6 +545,11 @@ class Arguments:
                 run_validation=self.get_env('run_validation'),
                 terraform_version=self.get_env('terraform_version'),
             )
+
+        if self.command == 'help':
+            results = hcl2.load_variables(self.get_env('project_path'))
+            outputs = results
+            print(hcl2.variable_help_message(results))
 
         if self.command == 'generate':
             outputs = generate_terraform(
