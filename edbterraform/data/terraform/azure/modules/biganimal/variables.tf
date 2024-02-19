@@ -76,6 +76,31 @@ variable "allowed_ip_ranges" {
   default = []
 }
 
+variable "service_cidrblocks" {
+  description = "Default cidr blocks for service ports"
+  type = list(string)
+  nullable = false
+  default = []
+}
+
+locals {
+  # If cidrblocks are not set, biganimal opens service to all ips.
+  # Block traffic if it is an empty list to avoid accidental exposure of the database
+  mod_ip_ranges = length(var.allowed_ip_ranges) >= 1 ? var.allowed_ip_ranges : [{
+    cidr_block = "127.0.0.1/32"
+    description = "private default"
+  }]
+  service_cidrblocks = [
+    for cidr in var.service_cidrblocks : {
+      cidr_block = cidr
+      description = "Service CIDR"
+    }
+  ]
+  # Private networking blocks setting of allowed_ip_ranges and forces private endpoints or vpc peering to be used.
+  # The provider overrides with 0.0.0.0/0 but fails to create if allowed_ip_ranges is not an empty list.
+  allowed_ip_ranges = var.publicly_accessible ? concat(local.mod_ip_ranges, local.service_cidrblocks) : []
+}
+
 variable "tags" {
   type = map(any)
   default = {}
@@ -107,7 +132,7 @@ locals {
     clusterName = local.cluster_name
     instanceType = { instanceTypeId = local.instance_type }
     allowedIpRanges = [
-      for key, value in var.allowed_ip_ranges :
+      for key, value in local.allowed_ip_ranges :
         {
           cidrBlock = value.cidr_block
           description = value.description
