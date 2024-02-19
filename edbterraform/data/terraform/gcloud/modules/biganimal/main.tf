@@ -24,7 +24,7 @@ resource "biganimal_cluster" "instance" {
 
     # optional
     dynamic "allowed_ip_ranges" {
-        for_each = { for key,values in var.allowed_ip_ranges: key=>values }
+        for_each = local.allowed_ip_ranges
         content {
             cidr_block = allowed_ip_ranges.value.cidr_block
             description = allowed_ip_ranges.value.description

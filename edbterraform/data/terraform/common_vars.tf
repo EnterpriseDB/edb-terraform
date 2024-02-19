@@ -27,6 +27,12 @@ variable "force_dynamic_ip" {
   default = false
 }
 
+variable "force_service_biganimal" {
+  description = "Force the use of service_cidrblocks in biganimals allowed_ip_ranges"
+  type = bool
+  default = false
+}
+
 variable "dynamic_service_ip_mask" {
   type = number
   default = 32
@@ -62,4 +68,5 @@ locals {
     }/${var.dynamic_service_ip_mask}"
   ] : []
   service_cidrblocks = concat(var.service_cidrblocks, local.dynamic_ip)
+  biganimal_service_cidrblocks = var.force_service_biganimal ? local.service_cidrblocks : []
 }
