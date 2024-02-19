@@ -12,6 +12,7 @@ resource "biganimal_cluster" "instance" {
     password = var.password
     pg_type = var.engine
     pg_version = var.engine_version
+    pgvector = var.pgvector
     project_id = var.project.id
     region = var.region
     storage {

@@ -142,6 +142,7 @@ variable "spec" {
         throughput = optional(number)
       }))
       password       = string
+      pgvector       = optional(bool)
       settings = optional(list(object({
         name  = string
         value = string

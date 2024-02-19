@@ -4,6 +4,12 @@ variable "project" {
   })
 }
 
+variable "pgvector" {
+  type = bool
+  default = false
+  nullable = false
+}
+
 variable "name" {}
 variable "name_id" {}
 variable "cloud_account" {
