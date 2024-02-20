@@ -138,6 +138,7 @@ variable "spec" {
         cidr_block = string
         description = optional(string, "default description")
       })))
+      allowed_machines = optional(list(string))
       tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({

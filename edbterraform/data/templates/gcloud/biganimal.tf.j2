@@ -23,7 +23,9 @@ module "biganimal_{{ region_ }}" {
   password                  = each.value.spec.password
   pgvector                  = each.value.spec.pgvector
   allowed_ip_ranges         = each.value.spec.allowed_ip_ranges
+  allowed_machines          = each.value.spec.allowed_machines
   service_cidrblocks        = local.biganimal_service_cidrblocks
+  machine_cidrblocks        = local.machine_cidrblocks
 
   settings                  = each.value.spec.settings
 
