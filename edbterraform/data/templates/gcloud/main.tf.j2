@@ -57,15 +57,21 @@
 locals {
   # Module names set with jinja2 in edb-terraform
   # Modules cannot be referenced dynamically.
-  modules = {
 {% for type, attributes in boxes.items() %}
-    {{ type }} = flatten([
+  {{ type }} = flatten([
 {%   for region in attributes["regions"] -%}
 {%   set module = attributes["module_base"] ~ region | replace('-', '_') %}
-      {{ module }},
+    {{ module }},
 {%   endfor %}
-    ])
+  ])
 {% endfor %}
+
+  modules = {
+    machines = local.machines
+    databases = local.databases
+    alloy = local.alloy
+    biganimal = local.biganimal
+    kubernetes = local.kubernetes
   }
 }
 
