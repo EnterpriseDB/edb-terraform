@@ -73,6 +73,12 @@ locals {
     biganimal = local.biganimal
     kubernetes = local.kubernetes
   }
+
+  # Collect all machine ips for re-use
+  machine_cidrblocks = {
+    for machine, values in coalesce(one(local.machines), {}):
+      machine => formatlist("%s/32", [values.public_ip, values.private_ip])
+  }
 }
 
 output "modules" {
