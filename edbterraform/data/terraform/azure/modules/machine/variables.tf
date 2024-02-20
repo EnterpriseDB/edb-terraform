@@ -32,11 +32,27 @@ variable "machine" {
 variable "public_cidrblocks" {}
 variable "service_cidrblocks" {}
 variable "internal_cidrblocks" {}
+variable "force_ssh_access" {
+  description = "Force append a service rule for ssh access"
+  default = false
+  type = bool
+  nullable = false
+}
 variable "ports" {
   type = list
   default = []
   nullable = false
 }
+locals {
+  # Allow machine default outbound access if no egress is defined
+  ssh_defined = anytrue([for port in ports: port.port == var.machine.ssh_port])
+  machine_ports = concat(ports, (!var.force_ssh_access || local.ssh_defined ? [] : [
+        {"type":"ingress", "defaults":"service", "cidrs": [], "protocol": "tcp", "port": var.machine.ssh_port, "to_port": var.machine.ssh_port, "description": "Force SSH Access"},
+        {"type":"egress", "defaults":"service", "cidrs": [], "protocol": "tcp", "port": var.machine.ssh_port, "to_port": var.machine.ssh_port, "description": "Force SSH Access"},
+      ])
+    )
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

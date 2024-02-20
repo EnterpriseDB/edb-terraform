@@ -2,6 +2,20 @@ variable "machine" {}
 variable "public_cidrblocks" {}
 variable "service_cidrblocks" {}
 variable "internal_cidrblocks" {}
+variable "force_ssh_access" {
+  description = "Force append a service rule for ssh access"
+  default = false
+  type = bool
+  nullable = false
+}
+locals {
+  ssh_defined = anytrue([for port in var.machine.spec.ports: port.port == var.machine.spec.ssh_port])
+  machine_ports = concat(var.machine.spec.ports, (!var.force_ssh_access || local.ssh_defined ? [] : [
+        {"type":"ingress", "defaults":"service", "cidrs": [], "protocol": "tcp", "port": var.machine.spec.ssh_port, "to_port": var.machine.spec.ssh_port, "description": "Force SSH Access"},
+        {"type":"egress", "defaults":"service", "cidrs": [], "protocol": "tcp", "port": var.machine.spec.ssh_port, "to_port": var.machine.spec.ssh_port, "description": "Force SSH Access"},
+      ])
+    )
+}
 variable "zone" {}
 variable "ssh_priv_key" {}
 variable "ssh_pub_key" {}

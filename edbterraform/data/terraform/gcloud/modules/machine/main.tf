@@ -59,7 +59,7 @@ module "machine_ports" {
   source = "../security"
 
   network_name     = var.network_name
-  ports            = var.machine.spec.ports
+  ports            = local.machine_ports
   public_cidrblocks = var.public_cidrblocks
   service_cidrblocks = var.service_cidrblocks
   internal_cidrblocks = var.internal_cidrblocks
