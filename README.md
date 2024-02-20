@@ -38,6 +38,7 @@ edb-terraform generate \
   --infra-file edb-terraform/docs/examples/aws/edb-ra-3.yml
 cd example
 terraform init
+edb-terraform help --project-path .
 terraform apply -var "force_dynamic_ip=true"
 terraform destroy
 ```
@@ -232,6 +233,15 @@ This is meant for single time use and in most cases you should set the pre-defin
 > Only AWS supports security groups, which allows for more flexibility with port configurations.  
 > We mimic the functionality of security groups for Azure and GCloud to allow ports to be defined per instance.  
 
+#### BigAnimal
+BigAnimal controls a single VPC per project for its cluster.
+Pairing can be done by setting the allow list for the provider or using vpc-peering/provider-private-connections.
+- VPC peering can fail if not careful since you must not overlap the address space of each VPC.
+- By default, it will allow connections from all machine instances created.
+  - `allowed_machines` is a configuration option which accepts a list of machine names which are allowed to access the database.
+    - Default is a wildcard to append all machine ips: `["*"]`
+  - To change the allow list after provisioning, the file `terraform.tfvars.json` can be directly modified and use `terraform apply` again.
+
 ### Environment variables
 Terraform allows for top-level variables to be defined with cli arguments or environment variables.
 
@@ -240,10 +250,13 @@ For any variable you can define:
 - Environment variables for a targetted stage: `TF_VAR_ARGS_<stage>=<CLI ARGS>`
 - Environment variables for root variables: `TF_VAR_<variable>=<ARGS>`
 - CLI Arguments for root variables: `-var <variable>=<ARGS>`
+Terraform will surface an error if an invalid variable is set with `-var` but will continue if it is set with environment variables for root variables.
 
 Example variable:
 - `TF_VAR_force_dynamic_ip=true` is the same as `-var force_dynamic_ip=true`
 - `TF_VAR_service_cidrblocks='["0.0.0.0/0"]'`
+- `-var "force_service_biganimal=true"`
+- `-var "force_service_machines=true"`
 
 ### :open_file_folder: Project directory layout
 ```
