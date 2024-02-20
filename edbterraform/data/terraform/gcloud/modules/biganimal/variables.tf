@@ -76,6 +76,18 @@ variable "allowed_ip_ranges" {
   default = []
 }
 
+variable "allowed_machines" {
+  type = list(string)
+  nullable = false
+  default = ["*"]
+}
+
+variable "machine_cidrblocks" {
+  type = map(list(string))
+  default = {}
+  nullable = false
+}
+
 variable "service_cidrblocks" {
   description = "Default cidr blocks for service ports"
   type = list(string)
@@ -96,9 +108,19 @@ locals {
       description = "Service CIDR"
     }
   ]
+  machine_cidrblock_wildcard = anytrue([for machine in var.allowed_machines : machine == "*"])
+  machine_names = local.machine_cidrblock_wildcard ? [for machine in keys(var.machine_cidrblocks) : machine] : var.allowed_machines
+  machine_cidrblocks = flatten([
+    for machine_name in local.machine_names : flatten([
+      for cidr in var.machine_cidrblocks[machine_name] : {
+          cidr_block = cidr
+          description = "Machine CIDR - ${machine_name}"
+        }
+    ])
+  ])
   # Private networking blocks setting of allowed_ip_ranges and forces private endpoints or vpc peering to be used.
   # The provider overrides with 0.0.0.0/0 but fails to create if allowed_ip_ranges is not an empty list.
-  allowed_ip_ranges = var.publicly_accessible ? concat(local.mod_ip_ranges, local.service_cidrblocks) : []
+  allowed_ip_ranges = var.publicly_accessible ? concat(local.mod_ip_ranges, local.service_cidrblocks, local.machine_cidrblocks) : []
 }
 
 variable "tags" {
