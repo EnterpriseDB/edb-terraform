@@ -95,7 +95,7 @@ module "machine_ports" {
   name_id          = "${var.name}-${var.name_id}"
   region           = var.machine.region
   resource_name    = var.resource_name
-  ports            = var.ports
+  ports            = local.machine_ports
   public_cidrblocks = var.public_cidrblocks
   service_cidrblocks = var.service_cidrblocks
   internal_cidrblocks = var.internal_cidrblocks

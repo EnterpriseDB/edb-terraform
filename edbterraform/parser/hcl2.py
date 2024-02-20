@@ -12,6 +12,7 @@ TERRAFORM_PYTHON_TYPES = {
     "${map(string)}": dict[str, str],
 }
 
+# TODO: Fix breaking changes or use a different library such as https://github.com/hashicorp/terraform-config-inspect
 def load_hcl2(project_path: Union[str, Path] = None, load_tf = True, load_tf_vars = False, load_json = False,):
     try:
         results = {}

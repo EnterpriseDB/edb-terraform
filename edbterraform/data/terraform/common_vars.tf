@@ -27,6 +27,12 @@ variable "force_dynamic_ip" {
   default = false
 }
 
+variable "force_service_machines" {
+  description = "Force the use of service_cidrblocks and set up an ssh rule for the machines"
+  type = bool
+  default = false
+}
+
 variable "force_service_biganimal" {
   description = "Force the use of service_cidrblocks in biganimals allowed_ip_ranges"
   type = bool
