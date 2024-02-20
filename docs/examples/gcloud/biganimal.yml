@@ -39,5 +39,7 @@ gcloud:
         - cidr_block: 10.2.0.0/24
         - cidr_block: 127.0.0.1/32
           description: localhost
+      allowed_machines:
+        - "*"
       tags:
         foo: bar
