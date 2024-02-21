@@ -117,7 +117,7 @@ runs:
     - name: Mask secrets
       working-directory: ${{ inputs.project-path }}
       shell: bash
-      if: ${{ inputs.mask_secrets == true || inputs.mask_secrets == 'true') }}
+      if: ${{ inputs.mask_secrets == true || inputs.mask_secrets == 'true' }}
       run: |
         MASK_PREFIX="::add-mask::"
         SECRET_KEYS='["password","public_ip","public_dns"]'
