@@ -1,0 +1,221 @@
+aws:
+  tags:
+    cluster_name: Demo-Infra
+    created_by: edb-terraform
+  images:
+    rocky:
+      name: Rocky-9-EC2-Base-9.2-20230513.0.x86_64
+      owner: 679593333241
+      ssh_user: rocky
+  regions:
+    us-west-1:
+      cidr_block: 10.1.0.0/16
+      zones:
+        a:
+          zone: us-west-1b
+          cidr: 10.1.10.0/24
+      ports:
+        - port: 22
+          defaults: service
+          protocol: tcp
+          description: "SSH"
+          type: ingress
+          cidrs:
+            - 0.0.0.0/0
+        - protocol: icmp
+          defaults: internal
+          description: "pinging"
+    us-west-2:
+      cidr_block: 10.2.0.0/16
+      zones:
+        a:
+          zone: us-west-2a
+          cidr: 10.2.10.0/24
+      ports:
+        - port: 22
+          defaults: service
+          protocol: tcp
+          description: "SSH"
+          type: ingress
+          cidrs:
+            - 0.0.0.0/0
+        - protocol: icmp
+          defaults: internal
+          description: "pinging"
+    us-east-1:
+      cidr_block: 10.3.0.0/16
+      zones:
+        a:
+          zone: us-east-1a
+          cidr: 10.3.10.0/24
+      ports:
+        - port: 22
+          defaults: service
+          protocol: tcp
+          description: "SSH"
+          type: ingress
+          cidrs:
+            - 0.0.0.0/0
+        - protocol: icmp
+          defaults: internal
+          description: "pinging"
+    us-east-2:
+      cidr_block: 10.4.0.0/16
+      zones:
+        a:
+          zone: us-east-2a
+          cidr: 10.4.10.0/24
+      ports:
+        - port: 22
+          defaults: service
+          protocol: tcp
+          description: "SSH"
+          type: ingress
+          cidrs:
+            - 0.0.0.0/0
+        - protocol: icmp
+          defaults: internal
+          description: "pinging"
+    ca-central-1:
+      cidr_block: 10.5.0.0/16
+      zones:
+        a:
+          zone: ca-central-1a
+          cidr: 10.5.10.0/24
+      ports:
+        - port: 22
+          defaults: service
+          protocol: tcp
+          description: "SSH"
+          type: ingress
+          cidrs:
+            - 0.0.0.0/0
+        - protocol: icmp
+          defaults: internal
+          description: "pinging"
+  machines:
+    primary_1:
+      image_name: rocky
+      region: us-west-1
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    subscribers_1:
+      count: 20
+      image_name: rocky
+      region: us-west-1
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    primary_2:
+      image_name: rocky
+      region: us-west-2
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    subscribers_2:
+      count: 20
+      image_name: rocky
+      region: us-west-2
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    primary_3:
+      image_name: rocky
+      region: us-east-1
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    subscribers_3:
+      count: 20
+      image_name: rocky
+      region: us-east-1
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    primary_4:
+      image_name: rocky
+      region: us-east-2
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    subscribers_4:
+      count: 20
+      image_name: rocky
+      region: us-east-2
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    primary_5:
+      image_name: rocky
+      region: ca-central-1
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
+    subscribers_5:
+      count: 20
+      image_name: rocky
+      region: ca-central-1
+      zone_name: a
+      instance_type: m6a.large
+      volume:
+        type: gp3
+        size_gb: 50
+        iops: 150
+        encrypted: false
+      tags:
+        type: postgres
