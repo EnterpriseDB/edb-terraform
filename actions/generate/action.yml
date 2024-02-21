@@ -14,20 +14,15 @@ inputs:
     description: 'Infrastructure file path'
     required: true
   infra-template-variables:
-    description: 'Infrastructure template variables'
+    description: 'Infrastructure template variables passed along with infra-file-path. Use stringified json or pass in a json file.'
     required: false
     default: '{}'
   cloud-service-provider:
     description: 'Cloud service provider'
     required: false
     default: aws
-    type: choice
-    options:
-      - aws
-      - azure
-      - gcloud
   remote-state:
-    description: 'Remote state'
+    description: 'Terraform remote state type. Choose options based on terraforms support list.'
     required: false
     default: 'local'
   user-templates:
