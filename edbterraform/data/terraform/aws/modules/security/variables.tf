@@ -59,4 +59,14 @@ locals {
         "description": join(" _ ", distinct(local.port_rules_descriptions[name]))
       })
   }
+  # Expand the list back out with 1 rule per cidrblock since AWS fails to track the rules properly
+  # Ref: https://github.com/hashicorp/terraform-provider-aws/issues/29797
+  rules = merge([
+    for name, rule in local.merged_rules: {
+      for cidr in rule.cidrs: 
+        format("%s_%s", name, cidr) => merge(rule, {
+          cidrs = [cidr]
+        })
+    }
+  ]...)
 }
