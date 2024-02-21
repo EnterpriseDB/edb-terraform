@@ -8,7 +8,7 @@ resource "aws_security_group" "rules" {
 }
 
 resource "aws_security_group_rule" "rule" {
-  for_each = local.merged_rules
+  for_each = local.rules
   security_group_id = aws_security_group.rules.id
   description = each.value.description
   type = each.value.type
