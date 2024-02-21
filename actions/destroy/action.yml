@@ -13,7 +13,7 @@ runs:
       working-directory: ${{ inputs.repo-directory }}
       shell: bash
       run: |
-        programs=("terraform" "edb-terraform" "aws" "jq")
+        programs=("terraform")
 
         for program in "${programs[@]}"
         do
