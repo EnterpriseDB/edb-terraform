@@ -2,12 +2,11 @@ variable "machine" {}
 variable "public_cidrblocks" {}
 variable "service_cidrblocks" {}
 variable "internal_cidrblocks" {}
+variable "outbound_security_groups" {}
 locals {
   # Allow machine default outbound access if no egress is defined
   egress_defined = anytrue([for port in var.machine.spec.ports: port.type=="egress"])
-  machine_ports = concat(var.machine.spec.ports, 
-      (local.egress_defined ? [] : [{"type"="egress", "cidrs"=["0.0.0.0/0"], "protocol"="-1", "port": null, "to_port": null, "description": "Default Egress if not defined"}]),
-    )
+  security_group_ids = concat(var.custom_security_group_ids, local.egress_defined ? [] : var.outbound_security_groups)
 }
 
 variable "vpc_id" {}
