@@ -61,12 +61,14 @@ locals {
   }
   # Expand the list back out with 1 rule per cidrblock since AWS fails to track the rules properly
   # Ref: https://github.com/hashicorp/terraform-provider-aws/issues/29797
+  # New resources aws_vpc_security_group_egress_rule and aws_vpc_security_group_ingress_rule manages rules per cidrblock
   rules = merge([
     for name, rule in local.merged_rules: {
-      for cidr in rule.cidrs: 
-        format("%s_%s", name, cidr) => merge(rule, {
+      for cidr in rule.cidrs: format("%s_%s", name, cidr) => merge(rule,
+        {
           cidrs = [cidr]
-        })
+        }
+      )
     }
   ]...)
 }
