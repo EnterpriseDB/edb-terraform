@@ -14,9 +14,38 @@ locals {
       values.cidr_block
   ])
 
+  machine_ssh_ports = distinct([for machine, values in var.spec.machines: values.ssh_port])
+  region_ssh_exists = {
+    for region, values in var.spec.regions: region => anytrue([
+      for port in values.ports: contains(local.machine_ssh_ports, coalesce(port.port, -2)) || contains(local.machine_ssh_ports, coalesce(port.to_port, -2)) if port.defaults == "service"
+    ])
+  }
+  machine_ssh_rules = flatten([
+    for port in local.machine_ssh_ports: [
+      {
+        "type": "ingress",
+        "defaults": "service",
+        "cidrs": [],
+        "protocol": "tcp",
+        "port": port,
+        "to_port": port,
+        "description": "Force SSH Access"
+      },
+      {
+        "type": "egress",
+        "defaults": "service",
+        "cidrs": [],
+        "protocol": "tcp",
+        "port": port,
+        "to_port": port,
+        "description": "Force SSH Access"
+      },
+    ]
+  ])
+
   # save ports per region
   region_ports = {
-    for region, values in var.spec.regions: region => values.ports
+    for region, values in var.spec.regions: region => concat(values.ports, (local.region_ssh_exists[region] ? [] : local.machine_ssh_rules))
   }
 }
 
