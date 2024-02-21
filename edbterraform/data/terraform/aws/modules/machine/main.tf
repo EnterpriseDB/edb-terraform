@@ -3,7 +3,7 @@ module "machine_ports" {
 
   vpc_id           = var.vpc_id
   cluster_name     = var.machine.name
-  ports            = local.machine_ports
+  ports            = var.machine.spec.ports
   tags             = var.tags
   public_cidrblocks = var.public_cidrblocks
   service_cidrblocks = var.service_cidrblocks
@@ -15,7 +15,7 @@ resource "aws_instance" "machine" {
   instance_type          = var.machine.spec.instance_type
   key_name               = var.key_name
   subnet_id              = var.subnet_id
-  vpc_security_group_ids = flatten([var.custom_security_group_ids, module.machine_ports.security_group_ids])
+  vpc_security_group_ids = flatten([local.security_group_ids, module.machine_ports.security_group_ids])
 
   dynamic "instance_market_options" {
     for_each = var.machine.spec.spot == true ? [1] : []

@@ -1,3 +1,24 @@
+# Default outbound rules for use with machines
+resource "aws_security_group" "default_{{ region_ }}" {
+  name = format("default_outbound")
+  vpc_id = module.vpc_{{ region_ }}.vpc_id
+
+  tags = merge({
+    Name = format("default_outbound")
+  }, module.spec.base.tags)
+
+  provider = aws.{{ region_ }}
+}
+
+resource "aws_vpc_security_group_egress_rule" "out_{{ region_ }}" {
+  security_group_id = aws_security_group.default_{{ region_ }}.id
+  description = "Default outbound"
+  ip_protocol = -1
+  cidr_ipv4   = "0.0.0.0/0"
+
+  provider = aws.{{ region_ }}
+}
+
 # Find the AMI id, which varies by region.
 # This must be done outside of the module to avoid the data source being called per machine.
 # If set within the module, it will delay calling the data source and causes terraform to re-create resources since it is unknown.
@@ -33,6 +54,7 @@ module "machine_{{ region_ }}" {
   machine                  = each.value
   image_info               = data.aws_ami.default_{{ region_ }}
   custom_security_group_ids = module.security_{{ region_ }}.security_group_ids
+  outbound_security_groups = [aws_security_group.default_{{ region_ }}.id]
   ssh_pub_key              = module.spec.public_key
   ssh_priv_key             = module.spec.private_key
   use_agent                = module.spec.base.ssh_key.use_agent
