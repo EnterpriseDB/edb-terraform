@@ -83,7 +83,7 @@ locals {
 
   # Collect all machine ips for re-use
   machine_cidrblocks = {
-    for machine, values in coalesce(one(local.machines), {}):
+    for machine, values in merge(local.machines...):
       machine => formatlist("%s/32", [values.public_ip, values.private_ip])
   }
 }
