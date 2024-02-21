@@ -1,19 +1,3 @@
-data "aws_ami" "default" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["${var.operating_system.name}*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["${var.operating_system.owner}"]
-}
-
 module "machine_ports" {
   source = "../security"
 
@@ -24,11 +8,10 @@ module "machine_ports" {
   public_cidrblocks = var.public_cidrblocks
   service_cidrblocks = var.service_cidrblocks
   internal_cidrblocks = var.internal_cidrblocks
-
 }
 
 resource "aws_instance" "machine" {
-  ami                    = data.aws_ami.default.id
+  ami                    = var.image_info[var.machine.spec.image_name].id
   instance_type          = var.machine.spec.instance_type
   key_name               = var.key_name
   subnet_id              = var.subnet_id
@@ -59,8 +42,6 @@ resource "aws_instance" "machine" {
 
   lifecycle {
     ignore_changes = [
-      # AMI is ignored because the data source forces the resource to be re-created when apply is used again
-      ami,
       # Tags appear as null during re-applys
       tags["Owner"],
       root_block_device[0].tags["Owner"],

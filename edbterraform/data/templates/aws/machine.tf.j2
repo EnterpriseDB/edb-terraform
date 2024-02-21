@@ -1,3 +1,25 @@
+# Find the AMI id, which varies by region.
+# This must be done outside of the module to avoid the data source being called per machine.
+# If set within the module, it will delay calling the data source and causes terraform to re-create resources since it is unknown.
+data "aws_ami" "default_{{ region_ }}" {
+  for_each = var.spec.images
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["${each.value.name}*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["${each.value.owner}"]
+
+  provider = aws.{{ region_ }}
+}
+
 module "machine_{{ region_ }}" {
   source = "./modules/machine"
 
@@ -9,6 +31,7 @@ module "machine_{{ region_ }}" {
   cidr_block               = each.value.spec.cidr
   az                       = each.value.spec.zone
   machine                  = each.value
+  image_info               = data.aws_ami.default_{{ region_ }}
   custom_security_group_ids = module.security_{{ region_ }}.security_group_ids
   ssh_pub_key              = module.spec.public_key
   ssh_priv_key             = module.spec.private_key

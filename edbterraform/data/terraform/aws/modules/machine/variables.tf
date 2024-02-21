@@ -26,6 +26,7 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+variable "image_info" {}
 
 locals {
   additional_volumes_length = length(lookup(var.machine.spec, "additional_volumes", []))
