@@ -15,15 +15,30 @@ inputs:
     description: 'Cloud service provider'
     required: false
     default: aws
-    type: choice
-    options:
-      - aws
-      - azure
-      - gcloud
   backend-configs:
     description: 'List of backend configuration options for terraform init. Expects a series of key-value pairs or a single file when remote state is not `local`. Make sure to mask sensitive values.'
     required: false
     default: '[]'
+  force_service_machines:
+    description: 'Append an ssh port rule for all machines'
+    required: false
+    default: 'true'
+  force_service_biganimal:
+    description: 'Append service cidr blocks to BigAnimals allow list'
+    required: false
+    default: 'true'
+  service_cidrblocks:
+    description: 'Service CIDR blocks which will be applied when defaults=service under a port configuration'
+    required: false
+    default: '[]'
+  force_dynamic_ip:
+    description: 'Append the controllers ip to the service cidr blocks.'
+    required: false
+    default: 'true'
+  mask_secrets:
+    description: 'Mask secrets from terraform output'
+    required: false
+    default: 'true'
 runs:
   using: "composite"
   steps:
@@ -62,33 +77,47 @@ runs:
       env:
         BACKEND_CONFIGS: ${{ inputs.backend-configs }}
       run: |
-      CONFIGS=$(echo $BACKEND_CONFIGS | jq -r .[])
-      OPTION="-backend-config="
-      CONFIG_STR=""
-      for config in $CONFIGS
-      do
-        CONFIG_STR+="$OPTION\"$config\""
-      done
+        CONFIGS=$(echo $BACKEND_CONFIGS | jq -r .[])
+        OPTION="-backend-config="
+        CONFIG_STR=("-input=false")
+        for config in $CONFIGS
+        do
+          CONFIG_STR+=("$OPTION$config")
+        done
 
-      terraform init -input=false "$CONFIG_STR"
+        terraform init "${CONFIG_STR[@]}"
 
     - name: Terraform plan
       working-directory: ${{ inputs.project-path }}
       shell: bash
       env:
         PLAN_FILENAME: ${{ inputs.plan-filename }}
-      run: terraform plan -input=false -out="$PLAN_FILENAME"
+        FORCE_SERVICE_MACHINES: ${{ inputs.force_service_machines }}
+        FORCE_SERVICE_BIGANIMAL: ${{ inputs.force_service_biganimal }}
+        SERVICE_CIDRBLOCKS: ${{ inputs.service_cidrblocks }}
+        FORCE_DYNAMIC_IP: ${{ inputs.force_dynamic_ip }}
+      run: |
+        terraform plan -input=false \
+                       -out="$PLAN_FILENAME" \
+                       -var "force_service_machines=$FORCE_SERVICE_MACHINES" \
+                       -var "force_service_biganimal=$FORCE_SERVICE_BIGANIMAL" \
+                       -var "service_cidrblocks=$SERVICE_CIDRBLOCKS" \
+                       -var "force_dynamic_ip=$FORCE_DYNAMIC_IP"
 
     - name: Terraform apply
       working-directory: ${{ inputs.project-path }}
       shell: bash
       env:
         PLAN_FILENAME: ${{ inputs.plan-filename }}
-      run: terraform apply -input=false -auto-approve "$PLAN_FILENAME"
+      run: |
+        terraform apply -input=false \
+                        -auto-approve \
+                        "$PLAN_FILENAME"
 
     - name: Mask secrets
       working-directory: ${{ inputs.project-path }}
       shell: bash
+      if: ${{ inputs.mask_secrets == true || inputs.mask_secrets == 'true') }}
       run: |
         MASK_PREFIX="::add-mask::"
         SECRET_KEYS='["password","public_ip","public_dns"]'
