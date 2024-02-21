@@ -8,7 +8,7 @@ inputs:
   link-path:
     description: 'Path to link the binary'
     required: false
-    default: '/usr/local/bin'
+    default: '/usr/bin'
   terraform-version:
     description: 'Version of terraform to install'
     required: false
@@ -16,18 +16,11 @@ inputs:
   run-edbterraform-setup:
     description: 'Whether to run edb-terraform setup'
     required: false
-    default: 'false'
-    type: boolean
+    default: 'true'
   cloud-provider:
     description: 'Cloud provider to use'
     required: false
     default: 'aws'
-    options:
-      - 'aws'
-      - 'azure'
-      - 'gcloud'
-      - 'all'
-      - 'none'
 
 runs:
   using: "composite"
@@ -41,7 +34,7 @@ runs:
         python3 -m venv venv-terraform
         source venv-terraform/bin/activate
         python -m pip install . --upgrade
-        ln -s $(pwd)/venv-terraform/bin/edb-terraform "$LINK_PATH/edb-terraform"
+        sudo ln -s $(pwd)/venv-terraform/bin/edb-terraform "$LINK_PATH/edb-terraform"
 
     - name: Install terraform and link binary
       if: ${{ inputs.run-edbterraform-setup == true || inputs.run-edbterraform-setup == 'true' }}
@@ -49,10 +42,26 @@ runs:
       shell: bash
       env:
         LINK_PATH: ${{ inputs.link-path }}
-      shell: bash
+        TERRAFORM_VERSION: ${{ inputs.terraform-version }}
       run: |
-        edb-terraform setup
-        ln -s $HOME/.edb-terraform/bin/terraform "$LINK_PATH/terraform"
+        items=$(edb-terraform setup --terraform-cli-version "$TERRAFORM_VERSION")
+        echo "$items"
+
+        echo "$items" | tail -n 1 | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while IFS="=" read -r key value
+        do
+          # Remove any pre-installed tools
+          sudo apt-get purge -y "$key" || true
+          sudo dnf remove -y "$key" || true
+          paths=$(whereis "$key" | cut -d ':' -f 2)
+          for path in $paths
+          do
+            echo "Removing $path"
+            sudo rm -f "$path" || true
+          done
+
+          # Setup tool path
+          sudo ln -s "$value" "$LINK_PATH/$key"
+        done
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -67,7 +76,7 @@ runs:
       run: apt-get install -y jq
 
     - name: Install AWS CLI
-      if: ${{ inputs.cloud-provider != 'none' && inputs.cloud-provider == 'aws' || inputs.cloud-provider == 'all' }}
+      if: ${{ (inputs.cloud-provider == 'aws' || inputs.cloud-provider == 'all') && (inputs.run-edbterraform-setup == false || inputs.run-edbterraform-setup == 'false') }}
       working-directory: ${{ inputs.repo-directory }}
       shell: bash
       env:
