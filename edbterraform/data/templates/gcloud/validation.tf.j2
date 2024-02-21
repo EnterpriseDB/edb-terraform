@@ -6,6 +6,7 @@ module "spec" {
   source = "./modules/specification"
 
   spec = var.spec
+  force_ssh_access = var.force_service_machines
 }
 
 resource "null_resource" "validation" {

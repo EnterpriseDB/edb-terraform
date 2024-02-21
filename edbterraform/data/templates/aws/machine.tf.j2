@@ -18,7 +18,6 @@ module "machine_{{ region_ }}" {
   public_cidrblocks        = var.public_cidrblocks
   service_cidrblocks       = local.service_cidrblocks
   internal_cidrblocks      = module.spec.region_cidrblocks
-  force_ssh_access         = var.force_service_machines
 
   depends_on = [module.key_pair_{{ region_ }}, module.security_{{ region_ }}]
 

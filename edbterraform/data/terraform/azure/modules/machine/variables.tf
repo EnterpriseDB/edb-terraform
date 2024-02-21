@@ -32,12 +32,6 @@ variable "machine" {
 variable "public_cidrblocks" {}
 variable "service_cidrblocks" {}
 variable "internal_cidrblocks" {}
-variable "force_ssh_access" {
-  description = "Force append a service rule for ssh access"
-  default = false
-  type = bool
-  nullable = false
-}
 variable "ports" {
   type = list
   default = []

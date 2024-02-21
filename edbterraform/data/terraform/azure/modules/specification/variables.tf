@@ -157,6 +157,13 @@ variable "spec" {
 
 }
 
+variable "force_ssh_access" {
+  description = "Force append a service rule for ssh access"
+  default = false
+  type = bool
+  nullable = false
+}
+
 locals {
   cluster_name = can(var.spec.tags.cluster_name) ? var.spec.tags.cluster_name : "Azure-Cluster-default"
   created_by = can(var.spec.tags.created_by) ? var.spec.tags.created_by : "EDB-Terraform-Azure"
