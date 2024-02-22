@@ -22,39 +22,39 @@ inputs:
     description: 'List of backend configuration options for terraform init. Expects a series of key-value pairs or a single file when remote state is not `local`. Make sure to mask sensitive values.'
     required: false
     default: '[]'
-  force_service_machines:
+  force-service-machines:
     description: 'Append an ssh port rule for all machines'
     required: false
     default: 'true'
-  force_service_biganimal:
+  force-service-biganimal:
     description: 'Append service cidr blocks to BigAnimals allow list'
     required: false
     default: 'true'
-  service_cidrblocks:
+  service-cidrblocks:
     description: 'Service CIDR blocks which will be applied when defaults=service under a port configuration'
     required: false
     default: '[]'
-  force_dynamic_ip:
+  force-dynamic-ip:
     description: 'Append the controllers ip to the service cidr blocks.'
     required: false
     default: 'true'
-  mask_secrets:
+  mask-secrets:
     description: 'Mask secrets from terraform output'
     required: false
     default: 'true'
-  create_artifact:
+  create-artifact:
     description: 'Create artifact for plan file'
     required: false
     default: 'true'
-  artifact_name:
+  artifact-name:
     description: 'Artifact name. When artifact_overwrite is false, append unique identifiers such as the run-id and run-attempt to the artifact name.'
     required: false
     default: 'terraform-plan'
-  artifact_id:
+  artifact-id:
     description: 'Artifact id'
     required: false
     default: ''
-  artifact_overwrite:
+  artifact-overwrite:
     description: 'Overwrite existing artifact. When false, artifact_name needs to be unique for each run starting actions/upload-artifact@v4'
     required: false
     default: 'false'
@@ -125,10 +125,10 @@ runs:
       shell: bash
       env:
         PLAN_FILENAME: ${{ inputs.plan-filename }}
-        FORCE_SERVICE_MACHINES: ${{ inputs.force_service_machines }}
-        FORCE_SERVICE_BIGANIMAL: ${{ inputs.force_service_biganimal }}
-        SERVICE_CIDRBLOCKS: ${{ inputs.service_cidrblocks }}
-        FORCE_DYNAMIC_IP: ${{ inputs.force_dynamic_ip }}
+        FORCE_SERVICE_MACHINES: ${{ inputs.force-service-machines }}
+        FORCE_SERVICE_BIGANIMAL: ${{ inputs.force-service-biganimal }}
+        SERVICE_CIDRBLOCKS: ${{ inputs.service-cidrblocks }}
+        FORCE_DYNAMIC_IP: ${{ inputs.force-dynamic-ip }}
       run: |
         terraform plan -input=false \
                        -out="$PLAN_FILENAME" \
@@ -138,12 +138,12 @@ runs:
                        -var "force_dynamic_ip=$FORCE_DYNAMIC_IP"
 
     - name: Upload plan artifact
-      if: ${{ inputs.create_artifact == true || inputs.create_artifact == 'true' }}
+      if: ${{ inputs.create-artifact == true || inputs.create-artifact == 'true' }}
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifact_name }}${{ inputs.artifact_id }}
+        name: ${{ inputs.artifact-name }}${{ inputs.artifact-id }}
         path: ${{ inputs.work-directory }}/${{ inputs.project-path }}/${{ inputs.plan-filename }}
-        overwrite: ${{ inputs.artifact_overwrite }}
+        overwrite: ${{ inputs.artifact-overwrite }}
 
     - name: Terraform apply
       working-directory: ${{ inputs.project-path }}
@@ -158,7 +158,7 @@ runs:
     - name: Mask secrets
       working-directory: ${{ inputs.project-path }}
       shell: bash
-      if: ${{ inputs.mask_secrets == true || inputs.mask_secrets == 'true' }}
+      if: ${{ inputs.mask-secrets == true || inputs.mask-secrets == 'true' }}
       run: |
         MASK_PREFIX="::add-mask::"
         SECRET_KEYS='["password","public_ip","public_dns"]'

@@ -29,19 +29,19 @@ inputs:
     description: 'Post terraform templates'
     required: false
     default: '/dev/null'
-  create_artifact:
+  create-artifact:
     description: 'Create artifacts'
     required: false
     default: 'true'
-  artifact_name:
+  artifact-name:
     description: 'Artifact name. When artifact_overwrite is false, append unique identifiers such as the run-id and run-attempt to the artifact name.'
     required: false
     default: 'terraform-project'
-  artifact_id:
+  artifact-id:
     description: 'Artifact id'
     required: false
     default: ''
-  artifact_overwrite:
+  artifact-overwrite:
     description: 'Overwrite existing artifact. When false, artifact_name needs to be unique for each run starting actions/upload-artifact@v4'
     required: false
     default: 'false'
@@ -53,7 +53,6 @@ runs:
   using: "composite"
   steps:
     - name: Check dependencies
-      working-directory: ${{ inputs.repo-directory }}
       shell: bash
       run: |
         programs=("edb-terraform")
@@ -68,7 +67,7 @@ runs:
         done
 
     - name: Generate terraform files
-      working-directory: ${{ inputs.repo-directory }}
+      working-directory: ${{ inputs.work-directory }}
       shell: bash
       env:
         CLOUD_SERVICE_PROVIDER: ${{ inputs.cloud-service-provider }}
@@ -89,9 +88,9 @@ runs:
           --user-templates "$USER_TEMPLATES"
 
     - name: Upload artifacts
-      if: ${{ inputs.create_artifact == true || inputs.create_artifact == 'true' }}
+      if: ${{ inputs.create-artifact == true || inputs.create-artifact == 'true' }}
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifact_name }}${{ inputs.artifact_id }}
+        name: ${{ inputs.artifact-name }}${{ inputs.artifact-id }}
         path: ${{ inputs.work-directory }}/${{ inputs.project-name }}
-        overwrite: ${{ inputs.artifact_overwrite }}
+        overwrite: ${{ inputs.artifact-overwrite }}

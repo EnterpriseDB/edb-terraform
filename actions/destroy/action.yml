@@ -10,7 +10,6 @@ runs:
   using: "composite"
   steps:
     - name: Check dependencies
-      working-directory: ${{ inputs.repo-directory }}
       shell: bash
       run: |
         programs=("terraform")

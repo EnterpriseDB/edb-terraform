@@ -48,8 +48,8 @@ jobs:
         id: provision
         with:
           project-path: "${{ steps.edb-terraform.outputs.project-path }}"
-          force_dynamic_ip: "true"
-          force_service_machines: "true"
+          force-dynamic-ip: "true"
+          force-service-machines: "true"
           backend-configs: '["bucket=${{ env.AWS_BUCKET }}","key=${{ env.WORKFLOW_ID_PATHS }}","region=${{ env.AWS_BUCKET_REGION }}"]'
           artifact-id: "-${{ env.WORKFLOW_ID_DASHES }}"
         continue-on-error: true
