@@ -1,0 +1,60 @@
+name: Example-Workflow
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
+  AWS_BUCKET_REGION: ${{ secrets.BUCKET_REGION }}
+  ROLE_ODIC_ARN: ${{ secrets.ROLE_ODIC_ARN }}
+  ROLE_SESSION_NAME: "Github-Actions-ODIC"
+  ROLE_DEFAULT_REGION: "us-east-1"
+  WORKFLOW_ID_PATHS: ${{ github.run_number }}/${{ github.run_id }}/${{ github.run_attempt }}
+  WORKFLOW_ID_DASHES: ${{ github.run_number }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+jobs:
+  infrastructure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout edb-terraform repo
+        uses: actions/checkout@v4
+        with:
+          repository: EnterpriseDB/edb-terraform
+          ref: v1.6.2
+          path: "${{ github.workspace }}/EnterpriseDB/edb-terraform"
+      - name: Install edb-terraform
+        uses: ./EnterpriseDB/edb-terraform/actions/setup
+        with:
+          repo-directory: "${{ github.workspace }}/EnterpriseDB/edb-terraform"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ROLE_ODIC_ARN}}
+          role-session-name: ${{ env.ROLE_SESSION_NAME}}
+          aws-region: ${{ env.ROLE_DEFAULT_REGION }}
+      - name: Generate terraform files
+        id: edb-terraform
+        uses: ./EnterpriseDB/edb-terraform/actions/generate
+        with:
+          infra-file-path: "${{ github.workspace }}/edb-terraform/docs/examples/aws/machines-v2.yml"
+          artifact-id: "-${{ env.WORKFLOW_ID_DASHES }}"
+      - name: Provision Terraform infrastructure
+        uses: ./EnterpriseDB/edb-terraform/actions/apply
+        id: provision
+        with:
+          project-path: "${{ steps.edb-terraform.outputs.project-path }}"
+          force_dynamic_ip: "true"
+          force_service_machines: "true"
+          backend-configs: '["bucket=${{ env.AWS_BUCKET }}","key=${{ env.WORKFLOW_ID_PATHS }}","region=${{ env.AWS_BUCKET_REGION }}"]'
+          artifact-id: "-${{ env.WORKFLOW_ID_DASHES }}"
+        continue-on-error: true
+      - name: Destroy Terraform infrastructure
+        uses: ./EnterpriseDB/edb-terraform/actions/destroy
+        with:
+          project-path: "${{ steps.edb-terraform.outputs.project-path }}"
+        if: always() && steps.provision.outcome != 'skipped'
