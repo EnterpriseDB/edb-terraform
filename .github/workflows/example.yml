@@ -41,7 +41,7 @@ jobs:
         id: edb-terraform
         uses: ./EnterpriseDB/edb-terraform/actions/generate
         with:
-          infra-file-path: "${{ github.workspace }}/edb-terraform/docs/examples/aws/machines-v2.yml"
+          infra-file-path: "${{ github.workspace }}/EnterpriseDB/edb-terraform/docs/examples/aws/machines-v2.yml"
           artifact-id: "-${{ env.WORKFLOW_ID_DASHES }}"
       - name: Provision Terraform infrastructure
         uses: ./EnterpriseDB/edb-terraform/actions/apply
