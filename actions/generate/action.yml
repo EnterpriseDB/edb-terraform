@@ -22,9 +22,9 @@ inputs:
     required: false
     default: aws
   remote-state:
-    description: 'Terraform remote state type. Choose options based on terraforms support list.'
+    description: 'Terraform remote state type. "cloud" maps to each cloud providers storage backend offering. Override with any supported backend type such as postgres or consul. Use of "local" will require manual destruction if git actions fail.'
     required: false
-    default: 'local'
+    default: 'cloud'
   user-templates:
     description: 'Post terraform templates'
     required: false
