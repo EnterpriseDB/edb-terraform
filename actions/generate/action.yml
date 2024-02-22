@@ -29,6 +29,18 @@ inputs:
     description: 'Post terraform templates'
     required: false
     default: '/dev/null'
+  create_artifact:
+    description: 'Create artifacts'
+    required: false
+    default: 'true'
+  artifact_name:
+    description: 'Artifact name. When artifact_overwrite is false, append unique identifiers such as the run-id and run-attempt to the artifact name.'
+    required: false
+    default: 'Terraform-Project'
+  artifact_overwrite:
+    description: 'Overwrite existing artifact. When false, artifact_name needs to be unique for each run starting actions/upload-artifact@v4'
+    required: false
+    default: 'false'
 outputs:
   project-path:
     description: "Project path"
@@ -71,3 +83,11 @@ runs:
           --infra-template-variables "$INFRA_TEMPLATE_VARIABLES" \
           --remote-state-type "$REMOTE_STATE_TYPE" \
           --user-templates "$USER_TEMPLATES"
+
+    - name: Upload artifacts
+      if: ${{ inputs.create_artifact == true || inputs.create_artifact == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ${{ inputs.work-directory }}/${{ inputs.project-name }}
+        overwrite: ${{ inputs.artifact_overwrite }}
