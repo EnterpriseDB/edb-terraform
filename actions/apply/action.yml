@@ -59,9 +59,37 @@ runs:
   steps:
     - name: Check dependencies
       shell: bash
+      env:
+        CLOUD_SERVICE_PROVIDER: ${{ inputs.cloud-service-provider }}
       run: |
-        programs=("terraform" "edb-terraform" "aws" "jq")
+        RC=1
+        printf "Checking if cloud cli and credentials are configured: $CLOUD_SERVICE_PROVIDER\n"
+        case "$CLOUD_SERVICE_PROVIDER" in
+          aws)
+            aws sts get-caller-identity &> /dev/null
+            RC=$?
+            ;;
+          azure)
+            az account show &> /dev/null
+            RC=$?
+            ;;
+          gcloud)
+            gcloud auth list 2>&1 | grep "No credentialed accounts." > /dev/null
+            RC=$?
+            ;;
+          *)
+            printf "Cloud service provider not supported: $CLOUD_SERVICE_PROVIDER" 1>&2
+            exit $RC
+            ;;
+        esac
 
+        if [ $RC -ne 0 ]
+        then
+          printf "Cloud cli binary is not found or credentials are not configured: $CLOUD_SERVICE_PROVIDER" 1>&2
+          exit $RC
+        fi
+
+        programs=("terraform" "jq")
         for program in "${programs[@]}"
         do
           if ! builtin type -P "$program" >/dev/null 2>&1
@@ -70,21 +98,6 @@ runs:
             exit 1
           fi
         done
-
-    - name: Check if csp credentials configured
-      shell: bash
-      env:
-        CLOUD_SERVICE_PROVIDER: ${{ inputs.cloud-service-provider }}
-      run: |
-        case "$CLOUD_SERVICE_PROVIDER" in
-          aws)
-            aws sts get-caller-identity
-            ;;
-          *)
-            printf "Cloud service provider not supported: $CLOUD_SERVICE_PROVIDER" 1>&2
-            exit 1
-            ;;
-        esac
 
     - name: Terraform init
       working-directory: ${{ inputs.project-path }}
