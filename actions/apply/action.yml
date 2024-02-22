@@ -49,7 +49,11 @@ inputs:
   artifact_name:
     description: 'Artifact name. When artifact_overwrite is false, append unique identifiers such as the run-id and run-attempt to the artifact name.'
     required: false
-    default: 'Terraform-Plan'
+    default: 'terraform-plan'
+  artifact_id:
+    description: 'Artifact id'
+    required: false
+    default: ''
   artifact_overwrite:
     description: 'Overwrite existing artifact. When false, artifact_name needs to be unique for each run starting actions/upload-artifact@v4'
     required: false
@@ -137,7 +141,7 @@ runs:
       if: ${{ inputs.create_artifact == true || inputs.create_artifact == 'true' }}
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifact_name }}
+        name: ${{ inputs.artifact_name }}${{ inputs.artifact_id }}
         path: ${{ inputs.work-directory }}/${{ inputs.project-path }}/${{ inputs.plan-filename }}
         overwrite: ${{ inputs.artifact_overwrite }}
 
