@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EnterpriseDB/edb-terraform
-          ref: 801582106b7cc3530453b1c5611a9a339c22b1a2
+          ref: ${{ github.ref_name }}
           path: "${{ github.workspace }}/EnterpriseDB/edb-terraform"
       - name: Install edb-terraform
         uses: ./EnterpriseDB/edb-terraform/actions/setup
