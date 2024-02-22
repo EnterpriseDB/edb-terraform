@@ -1,6 +1,9 @@
 ---
 # This action requires that AWS/Azure/Gcloud credentials are setup
 # AWS: https://github.com/aws-actions/configure-aws-credentials?tab=readme-ov-file#long-term-credentials-warning-10323
+# Upon failure, catch errors in the workflow to start the destroy action
+# Composite actions pre/post actions are not supported:
+# Ref: https://github.com/actions/runner/issues/1478
 name: 'Apply'
 description: 'Provision Terraform resources'
 inputs:
@@ -39,6 +42,18 @@ inputs:
     description: 'Mask secrets from terraform output'
     required: false
     default: 'true'
+  create_artifact:
+    description: 'Create artifact for plan file'
+    required: false
+    default: 'true'
+  artifact_name:
+    description: 'Artifact name. When artifact_overwrite is false, append unique identifiers such as the run-id and run-attempt to the artifact name.'
+    required: false
+    default: 'Terraform-Plan'
+  artifact_overwrite:
+    description: 'Overwrite existing artifact. When false, artifact_name needs to be unique for each run starting actions/upload-artifact@v4'
+    required: false
+    default: 'false'
 runs:
   using: "composite"
   steps:
@@ -88,6 +103,7 @@ runs:
         terraform init "${CONFIG_STR[@]}"
 
     - name: Terraform plan
+      id: plan
       working-directory: ${{ inputs.project-path }}
       shell: bash
       env:
@@ -103,6 +119,14 @@ runs:
                        -var "force_service_biganimal=$FORCE_SERVICE_BIGANIMAL" \
                        -var "service_cidrblocks=$SERVICE_CIDRBLOCKS" \
                        -var "force_dynamic_ip=$FORCE_DYNAMIC_IP"
+
+    - name: Upload plan artifact
+      if: ${{ inputs.create_artifact == true || inputs.create_artifact == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ${{ inputs.work-directory }}/${{ inputs.project-path }}/${{ inputs.plan-filename }}
+        overwrite: ${{ inputs.artifact_overwrite }}
 
     - name: Terraform apply
       working-directory: ${{ inputs.project-path }}
