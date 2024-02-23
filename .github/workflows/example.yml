@@ -9,7 +9,7 @@ permissions:
 
 env:
   AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
-  AWS_BUCKET_REGION: ${{ secrets.AWS_BUCKET_REGION }}
+  AWS_BUCKET_REGION: "us-west-2"
   ROLE_ODIC_ARN: ${{ secrets.ROLE_ODIC_ARN }}
   ROLE_SESSION_NAME: "Github-Actions-ODIC"
   ROLE_DEFAULT_REGION: "us-east-1"
