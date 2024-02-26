@@ -58,6 +58,12 @@ inputs:
     description: 'Overwrite existing artifact. When false, artifact_name needs to be unique for each run starting actions/upload-artifact@v4'
     required: false
     default: 'false'
+
+outputs:
+  plan-path:
+    description: "Terraform plan path"
+    value: ${{ inputs.project-path }}/${{ inputs.plan-filename }}
+
 runs:
   using: "composite"
   steps:
