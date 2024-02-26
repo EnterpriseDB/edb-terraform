@@ -52,7 +52,6 @@ jobs:
           force-service-machines: "true"
           backend-configs: '["bucket=${{ env.AWS_BUCKET }}","key=${{ env.WORKFLOW_ID_PATHS }}","region=${{ env.AWS_BUCKET_REGION }}"]'
           artifact-id: "-${{ env.WORKFLOW_ID_DASHES }}"
-        continue-on-error: true
       - name: Destroy Terraform infrastructure
         uses: ./EnterpriseDB/edb-terraform/actions/destroy
         with:
