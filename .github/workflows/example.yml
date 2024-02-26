@@ -56,4 +56,7 @@ jobs:
         uses: ./EnterpriseDB/edb-terraform/actions/destroy
         with:
           project-path: "${{ steps.edb-terraform.outputs.project-path }}"
+        # When splitting destroy into a seperate job/step,
+        #   always() is needed to always execute the if statement when a previous step fails.
+        # Ref: https://github.com/actions/runner/issues/2205#issuecomment-1381988186
         if: always() && steps.provision.outcome != 'skipped'
