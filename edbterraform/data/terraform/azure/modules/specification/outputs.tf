@@ -8,6 +8,12 @@ locals {
     cluster_name    = local.cluster_name
   })
 
+  # each regions cidrblock, should not overlap since we perform VPC peering
+  region_cidrblocks = flatten([
+    for region, values in var.spec.regions:
+      values.cidr_block
+  ])
+
   machine_ssh_ports = distinct([for machine, values in var.spec.machines: values.ssh_port])
   region_ssh_exists = {
     for region, values in var.spec.regions: region => anytrue([
