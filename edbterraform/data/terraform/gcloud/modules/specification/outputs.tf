@@ -127,17 +127,14 @@ output "region_alloys" {
   }
 }
 
-output "region_biganimals" {
+output "biganimal" {
   value = {
-    for name, biganimal_spec in var.spec.biganimal : biganimal_spec.region => {
-      name = name
-      spec = merge(biganimal_spec, {
+    for name, biganimal_spec in var.spec.biganimal : name => merge(biganimal_spec, {
         # spec project tags
         tags = merge(local.tags, biganimal_spec.tags, {
           Name = format("%s-%s-%s", name, local.cluster_name, random_id.apply.id)
-        })
       })
-    }...
+    })
   }
 }
 
