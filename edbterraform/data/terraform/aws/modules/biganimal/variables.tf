@@ -24,11 +24,11 @@ variable "cluster_type" {
   default = "single"
 
   validation {
-    condition = contains(["single", "ha"], var.cluster_type)
+    condition = contains(["single", "ha", "pgd"], var.cluster_type)
     error_message = (
       <<-EOT
       ${var.cluster_type} not a valid option.
-      Please choose from the following: single, ha, eha
+      Please choose from the following: single, ha, pgd
       EOT
     )
   }
