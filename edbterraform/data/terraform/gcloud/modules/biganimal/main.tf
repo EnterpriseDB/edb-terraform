@@ -5,7 +5,7 @@ resource "biganimal_cluster" "instance" {
     cloud_provider = local.cloud_provider
     cluster_architecture {
         id = var.cluster_type
-        nodes = var.node_count
+        nodes = var.cluster_type == "single" ? 1 : var.node_count
     }
     cluster_name = local.cluster_name
     instance_type = local.instance_type
