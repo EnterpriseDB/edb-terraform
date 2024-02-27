@@ -170,7 +170,7 @@ locals {
     provider = { cloudProviderId = local.cloud_provider }
     clusterArchitecture = {
         clusterArchitectureId = var.cluster_type
-        nodes = var.node_count
+        nodes = var.cluster_type == "single" ? 1 : var.node_count
     }
     region = { regionId = var.region }
     pgVersion = { pgVersionId = tostring(var.engine_version) }
