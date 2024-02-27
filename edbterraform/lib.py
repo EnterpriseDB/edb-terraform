@@ -631,4 +631,15 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
             if 'zone_name' not in spec_variables['kubernetes'][cluster] and 'zone' in spec_variables['kubernetes'][cluster]:
                 spec_variables['kubernetes'][cluster]['zone_name'] = f'depreciated-{spec_variables["kubernetes"][machine]["zone"]}'
 
+    # BigAnimal supports single, ha, and pgd cluster types
+    # PGD uses its own resource and defines a set of data nodes and witness nodes.
+    #
+    # Handle single and ha under data_nodes
+    #   which should be a single item object with a single key
+    if 'biganimal' in spec_variables:
+        for cluster in spec_variables['biganimal']:
+            if 'data_groups' not in spec_variables['biganimal'][cluster]:
+                items = spec_variables['biganimal'][cluster].copy()
+                spec_variables['biganimal'][cluster]['data_groups'] = {'deprecated': items}
+
     return spec_variables

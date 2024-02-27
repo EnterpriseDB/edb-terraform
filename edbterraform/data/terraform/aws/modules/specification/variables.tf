@@ -156,41 +156,43 @@ variable "spec" {
       tags = optional(map(string), {})
     })), {})
     biganimal = optional(map(object({
-      type           = string
       project        = object({
         id = optional(string)
       })
       cloud_account = optional(bool)
-      region         = string
-      node_count     = number
-      engine         = string
-      engine_version = number
-      instance_type  = string
-      volume = object({
-        size_gb   = number
-        type      = string
-        properties = string
-        iops      = optional(number)
-        throughput = optional(number)
-      })
-      wal_volume = optional(object({
-        size_gb   = number
-        type      = string
-        properties = string
-        iops      = optional(number)
-        throughput = optional(number)
-      }))
       password       = string
-      pgvector       = optional(bool)
-      settings = optional(list(object({
-        name  = string
-        value = string
-      })), [])
-      allowed_ip_ranges = optional(list(object({
-        cidr_block = string
-        description = optional(string, "default description")
+      data_groups = optional(map(object({
+        type           = string
+        region         = string
+        node_count     = number
+        engine         = string
+        engine_version = number
+        instance_type  = string
+        volume = object({
+          size_gb   = number
+          type      = string
+          properties = string
+          iops      = optional(number)
+          throughput = optional(number)
+        })
+        wal_volume = optional(object({
+          size_gb   = number
+          type      = string
+          properties = string
+          iops      = optional(number)
+          throughput = optional(number)
+        }))
+        pgvector       = optional(bool)
+        settings = optional(list(object({
+          name  = string
+          value = string
+        })), [])
+        allowed_ip_ranges = optional(list(object({
+          cidr_block = string
+          description = optional(string, "default description")
+        })))
+        allowed_machines = optional(list(string))
       })))
-      allowed_machines = optional(list(string))
       tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({
