@@ -19,14 +19,12 @@
 {%     include "alloy.tf.j2" %}
 {%   endif %}
 
-{%   if has_biganimal %}
-{%     include "biganimal.tf.j2" %}
-{%   endif %}
-
 {%   if has_kubernetes %}
 {%     include "kubernetes.tf.j2" %}
 {%   endif %}
 {% endfor %}
+
+{% include "biganimal.tf.j2" %}
 
 {% if has_region_peering %}
 {%   include "region_peering.tf.j2" %}
@@ -45,10 +43,6 @@
     'regions': alloy_regions,
     'module_base': "module.alloy_",
   },
-  'biganimal': {
-    'regions': biganimal_regions,
-    'module_base': "module.biganimal_",
-  },
   'kubernetes': {
     'regions': kubernetes_regions,
     'module_base': "module.kubernetes_",
@@ -65,6 +59,8 @@ locals {
 {%   endfor %}
   ])
 {% endfor %}
+
+  biganimal = [module.biganimal]
 
   modules = {
     machines = local.machines

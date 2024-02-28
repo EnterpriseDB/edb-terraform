@@ -328,12 +328,12 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
         has_machines=('machines' in infra_vars),
         has_databases=('databases' in infra_vars),
         has_biganimal=('biganimal' in infra_vars),
-        has_kubernetes=('kubernetes' in infra_vars),        
+        has_kubernetes=('kubernetes' in infra_vars),
         regions=infra_vars.get('regions',{}).copy(),
         peers=regions_to_peers(infra_vars.get('regions',{})),
+        # biganimal regions are not needed since the BigAnimal Provider is not region specific.
         machine_regions=object_regions('machines', infra_vars),
         database_regions=object_regions('databases', infra_vars),
-        biganimal_regions=object_regions('biganimal', infra_vars),
         kubernetes_regions=object_regions('kubernetes', infra_vars),
 
         # AWS Specific

@@ -1,13 +1,111 @@
+variable data_groups {
+  type = map(object({
+    type           = string
+    region         = string
+    node_count     = number
+    engine         = string
+    engine_version = number
+    instance_type  = string
+    volume = object({
+      size_gb   = number
+      type      = string
+      properties = string
+      iops      = optional(number)
+      throughput = optional(number)
+    })
+    wal_volume = optional(object({
+      size_gb   = number
+      type      = string
+      properties = string
+      iops      = optional(number)
+      throughput = optional(number)
+    }))
+    pgvector       = optional(bool, false)
+    settings = optional(list(object({
+      name  = string
+      value = string
+    })), [])
+    allowed_ip_ranges = optional(list(object({
+      cidr_block = string
+      description = optional(string, "default description")
+    })), [])
+    allowed_machines = optional(list(string), ["*"])
+  }))
+
+  validation {
+    condition = !anytrue([for name, grouping in var.data_groups: !contains(["single", "ha", "pgd"], grouping.type)])
+    error_message = (
+      <<-EOT
+      Data groups must define a valid type.
+      Please choose from the following: single, ha, pgd
+      Data groups: ${jsonencode(var.data_groups)}
+      EOT
+    )
+  }
+
+  validation {
+    condition = !anytrue([for name, grouping in var.data_groups: !contains(["epas", "pgextended", "postgres"], grouping.engine)])
+    error_message = (
+      <<-EOT
+      Data groups must define a valid engine.
+      Please choose from the following: epas, pgextended, postgres
+      Data groups: ${jsonencode(var.data_groups)}
+      EOT
+    )
+  }
+
+  validation {
+    condition = length(var.data_groups) >= 1
+    error_message = (
+      <<-EOT
+      Data groups must define at least one data group.
+      EOT
+    )
+  }
+
+  validation {
+    condition = length(var.data_groups) <= 1 || !anytrue([for name, grouping in var.data_groups: grouping.type != "pgd"])
+    error_message = (
+      <<-EOT
+      Multiple data groups are only supported for type "pgd".
+      EOT
+    )
+  }
+
+  validation {
+    condition = !anytrue([for name, grouping in var.data_groups: grouping.type != "pgd" || grouping.volume.size_gb < 32 || try(grouping.wal_volume.size_gb,32) < 32])
+    error_message = (
+      <<-EOT
+      When using pgd, the minimum storage size is 32 gb.
+      EOT
+    )
+  }
+
+  validation {
+    condition = length(distinct([for k,v in var.data_groups: v.region])) == length([for k,v in var.data_groups: v.region])
+    error_message = (
+      <<-EOT
+      Only one data group allowed per region.
+      Regions defined: ${jsonencode([for k,v in var.data_groups: v.region])}
+      EOT
+    )
+  }
+
+  validation {
+    condition = length(distinct([for name, grouping in var.data_groups: grouping.type])) <= 1
+    error_message = (
+      <<-EOT
+      All types must match:
+      ${jsonencode(var.data_groups)}
+      EOT
+    )
+  }
+}
+
 variable "project" {
   type = object({
     id = optional(string)
   })
-}
-
-variable "pgvector" {
-  type = bool
-  default = false
-  nullable = false
 }
 
 variable "name" {}
@@ -19,47 +117,17 @@ variable "cloud_account" {
   description = "Option for selecting if biganimal should host the resources with your own cloud account instead of biganimal hosted resources"
 }
 variable "cluster_name" {}
-variable "cluster_type" {
-  type = string
-  default = "single"
-
-  validation {
-    condition = contains(["single", "ha", "pgd"], var.cluster_type)
-    error_message = (
-      <<-EOT
-      ${var.cluster_type} not a valid option.
-      Please choose from the following: single, ha, pgd
-      EOT
-    )
-  }
-}
-variable "region" {}
-variable "node_count" {}
-variable "instance_type" {}
-variable "engine" {
-  type = string
-  default = "epas"
-
-  validation {
-    condition = contains(["epas", "pgextended", "postgres"], var.engine)
-    error_message = (
-      <<-EOT
-      ${var.engine} not a valid option.
-      Please choose from the following: epas, pgextended, postgres
-      EOT
-    )
-  }
-}
-variable "engine_version" {
-  type = number
-}
-variable "settings" {}
-variable "volume" {}
-variable "wal_volume" {
-  nullable = false
-  default = {}
-}
 variable "password" {}
+
+variable "cloud_provider" {
+  type = string
+  default = "azure"
+  nullable = false
+  validation {
+    condition = contains(["azure", "bah:azure"], var.cloud_provider)
+    error_message = "Invalid cloud provider"
+  }
+}
 
 variable "publicly_accessible" {
   type     = bool
@@ -67,19 +135,14 @@ variable "publicly_accessible" {
   nullable = false
 }
 
-variable "allowed_ip_ranges" {
-  type = list(object({
-    cidr_block = string
-    description = optional(string)
-  }))
-  nullable = false
-  default = []
-}
-
-variable "allowed_machines" {
-  type = list(string)
-  nullable = false
-  default = ["*"]
+variable "cidr_range" {
+  description = "BigAnimal ip range is pre-set and cannot be updated"
+  type = string
+  default = "10.0.0.0/16"
+  validation {
+    condition = var.cidr_range == "10.0.0.0/16"
+    error_message = "BigAnimal ip range is pre-set and cannot be updated"
+  }
 }
 
 variable "machine_cidrblocks" {
@@ -95,34 +158,6 @@ variable "service_cidrblocks" {
   default = []
 }
 
-locals {
-  # If cidrblocks are not set, biganimal opens service to all ips.
-  # Block traffic if it is an empty list to avoid accidental exposure of the database
-  mod_ip_ranges = length(var.allowed_ip_ranges) >= 1 ? var.allowed_ip_ranges : [{
-    cidr_block = "127.0.0.1/32"
-    description = "private default"
-  }]
-  service_cidrblocks = [
-    for cidr in var.service_cidrblocks : {
-      cidr_block = cidr
-      description = "Service CIDR"
-    }
-  ]
-  machine_cidrblock_wildcard = anytrue([for machine in var.allowed_machines : machine == "*"])
-  machine_names = local.machine_cidrblock_wildcard ? [for machine in keys(var.machine_cidrblocks) : machine] : var.allowed_machines
-  machine_cidrblocks = flatten([
-    for machine_name in local.machine_names : flatten([
-      for cidr in var.machine_cidrblocks[machine_name] : {
-          cidr_block = cidr
-          description = "Machine CIDR - ${machine_name}"
-        }
-    ])
-  ])
-  # Private networking blocks setting of allowed_ip_ranges and forces private endpoints or vpc peering to be used.
-  # The provider overrides with 0.0.0.0/0 but fails to create if allowed_ip_ranges is not an empty list.
-  allowed_ip_ranges = var.publicly_accessible ? concat(local.mod_ip_ranges, local.service_cidrblocks, local.machine_cidrblocks) : []
-}
-
 variable "tags" {
   type = map(any)
   default = {}
@@ -130,14 +165,58 @@ variable "tags" {
 }
 
 locals {
-  # resource expects a cloud provider prefix infront of its instance type
-  instance_type = !startswith("azure:", var.instance_type) ? format("azure:%s",var.instance_type) : var.instance_type
+  service_cidrblocks = [
+    for cidr in var.service_cidrblocks : {
+      cidr_block = cidr
+      description = "Service CIDR"
+    }
+  ]
 
-  # resource expects a cloud provider prefix infront of volume type when using premiumstorage
-  volume_type = !startswith("azure", var.volume.type) && endswith("premiumstorage", var.volume.type) ? format("azure%s", var.volume.type) : var.volume.type
-  volume_size = "${var.volume.size_gb} Gi"
+  use_pgd = anytrue([for group in var.data_groups: group.type == "pgd"]) ? true : false
+  use_wal_volume = anytrue([for group in var.data_groups: group.wal_volume != null && group.wal_volume != []]) ? true : false
 
-  cloud_provider = var.cloud_account ? "azure" : "bah:azure"
+  data_groups = {
+    for name, values in var.data_groups : name => (merge(values, {
+      # Private networking blocks setting of allowed_ip_ranges and forces private endpoints or vpc peering to be used.
+      # The provider overrides with 0.0.0.0/0 but fails to create if allowed_ip_ranges is not an empty list.
+      allowed_ip_ranges = !var.publicly_accessible ? [] : (
+        # If cidrblocks are not set, biganimal opens service to all ips.
+        # Block traffic if it is an empty list to avoid accidental exposure of the database
+        length(values.allowed_ip_ranges) <= 0 && length(var.machine_cidrblocks) <= 0 && length(local.service_cidrblocks) <= 0 ? [{
+          cidr_block = "127.0.0.1/32"
+          description = "private default"
+        }] : concat(
+          values.allowed_ip_ranges,
+          local.service_cidrblocks,
+          # When wildcards are used, we allow all machine_cidrblocks
+          # Otherwise, only allow the specified machines
+          flatten([
+            for machine_name in keys(var.machine_cidrblocks): [
+              for cidr_block in var.machine_cidrblocks[machine_name]: {
+                cidr_block = cidr_block
+                description = "Machine CIDR - ${machine_name}"
+              }
+            ]
+            if anytrue([for allow_name in values.allowed_machines: contains(values.allowed_machines, "*") || contains(keys(var.machine_cidrblocks), allow_name)])
+          ]),
+        )
+      )
+      # Handle single instance node count since it can only be 1
+      node_count = values.type == "single" ? 1 : values.node_count
+      # resource expects a cloud provider prefix infront of its instance type
+      instance_type = !startswith("${var.cloud_provider}:", values.instance_type) ? format("${var.cloud_provider}:%s", values.instance_type) : values.instance_type
+      volume_size = "${values.volume.size_gb} Gi"
+      # resource expects a cloud provider prefix infront of volume type when using premiumstorage
+      volume_type = !startswith("${var.cloud_provider}", var.volume.type) && endswith("premiumstorage", var.volume.type) ? format("${var.cloud_provider}%s", var.volume.type) : var.volume.type
+    }))
+  }
+
+}
+
+
+locals {
+
+  cloud_provider = var.cloud_account ? var.cloud_provider : "bah:${var.cloud_provider}"
   cluster_name = format("%s-%s", var.name, var.name_id)
 
   // Create an object that excludes any null objects
@@ -150,44 +229,82 @@ locals {
   }
   // Remove null values from the volume properties and save with the api variable naming as the key
   // Size must be saved as a string and with the Gi suffix
-  API_DATA = {
+  API_DATA = concat([
+    for group_name, group_values in var.data_groups: {
+      clusterName = local.cluster_name
+      clusterType = group_values.type
+      password = var.password
+      instanceType = { instanceTypeId = group_values.instance_type }
+      allowedIpRanges = [
+        for key, value in group_values.allowed_ip_ranges :
+          {
+            cidrBlock = value.cidr_block
+            description = value.description
+          }
+      ]
+      storage = {
+        for key, value in group_values.volume : local.TERRAFORM_API_MAPPING[key] =>
+          key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+      }
+      walStorage = {
+        for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING[key] =>
+          key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+      }
+      # required 
+      provider = { cloudProviderId = local.cloud_provider }
+      clusterArchitecture = {
+          clusterArchitectureId = group_values.type
+          nodes = group_values.type == "single" ? 1 : group_values.node_count
+      }
+      region = { regionId = group_values.region }
+      pgVersion = { pgVersionId = tostring(group_values.engine_version) }
+      pgType = { pgTypeId = group_values.engine }
+      pgConfig = group_values.settings
+      privateNetworking = !var.publicly_accessible
+      backupRetentionPeriod = "1d"
+      cspAuth = false
+      readOnlyConnections = false
+      superuserAccess = true
+    }], [{ # PGD configuration
     clusterName = local.cluster_name
-    instanceType = { instanceTypeId = local.instance_type }
-    allowedIpRanges = [
-      for key, value in local.allowed_ip_ranges :
-        {
-          cidrBlock = value.cidr_block
-          description = value.description
-        }
-    ]
-    # "premiumstorage" requires "azure" as a prefix when calling the api directly
-    storage = {
-      for key, value in var.volume : local.TERRAFORM_API_MAPPING[key] =>
-        key == "size_gb" ? "${value} Gi"
-        : contains(["type"], key) && contains(["premiumstorage"], value) ? "azurepremiumstorage"
-        : tostring(value) if value != null
-    }
-    walStorage = {
-      for key, value in var.wal_volume : local.TERRAFORM_API_MAPPING[key] =>
-        key == "size_gb" ? "${value} Gi"
-        : contains(["type"], key) && contains(["premiumstorage"], value) ? "azurepremiumstorage"
-        : tostring(value) if value != null
-    }
-    # required 
-    provider = { cloudProviderId = local.cloud_provider }
-    clusterArchitecture = {
-        clusterArchitectureId = var.cluster_type
-        nodes = var.cluster_type == "single" ? 1 : var.node_count
-    }
-    region = { regionId = var.region }
-    pgVersion = { pgVersionId = tostring(var.engine_version) }
-    pgType = { pgTypeId = var.engine }
-    pgConfig = var.settings
+    clusterType = one(distinct([for group_name, group_values in var.data_groups: group_values.type]))
     password = var.password
-    privateNetworking = !var.publicly_accessible
-    backupRetentionPeriod = "1d"
-    cspAuth = false
-    readOnlyConnections = false
-    superuserAccess = true
-  }
+    groups = [ for group_name, group_values in local.data_groups: {
+        clusterType = "data_group"
+        instanceType = { instanceTypeId = group_values.instance_type }
+        allowedIpRanges = [
+          for key, value in group_values.allowed_ip_ranges :
+            {
+              cidrBlock = value.cidr_block
+              description = value.description
+            }
+        ]
+        storage = {
+          for key, value in group_values.volume : local.TERRAFORM_API_MAPPING[key] =>
+            key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+        }
+        walStorage = {
+          for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING[key] =>
+            key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+        }
+        # required 
+        provider = { cloudProviderId = local.cloud_provider }
+        clusterArchitecture = {
+            clusterArchitectureId = group_values.type
+            nodes = group_values.type == "single" ? 1 : group_values.node_count
+        }
+        region = { regionId = group_values.region }
+        pgVersion = { pgVersionId = tostring(group_values.engine_version) }
+        pgType = { pgTypeId = group_values.engine }
+        pgConfig = group_values.settings
+        privateNetworking = !var.publicly_accessible
+        backupRetentionPeriod = "1d"
+        cspAuth = false
+        readOnlyConnections = false
+        superuserAccess = true
+      }
+    ]}
+  # Ternary requires consistent types.
+  # A workaround is to setup a list of objects and then use a conditional to choose the correct index.
+  ])[local.use_pgd ? 1 : 0]
 }

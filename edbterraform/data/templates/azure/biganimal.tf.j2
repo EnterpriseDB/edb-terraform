@@ -1,36 +1,19 @@
-module "biganimal_{{ region_ }}" {
-  source = "./modules/biganimal"
+module "biganimal" {
+  source             = "./modules/biganimal"
 
-  for_each = {
-    for rm in lookup(module.spec.region_biganimals, "{{ region }}", []) : 
-      rm.name => rm 
-  }
+  for_each           = module.spec.biganimal
 
-  project                   = each.value.spec.project
-  name                      = each.value.name
-  name_id                   = module.spec.hex_id
+  project            = each.value.project
+  name               = each.key
+  name_id            = module.spec.hex_id
 
-  cloud_account             = each.value.spec.cloud_account
-  cluster_name              = module.spec.base.tags.cluster_name
-  cluster_type              = each.value.spec.type
-  node_count                = each.value.spec.node_count
-  region                    = each.value.spec.region
-  engine                    = each.value.spec.engine
-  engine_version            = each.value.spec.engine_version
-  instance_type             = each.value.spec.instance_type
-  volume                    = each.value.spec.volume
-  wal_volume                = each.value.spec.wal_volume
-  password                  = each.value.spec.password
-  pgvector                  = each.value.spec.pgvector
-  allowed_ip_ranges         = each.value.spec.allowed_ip_ranges
-  allowed_machines          = each.value.spec.allowed_machines
-  service_cidrblocks        = local.biganimal_service_cidrblocks
-  machine_cidrblocks        = local.machine_cidrblocks
+  cloud_account      = each.value.cloud_account
+  cluster_name       = module.spec.base.tags.cluster_name
+  password           = each.value.password
+  data_groups        = each.value.data_groups
+  service_cidrblocks = local.biganimal_service_cidrblocks
+  machine_cidrblocks = local.machine_cidrblocks
 
-  settings                  = each.value.spec.settings
-
-  tags                     = each.value.spec.tags
-
-  depends_on = [module.security_{{ region_ }}]
+  tags               = each.value.tags
 
 }

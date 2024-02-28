@@ -1,30 +1,31 @@
 resource "biganimal_cluster" "instance" {
-    count = length(var.wal_volume) > 0 ? 0 : 1
-
-    # required 
+    for_each = local.use_wal_volume || local.use_pgd ? {} : local.data_groups
+    # required
     cloud_provider = local.cloud_provider
     cluster_architecture {
-        id = var.cluster_type
-        nodes = var.cluster_type == "single" ? 1 : var.node_count
+        id = each.value.type
+        nodes = each.value.node_count
     }
     cluster_name = local.cluster_name
-    instance_type = local.instance_type
+    instance_type = each.value.instance_type
     password = var.password
-    pg_type = var.engine
-    pg_version = var.engine_version
-    pgvector = var.pgvector
+    pg_type = each.value.engine
+    pg_version = each.value.engine_version
+    pgvector = each.value.pgvector
     project_id = var.project.id
-    region = var.region
+    region = each.value.region
     storage {
-        volume_type = var.volume.type
-        volume_properties = var.volume.properties
-        size = local.volume_size
-        # IOPs and Throughput not configurable for pd-ssd
+        volume_type = each.value.volume.type
+        volume_properties = each.value.volume.properties
+        size = each.value.volume_size
+        # optional
+        iops = each.value.volume.iops
+        throughput = each.value.volume.throughput
     }
 
     # optional
     dynamic "allowed_ip_ranges" {
-        for_each = local.allowed_ip_ranges
+        for_each = each.value.allowed_ip_ranges
         content {
             cidr_block = allowed_ip_ranges.value.cidr_block
             description = allowed_ip_ranges.value.description
@@ -33,21 +34,19 @@ resource "biganimal_cluster" "instance" {
     backup_retention_period = "1d"
     csp_auth = false
     dynamic "pg_config" {
-        for_each = { for key,values in var.settings: key=>values }
+        for_each = { for key,values in each.value.settings: key=>values }
         content {
             name         = pg_config.value.name
             value        = pg_config.value.value
         }
     }
-    # VPC Peering or other must be configured with CLI
-    # when using a private network
     private_networking = !var.publicly_accessible
     read_only_connections = false
     superuser_access = true
 }
 
 resource "toolbox_external" "api" {
-  count = length(var.wal_volume) > 0 ? 1 : 0
+  count = local.use_wal_volume ? 1 : 0
   create = true
   read = false
   update = false
@@ -162,7 +161,7 @@ resource "toolbox_external" "api" {
 }
 
 locals {
-  cluster_output = length(var.wal_volume) > 0 ? jsondecode(toolbox_external.api.0.result.data) : biganimal_cluster.instance.0
+  cluster_output = local.use_wal_volume ? jsondecode(toolbox_external.api.0.result.data) : one(values(biganimal_cluster.instance))
   cluster_region = try(local.cluster_output.region.regionId, local.cluster_output.region)
   cluster_id = try(local.cluster_output.clusterId, local.cluster_output.cluster_id)
   /*
