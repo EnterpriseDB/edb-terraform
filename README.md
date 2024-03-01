@@ -16,10 +16,14 @@ The following components must be installed on the system:
   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
   - [GCloud CLI](https://cloud.google.com/sdk/docs/install-sdk)
   - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-  - [BigAnimal CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/) currently optional since the terraform provider relies on the environment variable `BA_BEARER_TOKEN` and it requires manual authentication.
-    - For automation, [get-token.sh script](https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh) requires manual intervention every:
-      - 30 days
-      - Expired token is reused
+  - [BigAnimal CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/)
+    - `BA_ACCESS_KEY` environment variable (priority)
+      - Go to `https://portal.biganimal.com/access-keys` to create an access token that last 1-365 days.
+    - `BA_BEARER_TOKEN` environment variable (deprecated).
+      - [get-token.sh script](https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh) requires manual intervention every:
+        - New token request
+        - 30 days since initial token request
+        - Expired token is reused
 
 > :information_source:  
 > Refer to official documentation for credential management and environment specific installation.  
