@@ -56,12 +56,14 @@ resource "toolbox_external" "api" {
     "bash",
     "-c",
     <<EOT
+    set -eou pipefail
+
     create_stage() {
       URI="https://portal.biganimal.com/"
       ENDPOINT="api/v3/projects/${var.project.id}/clusters"
       REQUEST_TYPE="POST"
       DATA='${jsonencode(local.API_DATA)}'
-      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "authorization: Bearer $BA_BEARER_TOKEN" --url "$URI$ENDPOINT" --data "$DATA")
+      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA")
       RC=$?
       if [[ $RC -ne 0 ]];
       then
@@ -81,7 +83,7 @@ resource "toolbox_external" "api" {
       SLEEP_TIME=15
       while [[ $PHASE != *"healthy"* ]]
       do
-        RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "authorization: Bearer $BA_BEARER_TOKEN" --url "$URI$ENDPOINT")
+        RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT")
         RC=$?
         if [[ $RC -ne 0 ]]
         then
@@ -109,7 +111,7 @@ resource "toolbox_external" "api" {
       URI="https://portal.biganimal.com/"
       ENDPOINT="api/v3/projects/${var.project.id}/clusters/$1"
       REQUEST_TYPE="DELETE"
-      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "authorization: Bearer $BA_BEARER_TOKEN" --url "$URI$ENDPOINT")
+      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT")
       RC=$?
       if [[ $RC -ne 0 ]];
       then
@@ -121,7 +123,17 @@ resource "toolbox_external" "api" {
     }
 
     # Get json object from stdin
-    read input
+    IFS='' read -r input || [ -n "$input" ]
+
+    # BigAnimal API accepts either an access key or a bearer token
+    # The access token should be preferred if set and non-empty.
+    AUTH_HEADER=""
+    if [ ! -z "$${BA_ACCESS_KEY:+''}" ]
+    then
+      AUTH_HEADER="x-access-key: $BA_ACCESS_KEY"
+    else
+      AUTH_HEADER="authorization: Bearer $BA_BEARER_TOKEN"
+    fi
 
     # Check CRUD stage from terraform
     # and make appropriate calls
