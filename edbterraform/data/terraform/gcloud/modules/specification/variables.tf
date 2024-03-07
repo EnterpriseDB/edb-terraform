@@ -156,6 +156,10 @@ variable "spec" {
         })))
         allowed_machines = optional(list(string))
       })))
+      witness_groups = optional(map(object({
+        region = string
+        cloud_service_provider = string
+      })), {})
       tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({
