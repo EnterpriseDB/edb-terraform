@@ -102,6 +102,39 @@ variable data_groups {
   }
 }
 
+variable "witness_groups" {
+  description = "A single witness node is needed when using 2 data groups. It can be in a different cloud provider but cannot be in the same region as the data groups when using the same provider."
+  default = {}
+  nullable = false
+  type = map(object({
+    region = string
+    cloud_service_provider = string
+    maintenance_window = optional(object({
+      is_enabled = bool
+      start_day = number
+      start_time = string
+    }), {
+      is_enabled = false
+      start_day = 0
+      start_time = "00:00"
+    })
+  }))
+
+  validation {
+    condition = (
+      var.witness_groups == {} ||
+      var.witness_groups == null ||
+      alltrue([for k, v in var.witness_groups: v.maintenance_window.is_enabled == true || v.maintenance_window.start_day == 0 && v.maintenance_window.start_time == "00:00"])
+    )
+    error_message = (
+      <<-EOT
+      When maintenance window is disabled, start day and start time must be 0
+      # https://github.com/EnterpriseDB/terraform-provider-biganimal/issues/491
+      EOT
+    )
+  }
+}
+
 variable "project" {
   type = object({
     id = optional(string)
