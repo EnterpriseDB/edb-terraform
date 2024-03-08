@@ -53,6 +53,12 @@ resource "aws_instance" "machine" {
       # ebs_block_device,
     ]
   }
+
+  timeouts {
+    create = "30m"
+    update = "30m"
+    delete = "30m"
+  }
 }
 
 # Create set of volumes around the machine instance to be attached post-terraform
