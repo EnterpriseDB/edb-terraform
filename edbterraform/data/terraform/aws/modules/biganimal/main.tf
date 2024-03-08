@@ -45,6 +45,100 @@ resource "biganimal_cluster" "instance" {
     superuser_access = true
 }
 
+resource "biganimal_pgd" "clusters" {
+    count = local.use_wal_volume || !local.use_pgd ? 0 : 1
+
+    # required
+    cluster_name = local.cluster_name
+    project_id = var.project.id
+    password = var.password
+
+    data_groups = [
+      for key, values in local.data_groups: {
+        cloud_provider = {
+          cloud_provider_id = local.cloud_provider
+        }
+        cluster_architecture = {
+            cluster_architecture_id = values.type
+            nodes = values.node_count
+        }
+        instance_type = { 
+          instance_type_id = values.instance_type
+        }
+        pg_type = {
+          pg_type_id = values.engine
+        }
+        pg_version = {
+          pg_version_id = values.engine_version
+        }
+        project_id = var.project.id
+        region = {
+          region_id = values.region
+        }
+        storage = {
+            volume_type = values.volume.type
+            volume_properties = values.volume.properties
+            size = values.volume_size
+            # optional
+            iops = values.volume.iops
+            throughput = values.volume.throughput
+        }
+
+        maintenance_window = {
+          is_enabled = false
+          start_day  = 0
+          start_time = "00:00"
+        }
+
+        # optional
+        allowed_ip_ranges = [
+          for k, range_values in values.allowed_ip_ranges: {
+            cidr_block = range_values.cidr_block
+            description = range_values.description
+          }
+        ]
+        pg_config = [
+          for k, config_values in values.settings: {
+            name         = config_values.name
+            value        = config_values.value
+          }
+        ]
+
+        pe_allowed_principled_ids = []
+        service_account_ids = contains(["gcp", "bah:gcp"], var.cloud_provider) ? [] : null
+
+        backup_retention_period = "1d"
+        csp_auth = false
+        private_networking = !var.publicly_accessible
+        read_only_connections = false
+        superuser_access = true
+      }
+    ]
+
+    witness_groups = [
+      for k,v in var.witness_groups: {
+        region = {
+          region_id = v.region
+        }
+        cloud_provider = {
+          cloud_provider_id = v.cloud_service_provider
+        }
+        maintenance_window = {
+          is_enabled = v.maintenance_window.is_enabled
+          start_day = v.maintenance_window.start_day
+          start_time = v.maintenance_window.start_time
+        }
+      }
+    ]
+
+  lifecycle {
+    precondition {
+      error_message = "Witness group must be set when using 2 data groups with pgd"
+      condition = length(local.data_groups) <= 1 || length(var.witness_groups) > 0
+    }
+  }
+}
+
 resource "toolbox_external" "api" {
   count = local.use_wal_volume ? 1 : 0
   create = true
@@ -161,8 +255,8 @@ resource "toolbox_external" "api" {
 }
 
 locals {
-  cluster_output = local.use_wal_volume ? jsondecode(toolbox_external.api.0.result.data) : one(values(biganimal_cluster.instance))
-  cluster_region = try(local.cluster_output.region.regionId, local.cluster_output.region)
+  cluster_output = try(jsondecode(toolbox_external.api.0.result.data), one(values(biganimal_cluster.instance), biganimal_pgd.clusters.0))
+  cluster_region = try(local.cluster_output.region.regionId, local.cluster_output.region, local.cluster_output.data_groups.*.region.region_id)
   cluster_id = try(local.cluster_output.clusterId, local.cluster_output.cluster_id)
   /*
   BigAnimal does not output the VPC id as it shares a VPC for all clusters within a project
@@ -170,8 +264,8 @@ locals {
   - the resource will contain the project id: prj_<project_id>
   */
   base_project_id = trimprefix(var.project.id, "prj_")
-  vpc_name = format("vpc-%s-%s", local.base_project_id, local.cluster_region)
-  vpc_cmd = "aws ec2 describe-vpcs --filter Name=tag:Name,Values=${local.vpc_name} --query Vpcs[] --output json --region ${local.cluster_region}"
+  vpc_name = try(format("vpc-%s-%s", local.base_project_id, local.cluster_region), "unknown")
+  vpc_cmd = try("aws ec2 describe-vpcs --filter Name=tag:Name,Values=${local.vpc_name} --query Vpcs[] --output json --region ${local.cluster_region}", "")
   extract_vpc_id = "jq -r .[].VpcId"
   extract_biganimal_id = "jq -r '.[].Tags[] | select(.Key == \"BAID\") | .Value'"
 
@@ -181,19 +275,19 @@ locals {
   */
   // postgres bucket - pg-bucket-<project_id>-<region>/<cluster_id>/
   // Will contain base and wals directory
-  postgres_bucket = format("pg-bucket-%s-%s", local.base_project_id, local.cluster_region)
+  postgres_bucket = try(format("pg-bucket-%s-%s", local.base_project_id, local.cluster_region), "unknown")
   postgres_bucket_prefix = local.cluster_id
   // container logs bucket will need to be queried as each node will have a different directory suffix
   // Bucket may not not be available for some time after provisioning completes
-  container_bucket = format("logs-bucket-%s-%s", local.base_project_id, local.cluster_region)
-  partial_container_prefix = format("kubernetes-logs/customer_postgresql_cluster.var.log.containers.%s", local.cluster_id)
+  container_bucket = try(format("logs-bucket-%s-%s", local.base_project_id, local.cluster_region), "unknown")
+  partial_container_prefix = try(format("kubernetes-logs/customer_postgresql_cluster.var.log.containers.%s", local.cluster_id), "unknown")
   // metrics logs bucket
   // directory prefix unknown
-  metrics_bucket = format("metrics-bucket-%s-%s", local.base_project_id, local.cluster_region)
+  metrics_bucket = try(format("metrics-bucket-%s-%s", local.base_project_id, local.cluster_region), "unknown")
 }
 
 resource "toolbox_external" "vpc" {
-  count = var.cloud_account ? 1 : 0
+  count = var.cloud_account && !local.use_pgd ? 1 : 0
   program = [
     "bash",
     "-c",
@@ -212,7 +306,7 @@ resource "toolbox_external" "vpc" {
     BIGANIMAL_ID=$(printf "%s" "$RESULT" | ${local.extract_biganimal_id})
 
     # BigAnimal main route table
-    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --query RouteTables[?Associations[0].Main].RouteTableId --output text --region ${local.cluster_region}"
+    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --query RouteTables[?Associations[0].Main].RouteTableId --output text --region ${format("%v", local.cluster_region)}"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
@@ -224,7 +318,7 @@ resource "toolbox_external" "vpc" {
     MAIN_ROUTE_TABLE=$RESULT
 
     # BigAnimal uses private 3 route tables with the tags ManagedBy=BigAnimal and Name=*private*
-    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --filter "Name=tag:ManagedBy,Values=BigAnimal" --filter "Name=tag:Name,Values=*private*"  --query RouteTables[].RouteTableId --output json --region ${local.cluster_region}"
+    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --filter "Name=tag:ManagedBy,Values=BigAnimal" --filter "Name=tag:Name,Values=*private*"  --query RouteTables[].RouteTableId --output json --region ${try(local.cluster_region, "")}"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
@@ -238,7 +332,7 @@ resource "toolbox_external" "vpc" {
     ROUTE_TABLE_2=$(printf "%s" $RESULT | jq -r .[2])
 
     # BigAnimal has a loadbalancer attached to the projects vpc
-    CMD="aws elbv2 describe-load-balancers --query "LoadBalancers[?VpcId==\'$VPC_ID\']" --region ${local.cluster_region} --output json"
+    CMD="aws elbv2 describe-load-balancers --query "LoadBalancers[?VpcId==\'$VPC_ID\']" --region ${format("%v", local.cluster_region)} --output json"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
