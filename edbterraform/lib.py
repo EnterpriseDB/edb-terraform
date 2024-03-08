@@ -9,7 +9,7 @@ import shutil
 import subprocess
 from jinja2 import Environment, FileSystemLoader
 import textwrap
-from typing import List, Optional
+from typing import List, Dict, Optional
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -356,10 +356,10 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
 
 def generate_terraform(
         infra_file: Path,
-        infra_template_variables: dict,
         project_path: Path,
         csp: str,
         bin_path: Path,
+        infra_template_variables: Optional[Dict]={},
         terraform_version: str = TerraformCLI.max_version.to_string(),
         user_templates: Optional[List[Path]]=[],
         hcl_lock_file: Optional[Path]=None,
