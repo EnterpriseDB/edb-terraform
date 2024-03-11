@@ -27,7 +27,7 @@ terraform {
 
     google = {
       source = "registry.terraform.io/hashicorp/google"
-      version = "<= 5.14.0"
+      version = "<= 5.20.0"
     }
 
     kubernetes = {
