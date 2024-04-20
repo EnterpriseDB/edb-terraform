@@ -28,6 +28,9 @@ variable "tags" {
 variable "image_info" {}
 
 locals {
+  # Skip execution of prearranged volume script if the object is null/empty or all key-values contain empty/null values.
+  execute_preattached_volumes = !alltrue([for k,v in try(var.machine.spec.preattached_volumes, {}): v == null || v == {} || v == ""])
+
   additional_volumes_length = length(lookup(var.machine.spec, "additional_volumes", []))
   additional_volumes_count = local.additional_volumes_length > 0 ? 1 : 0
   additional_volumes_map = { for i, v in lookup(var.machine.spec, "additional_volumes", []) : i => v }
