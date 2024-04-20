@@ -8,7 +8,6 @@ aws:
       owner: 679593333241
       ssh_user: rocky
     debian:
-      name: debian-10-amd64
       owner: 136693071363
       ssh_user: admin
   regions:
@@ -50,6 +49,17 @@ aws:
         size_gb: 50
         iops: 5000
         encrypted: false
+      # Some cloud instances come with preattached volumes.
+      # Define preattached_volumes to create an lvm physical/group volume and its mount points.
+      #preattached_volumes:
+      #  required: false
+      #  volume_group: "sample"
+      #  mount_points:
+      #    /opt/testing:
+      #      size: 100%FREE
+      #      filesystem: xfs
+      #      mount_options:
+      #      - noatime
       tags:
         type: dbt2-driver
     pg1:
