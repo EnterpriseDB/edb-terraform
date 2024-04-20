@@ -8,6 +8,7 @@ aws:
       owner: 679593333241
       ssh_user: rocky
     debian:
+      name: debian-12-amd64
       owner: 136693071363
       ssh_user: admin
   regions:
