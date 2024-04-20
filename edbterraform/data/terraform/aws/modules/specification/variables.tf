@@ -72,6 +72,17 @@ variable "spec" {
         iops      = optional(number)
         encrypted = optional(bool)
       })
+      # Some cloud instances come with pre-attached storage.
+      # Creates an lvm group from the storage and creates any logical volumes for the mount points.
+      preattached_volumes = optional(object({
+        required = optional(bool)
+        volume_group = optional(string)
+        mount_points = optional(map(object({
+          size = optional(string)
+          filesystem = optional(string)
+          mount_options = optional(string)
+        })))
+      }), {})
       # Creates a set of volumes around a machine instance to be attached post-terraform
       jbod_volumes = optional(map(object({
         type = string
