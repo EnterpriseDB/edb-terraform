@@ -77,7 +77,7 @@ resource "aws_ebs_volume" "jbod_volumes" {
 }
 
 resource "null_resource" "ensure_ssh_open" {
-  count = local.additional_volumes_count
+  count = local.additional_volumes_length > 0 || local.execute_preattached_volumes ? 1 : 0
   triggers = {
     "depends0" = local.additional_volumes_length
     "depends1" = can(module.machine_ports)
@@ -99,7 +99,7 @@ resource "null_resource" "ensure_ssh_open" {
 }
 
 resource "toolbox_external" "initial_block_devices" {
-  count = local.additional_volumes_count
+  count = local.additional_volumes_length > 0 || local.execute_preattached_volumes ? 1 : 0
   query = {
     depend0 = can(null_resource.ensure_ssh_open)
     depends1 = local.additional_volumes_length
@@ -161,6 +161,22 @@ locals {
 }
 
 locals {
+  ssh_timeout = 240
+
+  preattached_volumes_script = "setup_preattached_volumes.sh"
+  preattached_volumes_variables = {
+    "required": coalesce(try(var.machine.spec.preattached_volumes.required, null), false)
+    "volume_group": coalesce(try(var.machine.spec.preattached_volumes.volume_group, null), "preattached_storage")
+    "mount_points": {
+      for mount_point, attributes in coalesce(try(var.machine.spec.preattached_volumes.mount_points, null), {}): mount_point => {
+        "size": coalesce(attributes.size, "100%FREE")
+        "filesystem": coalesce(attributes.filesystem, local.filesystem)
+        "mount_options": try(join(",", attributes.mount_options), join(",", local.mount_options))
+        "type": "striped"
+        "stripesize": "64 KB"
+    }}
+  }
+
   volume_variables = [
     for key, values in local.additional_volumes_map: {
         "device_names": element(local.linux_device_names, tonumber(key))
@@ -184,8 +200,48 @@ locals {
   }
 }
 
-locals {
-  ssh_timeout = 240
+resource "toolbox_external" "setup_preattached_volumes" {
+  count = local.execute_preattached_volumes ? 1 : 0
+  query = {
+    depend0 = can(toolbox_external.all_block_devices)
+  }
+  program = [
+    "bash",
+    "-c",
+    <<-EOT
+    ERROR_CHECK() {
+      if [[ $1 -ne 0 ]];
+      then
+        printf "%s\n" "$2" 1>&2
+        exit $1
+      fi
+    }
+
+    CONNECTION="${var.operating_system.ssh_user}@${aws_instance.machine.public_ip}"
+    SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=${local.ssh_timeout}"
+    SFTP_OPTIONS="-P ${var.machine.spec.ssh_port} -i ${var.machine.spec.operating_system.ssh_private_key_file} $SSH_OPTIONS"
+
+    # Copy script to /tmp directory
+    CMD="sftp -b <(printf '%s\n' 'put ${abspath(path.module)}/${local.preattached_volumes_script}') $SFTP_OPTIONS $CONNECTION:/tmp/"
+    RESULT=$(eval $CMD)
+    ERROR_CHECK $? $RESULT
+
+    ADDITIONAL_SSH_OPTIONS="-p ${var.machine.spec.ssh_port} -i ${var.machine.spec.operating_system.ssh_private_key_file}"
+    SSH_CMD="ssh $CONNECTION $ADDITIONAL_SSH_OPTIONS $SSH_OPTIONS"
+
+    # Set script as executable
+    CMD="$SSH_CMD chmod a+x /tmp/${local.preattached_volumes_script}"
+    RESULT=$($CMD)
+    ERROR_CHECK $? $RESULT
+
+    # Execute Script
+    CMD="$SSH_CMD /tmp/${local.preattached_volumes_script} ${base64encode(jsonencode(local.preattached_volumes_variables))} ${toolbox_external.initial_block_devices.0.result.base64json} >> /tmp/mount.log"
+    RESULT=$($CMD)
+    ERROR_CHECK $? $RESULT
+
+    jq -n --arg base64json "$(printf %s $RESULT | base64 | tr -d \\n)" '{"base64json": $base64json}'
+    EOT
+  ]
 }
 
 resource "toolbox_external" "setup_volumes" {
@@ -235,7 +291,7 @@ resource "toolbox_external" "setup_volumes" {
       exit $RC
     fi
 
-    jq -n --arg base64json "$(printf %s $result | base64 | tr -d \\n)" '{"base64json": $base64json}'
+    jq -n --arg base64json "$(printf %s $RESULT | base64 | tr -d \\n)" '{"base64json": $base64json}'
     EOT
   ]
 }
