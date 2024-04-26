@@ -2,6 +2,12 @@ variable "machine" {}
 variable "public_cidrblocks" {}
 variable "service_cidrblocks" {}
 variable "internal_cidrblocks" {}
+variable "force_ssh_access" {
+  description = "Force append a service rule for ssh access"
+  default = false
+  type = bool
+  nullable = false
+}
 locals {
   ssh_defined = anytrue([for port in var.machine.spec.ports: port.port == var.machine.spec.ssh_port])
   machine_ports = concat(var.machine.spec.ports, (!var.force_ssh_access || local.ssh_defined ? [] : [
