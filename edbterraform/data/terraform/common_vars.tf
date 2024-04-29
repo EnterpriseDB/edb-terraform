@@ -47,7 +47,8 @@ variable "dynamic_service_ip_mask" {
 
 variable "dynamic_service_ip_url" {
   type = string
-  default = "https://ipinfo.io/ip"
+  description = "Endpoint to get the dynamic IP address."
+  default = "https://checkip.amazonaws.com/"
   nullable = false
 }
 
@@ -68,7 +69,7 @@ locals {
   dynamic_ip = var.force_dynamic_ip ? [
     "${cidrhost(
         format("%s/%s",
-          split("/", data.http.instance_ip[0].response_body)[0], # Drop any prefined masks
+          split("/", chomp(data.http.instance_ip[0].response_body))[0], # Drop any prefined masks
           var.dynamic_service_ip_mask),
         0)
     }/${var.dynamic_service_ip_mask}"
