@@ -426,14 +426,15 @@ class AzureCLI:
 
     def check_version(self):
         try:
+            version_keyname='azure-cli'
             path = self.get_binary()
-            command = [path, '--version']
+            command = [path, 'version']
             output = execute_shell(
                 args=command,
                 environment=os.environ.copy(),
             )
-            result = output.decode("utf-8")
-            return Version(result.split('\n')[0].split()[-1])
+            result = json.loads(output.decode("utf-8"))
+            return Version(result[version_keyname])
         except KeyError as e:
             raise e(f'version keyname was not found')
 
