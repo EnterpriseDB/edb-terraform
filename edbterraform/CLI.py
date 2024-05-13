@@ -32,7 +32,7 @@ class TerraformCLI:
         self.version = self.max_version if not version else Version(version)
         self.skip_install = self.version == Version("0")
         self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
-        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.bin_path =  self.default_path
         self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
@@ -241,7 +241,7 @@ class JqCLI:
         # JQ drops the patch version when it is 0 and may include a tainted patch
         self.format_version = self.version.to_string(tainted=True, include_zero_patch=False)
         self.default_path = Path(self.bin_dir) / self.binary_name / self.format_version / 'bin'
-        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.bin_path =  self.default_path
         self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
@@ -347,7 +347,7 @@ class AwsCLI:
         self.skip_install = self.version == Version("0")
         self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
         self.default_venv = self.default_path.parents[0] / 'venv'
-        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.bin_path =  self.default_path
         self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.operating_system = platform.system().lower()
 
@@ -420,7 +420,7 @@ class AzureCLI:
         self.skip_install = self.version == Version("0")
         self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
         self.default_venv = self.default_path.parents[0] / 'venv'
-        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.bin_path =  self.default_path
         self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.operating_system = platform.system().lower()
 
@@ -491,7 +491,7 @@ class GoogleCLI:
         self.skip_install = self.version == Version("0")
         self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
         self.default_venv = self.default_path.parents[0]
-        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.bin_path =  self.default_path
         self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
@@ -562,7 +562,7 @@ class BigAnimalCLI:
         self.version = self.max_version if not version else Version(version)
         self.skip_install = self.version == Version("0")
         self.default_path = Path(self.bin_dir) / self.binary_name / self.version.to_string() / 'bin'
-        self.bin_path =  self.default_path if self.bin_dir == self.DOT_PATH else Path(self.bin_dir)
+        self.bin_path =  self.default_path
         self.binary_full_path = Path(self.bin_path) / self.binary_name
         self.architecture = self.arch_alias.get(platform.machine().lower(),platform.machine().lower())
         self.operating_system = platform.system().lower()
