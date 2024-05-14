@@ -50,7 +50,7 @@ do
 	# NVME device.
 	TARGET_NVME_DEVICE=""
 	for NVME_DEVICE in $(sudo ls -1v /dev/nvme*n*); do
-		FOUND_DEVICE=$(sudo nvme id-ctrl -v "${NVME_DEVICE}" | grep "0000:" | awk '{ print $18 }' | sed 's/["\.]//g')
+		FOUND_DEVICE=$(sudo nvme id-ctrl --vendor-specific "${NVME_DEVICE}" | grep "0000:" | awk '{ print $18 }' | sed 's/["\.]//g')
 
 		# /dev/ might be dropped at times so we need to check both cases
 		for DEVNAME in ${TARGET_DEVICES[*]}; do
