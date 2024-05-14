@@ -51,7 +51,7 @@ do
 	# Based on the target EBS device (/dev/sdX) we have to find the corresponding
 	# NVME device.
 	for NVME_DEVICE in $(sudo ls /dev/nvme*n*); do
-		FOUND_DEVICE=$(sudo nvme id-ctrl -v "${NVME_DEVICE}" | grep "0000:" | awk '{ print $18 }' | sed 's/["\.]//g')
+		FOUND_DEVICE=$(sudo nvme id-ctrl --vendor-specific "${NVME_DEVICE}" | grep "0000:" | awk '{ print $18 }' | sed 's/["\.]//g')
 
 		# /dev/ might be dropped at times so we need to check both cases
 	    if [[ "${TARGET_DEVICES[*]}" =~ "$FOUND_DEVICE" ]] || [[ "${TARGET_DEVICES[*]}" =~ "/dev/$FOUND_DEVICE" ]]; then
