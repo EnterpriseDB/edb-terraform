@@ -32,7 +32,7 @@ terraform {
 
     kubernetes = {
       source = "registry.terraform.io/hashicorp/kubernetes"
-      version = "< 2.25.3"
+      version = "< 2.30.1"
     }
 
     null = {
