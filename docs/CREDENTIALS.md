@@ -101,6 +101,115 @@ jobs:
 - [github actions docs](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 - [aws actions docs](https://github.com/aws-actions/configure-aws-credentials?tab=readme-ov-file#OIDC)
 
+#### Script
+```bash
+#!/bin/bash
+# Modify as needed as the script assumes
+# - the current user has the necessary permissions to create the role.
+# - Minimal role permissions to test the connection with github actions.
+# Creates:
+# - The OIDC provider
+# - A role for use with Github Actions
+# https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/
+set -eou pipefail
+
+FORCE_RECREATE_ROLE=false
+ROLE_NAME="EXAMPLE_ACTION_ROLE"
+ORGANIZATION="EnterpriseDB"
+REPO="SET_TO_REPO_NAME"
+
+IDP_URL="token.actions.githubusercontent.com"
+OIDC_THUMBPRINT="6938fd4d98bab03faadb97b34396831e3780aea1"
+AUDIENCE="sts.amazonaws.com"
+POLICY_FILE="assume-role-policy-document.json"
+
+# Get current accounts ARN ID
+echo "Getting ARN ID from current user"
+ARN_ID=$(aws sts get-caller-identity | jq -r '.Account')
+echo "ARN ID: ${ARN_ID}"
+
+PROVIDER_ARN="arn:aws:iam::${ARN_ID}:oidc-provider/${IDP_URL}"
+
+# Create the OIDC provider
+echo "Checking if OIDC provider exists: ${IDP_URL}"
+if aws iam list-open-id-connect-providers | grep -q "${PROVIDER_ARN}"
+then
+  echo "OIDC provider already exists"
+else
+  echo "OIDC provider does not exist"
+  echo "Creating OIDC provider: ${IDP_URL}"
+  aws iam create-open-id-connect-provider --url "https://${IDP_URL}" \
+                                          --thumbprint-list "${OIDC_THUMBPRINT}" \
+                                          --client-id-list "${AUDIENCE}"
+fi
+
+# Create permissions for the role
+# Creating roles doc: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp.html#roles-creatingrole-identityprovider-cli
+echo "Creating permissions for the role - filename: ${POLICY_FILE}"
+cat << EOF > "${POLICY_FILE}"
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Principal": {
+        "Federated": "arn:aws:iam::${ARN_ID}:oidc-provider/${IDP_URL}"
+      },
+      "Condition": {
+        "StringEquals": {
+          "${IDP_URL}:aud": [
+            "${AUDIENCE}"
+          ]
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": [
+            "repo:${ORGANIZATION}/${REPO}"
+          ]
+        }
+      }
+    }
+  ]
+}
+EOF
+
+# Create the role
+echo "Creating role: ${ROLE_NAME}"
+# Check if the role exists, delete it and recreate it
+if [ "${FORCE_RECREATE_ROLE}" = "true" ] || [ "${FORCE_RECREATE_ROLE}" = "1" ] && \
+    aws iam get-role --role-name "${ROLE_NAME}" > /dev/null 2>&1
+then
+    echo "Role already exists, deleting role: ${ROLE_NAME}"
+    ROLE_PROFILES=$(aws iam list-instance-profiles-for-role --role-name "${ROLE_NAME}")
+    ROLE_INLINE_POLICIES=$(aws iam list-role-policies --role-name "${ROLE_NAME}")
+    ROLE_ATTACHED_POLICIES=$(aws iam list-attached-role-policies --role-name "${ROLE_NAME}")
+
+    for profile in $(echo $ROLE_PROFILES | jq -r '.InstanceProfiles[].InstanceProfileName')
+    do
+        echo "Deleting instance profile: ${profile}"
+        aws iam remove-role-from-instance-profile --role-name "${ROLE_NAME}" --instance-profile-name "${profile}"
+    done
+
+    for policy in $(echo $ROLE_INLINE_POLICIES | jq -r '.PolicyNames[]')
+    do
+        echo "Deleting role policy: ${policy}"
+        aws iam delete-role-policy --role-name "${ROLE_NAME}" --policy-name "${policy}"
+    done
+
+    for policy in $(echo $ROLE_ATTACHED_POLICIES | jq -r '.AttachedPolicies[].PolicyArn')
+    do
+        echo "Detaching role policy: ${policy}"
+        aws iam detach-role-policy --role-name "${ROLE_NAME}" --policy-arn "${policy}"
+    done
+
+    aws iam delete-role --role-name "${ROLE_NAME}"
+fi
+ROLE=$(aws iam create-role --role-name "${ROLE_NAME}" --assume-role-policy-document "file://${POLICY_FILE}")
+ROLE_ARN=$(echo $ROLE | jq -r '.Role.Arn')
+
+echo "role-to-assume: ${ROLE_ARN}"
+```
+
 ## Azure
 #### OpenID Connect (OIDC)
 
