@@ -145,6 +145,9 @@ fi
 
 # Create permissions for the role
 # Creating roles doc: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp.html#roles-creatingrole-identityprovider-cli
+# Restrict by organization and repo: repo:OWNER/REPOSITORY:*
+# Restrict by organization, repo, and branch: repo:OWNER/REPOSITORY:ref:refs/heads/BRANCH_NAME
+# Restrict by repo environment: repo:OWNER/REPOSITORY:environment:NAME
 echo "Creating permissions for the role - filename: ${POLICY_FILE}"
 cat << EOF > "${POLICY_FILE}"
 {
@@ -164,7 +167,7 @@ cat << EOF > "${POLICY_FILE}"
         },
         "StringLike": {
           "token.actions.githubusercontent.com:sub": [
-            "repo:${ORGANIZATION}/${REPO}"
+            "repo:${ORGANIZATION}/${REPO}:*"
           ]
         }
       }
