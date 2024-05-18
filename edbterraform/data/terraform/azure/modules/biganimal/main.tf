@@ -42,7 +42,7 @@ resource "biganimal_cluster" "instance" {
     }
     private_networking = !var.publicly_accessible
     read_only_connections = false
-    superuser_access = true
+    superuser_access = local.superuser_access
 }
 
 resource "biganimal_pgd" "clusters" {
@@ -111,7 +111,7 @@ resource "biganimal_pgd" "clusters" {
         csp_auth = false
         private_networking = !var.publicly_accessible
         read_only_connections = false
-        superuser_access = true
+        superuser_access = local.superuser_access
       }
     ]
 
