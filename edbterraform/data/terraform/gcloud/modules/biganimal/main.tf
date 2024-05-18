@@ -255,7 +255,7 @@ resource "toolbox_external" "api" {
 }
 
 locals {
-  cluster_output = try(jsondecode(toolbox_external.api.0.result.data), one(values(biganimal_cluster.instance), biganimal_pgd.clusters.0))
+  cluster_output = try(jsondecode(toolbox_external.api.0.result.data), biganimal_pgd.clusters.0, one(values(biganimal_cluster.instance)))
   cluster_region = try(local.cluster_output.region.regionId, local.cluster_output.region, local.cluster_output.data_groups.*.region.region_id)
   cluster_id = try(local.cluster_output.clusterId, local.cluster_output.cluster_id)
   /*
