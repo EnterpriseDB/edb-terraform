@@ -73,7 +73,7 @@ variable data_groups {
   }
 
   validation {
-    condition = !anytrue([for name, grouping in var.data_groups: grouping.type != "pgd" || grouping.volume.size_gb < 32 || try(grouping.wal_volume.size_gb,32) < 32])
+    condition = alltrue([for name, grouping in var.data_groups: grouping.type != "pgd" || grouping.volume.size_gb >= 32 || try(grouping.wal_volume.size_gb,32) >= 32])
     error_message = (
       <<-EOT
       When using pgd, the minimum storage size is 32 gb.
