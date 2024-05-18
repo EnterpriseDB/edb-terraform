@@ -198,6 +198,9 @@ variable "tags" {
 }
 
 locals {
+  # superuser not allowed for biganimal-hosted clusters
+  superuser_access = var.cloud_account ? true : false
+
   service_cidrblocks = [
     for cidr in var.service_cidrblocks : {
       cidr_block = cidr
@@ -331,7 +334,7 @@ locals {
         backupRetentionPeriod = "1d"
         cspAuth = false
         readOnlyConnections = false
-        superuserAccess = true
+        superuserAccess = local.superuser_access
       }
     ]}
   # Ternary requires consistent types.
