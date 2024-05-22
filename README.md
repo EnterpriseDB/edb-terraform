@@ -17,13 +17,6 @@ The following components must be installed on the system:
   - [GCloud CLI](https://cloud.google.com/sdk/docs/install-sdk)
   - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
   - [BigAnimal CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/)
-    - `BA_ACCESS_KEY` environment variable (priority)
-      - Go to `https://portal.biganimal.com/access-keys` to create an access token that last 1-365 days.
-    - `BA_BEARER_TOKEN` environment variable (deprecated).
-      - [get-token.sh script](https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh) requires manual intervention every:
-        - New token request
-        - 30 days since initial token request
-        - Expired token is reused
 
 > :information_source:  
 > Refer to official documentation for credential management and environment specific installation.  
@@ -245,6 +238,18 @@ Pairing can be done by setting the allow list for the provider or using vpc-peer
   - `allowed_machines` is a configuration option which accepts a list of machine names which are allowed to access the database.
     - Default is a wildcard to append all machine ips: `["*"]`
   - To change the allow list after provisioning, the file `terraform.tfvars.json` can be directly modified and use `terraform apply` again.
+
+BigAnimal specific environment variables that can be used during `terraform apply`:
+- `BA_API_URI` - api endpoint
+  - Default: `https://portal.biganimal.com/api/v3/`
+- Setting access key
+  - `BA_ACCESS_KEY` (priority)
+    - Go to `https://portal.biganimal.com/access-keys` to create an access token that last 1-365 days.
+  - `BA_BEARER_TOKEN` (deprecated).
+    - [get-token.sh script](https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh) requires manual intervention every:
+      - New token request
+      - 30 days since initial token request
+      - Expired token is reused
 
 ### Environment variables
 Terraform allows for top-level variables to be defined with cli arguments or environment variables.
