@@ -151,9 +151,10 @@ resource "toolbox_external" "api" {
     <<EOT
     set -eou pipefail
 
+    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
+
     create_stage() {
-      URI="https://portal.biganimal.com/"
-      ENDPOINT="api/v3/projects/${var.project.id}/clusters"
+      ENDPOINT="projects/${var.project.id}/clusters"
       REQUEST_TYPE="POST"
       DATA='${jsonencode(local.API_DATA)}'
       RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA")
@@ -167,7 +168,7 @@ resource "toolbox_external" "api" {
       CLUSTER_DATA=$RESULT
 
       # Check cluster status
-      ENDPOINT="api/v3/projects/${var.project.id}/clusters/$(printf %s "$CLUSTER_DATA" | jq -r .data.clusterId)"
+      ENDPOINT="projects/${var.project.id}/clusters/$(printf %s "$CLUSTER_DATA" | jq -r .data.clusterId)"
       REQUEST_TYPE="GET"
       PHASE="creating"
       # Wait 30 minutes for cluster to be healthy
@@ -201,8 +202,7 @@ resource "toolbox_external" "api" {
     }
 
     delete_stage() {
-      URI="https://portal.biganimal.com/"
-      ENDPOINT="api/v3/projects/${var.project.id}/clusters/$1"
+      ENDPOINT="projects/${var.project.id}/clusters/$1"
       REQUEST_TYPE="DELETE"
       RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT")
       RC=$?
