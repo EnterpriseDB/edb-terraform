@@ -48,7 +48,7 @@ output "username" {
 
 output "password" {
   sensitive = true
-  value = var.password
+  value = local.password
 }
 
 output "port" {

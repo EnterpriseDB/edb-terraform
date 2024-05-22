@@ -150,7 +150,20 @@ variable "cloud_account" {
   description = "Option for selecting if biganimal should host the resources with your own cloud account instead of biganimal hosted resources"
 }
 variable "cluster_name" {}
-variable "password" {}
+variable "password" {
+  nullable = true
+  sensitive = true
+}
+
+resource "random_password" "password" {
+  length          = 32
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+locals {
+  password = var.password != null && var.password != "" ? var.password : random_password.password.result
+}
 
 variable "cloud_provider" {
   type = string
@@ -267,7 +280,7 @@ locals {
     for group_name, group_values in var.data_groups: {
       clusterName = local.cluster_name
       clusterType = group_values.type
-      password = var.password
+      password = local.password
       instanceType = { instanceTypeId = group_values.instance_type }
       allowedIpRanges = [
         for key, value in group_values.allowed_ip_ranges :
@@ -302,7 +315,7 @@ locals {
     }], [{ # PGD configuration
     clusterName = local.cluster_name
     clusterType = one(distinct([for group_name, group_values in var.data_groups: group_values.type]))
-    password = var.password
+    password = local.password
     groups = [ for group_name, group_values in local.data_groups: {
         clusterType = "data_group"
         instanceType = { instanceTypeId = group_values.instance_type }

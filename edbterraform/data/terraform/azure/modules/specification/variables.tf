@@ -108,7 +108,7 @@ variable "spec" {
         id = optional(string)
       })
       cloud_account = optional(bool)
-      password       = string
+      password       = optional(string)
       data_groups = optional(map(object({
         type           = string
         region         = string

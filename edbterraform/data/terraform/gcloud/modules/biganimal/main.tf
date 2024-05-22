@@ -8,7 +8,7 @@ resource "biganimal_cluster" "instance" {
     }
     cluster_name = local.cluster_name
     instance_type = each.value.instance_type
-    password = var.password
+    password = local.password
     pg_type = each.value.engine
     pg_version = each.value.engine_version
     pgvector = each.value.pgvector
@@ -51,7 +51,7 @@ resource "biganimal_pgd" "clusters" {
     # required
     cluster_name = local.cluster_name
     project_id = var.project.id
-    password = var.password
+    password = local.password
 
     data_groups = [
       for key, values in local.data_groups: {
