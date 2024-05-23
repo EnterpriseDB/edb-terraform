@@ -1,5 +1,6 @@
 variable data_groups {
   type = map(object({
+    cloud_account  = optional(bool, true)
     type           = string
     region         = string
     node_count     = number
@@ -100,6 +101,15 @@ variable data_groups {
       EOT
     )
   }
+
+  validation {
+    condition = alltrue([for name, grouping in var.data_groups: grouping.type != "pgd" || grouping.node_count == 2 || grouping.node_count == 3])
+    error_message = (
+      <<-EOT
+      When using pgd, node_count must be 2 or 3.
+      EOT
+    )
+  }
 }
 
 variable "witness_groups" {
@@ -108,6 +118,7 @@ variable "witness_groups" {
   nullable = false
   type = map(object({
     region = string
+    cloud_account  = optional(bool, true)
     cloud_service_provider = string
     maintenance_window = optional(object({
       is_enabled = bool
@@ -143,12 +154,6 @@ variable "project" {
 
 variable "name" {}
 variable "name_id" {}
-variable "cloud_account" {
-  type = bool
-  default = true
-  nullable = false
-  description = "Option for selecting if biganimal should host the resources with your own cloud account instead of biganimal hosted resources"
-}
 variable "cluster_name" {}
 variable "password" {
   nullable = true
@@ -170,7 +175,7 @@ variable "cloud_provider" {
   default = "azure"
   nullable = false
   validation {
-    condition = contains(["azure", "bah:azure"], var.cloud_provider)
+    condition = contains(["azure"], var.cloud_provider)
     error_message = "Invalid cloud provider"
   }
 }
@@ -211,9 +216,6 @@ variable "tags" {
 }
 
 locals {
-  # superuser not allowed for biganimal-hosted clusters
-  superuser_access = var.cloud_account ? true : false
-
   service_cidrblocks = [
     for cidr in var.service_cidrblocks : {
       cidr_block = cidr
@@ -255,17 +257,24 @@ locals {
       # resource expects a cloud provider prefix infront of its instance type
       instance_type = !startswith("${var.cloud_provider}:", values.instance_type) ? format("${var.cloud_provider}:%s", values.instance_type) : values.instance_type
       volume_size = "${values.volume.size_gb} Gi"
-      # resource expects a cloud provider prefix infront of volume type when using premiumstorage
-      volume_type = !startswith("${var.cloud_provider}", var.volume.type) && endswith("premiumstorage", var.volume.type) ? format("${var.cloud_provider}%s", var.volume.type) : var.volume.type
+
+      # superuser not allowed for biganimal-hosted clusters
+      superuser_access = values.cloud_account ? true : false
+
+      # Format the cloud provider id
+      cloud_provider_id = values.cloud_account ? var.cloud_provider : "bah:${var.cloud_provider}"
     }))
   }
 
+  cloud_account_non_pgd = (
+    try((one(local.data_groups)).cloud_account, false)
+    && !local.use_pgd
+    ? true : false
+  )
+
 }
 
-
 locals {
-
-  cloud_provider = var.cloud_account ? var.cloud_provider : "bah:${var.cloud_provider}"
   cluster_name = format("%s-%s", var.name, var.name_id)
 
   // Create an object that excludes any null objects
@@ -279,7 +288,7 @@ locals {
   // Remove null values from the volume properties and save with the api variable naming as the key
   // Size must be saved as a string and with the Gi suffix
   API_DATA = concat([
-    for group_name, group_values in var.data_groups: {
+    for group_name, group_values in local.data_groups: {
       clusterName = local.cluster_name
       clusterType = group_values.type
       password = local.password
@@ -299,8 +308,8 @@ locals {
         for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING[key] =>
           key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
       }
-      # required 
-      provider = { cloudProviderId = local.cloud_provider }
+      # required
+      provider = { cloudProviderId = group_values.cloud_provider_id }
       clusterArchitecture = {
           clusterArchitectureId = group_values.type
           nodes = group_values.type == "single" ? 1 : group_values.node_count
@@ -313,7 +322,7 @@ locals {
       backupRetentionPeriod = "1d"
       cspAuth = false
       readOnlyConnections = false
-      superuserAccess = true
+      superuserAccess = group_values.superuser_access
     }], [{ # PGD configuration
     clusterName = local.cluster_name
     clusterType = one(distinct([for group_name, group_values in var.data_groups: group_values.type]))
@@ -337,7 +346,7 @@ locals {
             key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
         }
         # required 
-        provider = { cloudProviderId = local.cloud_provider }
+        provider = { cloudProviderId = group_values.cloud_provider_id }
         clusterArchitecture = {
             clusterArchitectureId = group_values.type
             nodes = group_values.type == "single" ? 1 : group_values.node_count
@@ -350,7 +359,7 @@ locals {
         backupRetentionPeriod = "1d"
         cspAuth = false
         readOnlyConnections = false
-        superuserAccess = local.superuser_access
+        superuserAccess = group_values.superuser_access
       }
     ]}
   # Ternary requires consistent types.

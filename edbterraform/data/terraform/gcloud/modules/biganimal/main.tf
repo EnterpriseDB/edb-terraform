@@ -1,7 +1,7 @@
 resource "biganimal_cluster" "instance" {
     for_each = local.use_wal_volume || local.use_pgd ? {} : local.data_groups
     # required
-    cloud_provider = local.cloud_provider
+    cloud_provider = each.value.cloud_provider_id
     cluster_architecture {
         id = each.value.type
         nodes = each.value.node_count
@@ -42,7 +42,7 @@ resource "biganimal_cluster" "instance" {
     }
     private_networking = !var.publicly_accessible
     read_only_connections = false
-    superuser_access = local.superuser_access
+    superuser_access = each.value.superuser_access
 }
 
 resource "biganimal_pgd" "clusters" {
@@ -56,7 +56,7 @@ resource "biganimal_pgd" "clusters" {
     data_groups = [
       for key, values in local.data_groups: {
         cloud_provider = {
-          cloud_provider_id = local.cloud_provider
+          cloud_provider_id = values.cloud_provider_id
         }
         cluster_architecture = {
             cluster_architecture_id = values.type
@@ -105,13 +105,13 @@ resource "biganimal_pgd" "clusters" {
         ]
 
         pe_allowed_principled_ids = []
-        service_account_ids = contains(["gcp", "bah:gcp"], var.cloud_provider) ? [] : null
+        service_account_ids = contains(["gcp"], var.cloud_provider) ? [] : null
 
         backup_retention_period = "1d"
         csp_auth = false
         private_networking = !var.publicly_accessible
         read_only_connections = false
-        superuser_access = local.superuser_access
+        superuser_access = values.superuser_access
       }
     ]
 
@@ -121,7 +121,7 @@ resource "biganimal_pgd" "clusters" {
           region_id = v.region
         }
         cloud_provider = {
-          cloud_provider_id = v.cloud_service_provider
+          cloud_provider_id = v.cloud_account ? v.cloud_service_provider : "bah:${v.cloud_service_provider}"
         }
         maintenance_window = {
           is_enabled = v.maintenance_window.is_enabled

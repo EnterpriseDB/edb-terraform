@@ -112,7 +112,7 @@ output "biganimal_id" {
 }
 
 output "buckets" {
-  value = var.cloud_account ? {
+  value = local.cloud_account_non_pgd ? {
     postgres = {
       bucket = local.postgres_bucket
       prefix = local.postgres_bucket_prefix
@@ -128,7 +128,7 @@ output "buckets" {
 }
 
 output "loadbalancer" {
-  value = var.cloud_account && !local.use_pgd ? {
+  value = local.cloud_account_non_pgd ? {
     name = toolbox_external.vpc.0.result.loadbalancer_name
     dns = toolbox_external.vpc.0.result.loadbalancer_dns
   } : {}
