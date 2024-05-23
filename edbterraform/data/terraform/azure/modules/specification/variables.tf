@@ -107,9 +107,9 @@ variable "spec" {
       project        = object({
         id = optional(string)
       })
-      cloud_account = optional(bool)
       password       = optional(string)
       data_groups = optional(map(object({
+        cloud_account = optional(bool)
         type           = string
         region         = string
         node_count     = number
@@ -143,6 +143,7 @@ variable "spec" {
       })))
       witness_groups = optional(map(object({
         region = string
+        cloud_account = optional(bool)
         cloud_service_provider = string
       })), {})
       tags = optional(map(string), {})

@@ -7,7 +7,6 @@ module "biganimal" {
   name               = each.key
   name_id            = module.spec.hex_id
 
-  cloud_account      = each.value.cloud_account
   cluster_name       = module.spec.base.tags.cluster_name
   password           = each.value.password
   data_groups        = each.value.data_groups
