@@ -116,12 +116,12 @@ resource "biganimal_pgd" "clusters" {
     ]
 
     witness_groups = [
-      for k,v in var.witness_groups: {
+      for k,v in local.witness_groups: {
         region = {
           region_id = v.region
         }
         cloud_provider = {
-          cloud_provider_id = v.cloud_account ? v.cloud_service_provider : "bah:${v.cloud_service_provider}"
+          cloud_provider_id = v.cloud_provider_id
         }
         maintenance_window = {
           is_enabled = v.maintenance_window.is_enabled
@@ -157,10 +157,13 @@ resource "toolbox_external" "api" {
       ENDPOINT="projects/${var.project.id}/clusters"
       REQUEST_TYPE="POST"
       DATA='${jsonencode(local.API_DATA)}'
-      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA")
+      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA" 2>&1)
       RC=$?
       if [[ $RC -ne 0 ]];
       then
+        printf "URI: %s\n" "$URI" 1>&2
+        printf "ENDPOINT: %s\n" "$ENDPOINT" 1>&2
+        printf "REQUEST_TYPE: %s\n" "$REQUEST_TYPE" 1>&2
         printf "%s\n" "$RESULT" 1>&2
         exit $RC
       fi
@@ -171,9 +174,9 @@ resource "toolbox_external" "api" {
       ENDPOINT="projects/${var.project.id}/clusters/$(printf %s "$CLUSTER_DATA" | jq -r .data.clusterId)"
       REQUEST_TYPE="GET"
       PHASE="creating"
-      # Wait 30 minutes for cluster to be healthy
+      # Wait 45 minutes for cluster to be healthy
       COUNT=0
-      COUNT_LIMIT=120
+      COUNT_LIMIT=180
       SLEEP_TIME=15
       while [[ $PHASE != *"healthy"* ]]
       do
@@ -184,6 +187,7 @@ resource "toolbox_external" "api" {
           printf "%s\n" "$RESULT" 1>&2
           exit $RC
         fi
+
         PHASE=$(printf "$RESULT" | jq -r .data.phase)
 
         if [[ $COUNT -gt COUNT_LIMIT ]] && [[ $PHASE != *"healthy"* ]]

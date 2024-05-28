@@ -274,7 +274,62 @@ locals {
 
 }
 
+resource "toolbox_external" "witness_node_params" {
+  for_each = var.witness_groups
+  program = [
+    "bash",
+    "-c",
+    <<EOT
+    set -eou pipefail
+    # When using pgd, we need to get the witness node parameters
+    # Get json object from stdin
+    IFS='' read -r input || [ -n "$input" ]
+
+    # BigAnimal API accepts either an access key or a bearer token
+    # The access token should be preferred if set and non-empty.
+    AUTH_HEADER=""
+    if [ ! -z "$${BA_ACCESS_KEY:+''}" ]
+    then
+      AUTH_HEADER="x-access-key: $BA_ACCESS_KEY"
+    else
+      AUTH_HEADER="authorization: Bearer $BA_BEARER_TOKEN"
+    fi
+
+    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
+    ENDPOINT="projects/${var.project.id}/utils/calculate-witness-group-params"
+    REQUEST_TYPE="PUT"
+    DATA='{"provider":{"cloudProviderId":"${each.value.cloud_service_provider}"},"region":{"regionId":"${each.value.region}"}}'
+    RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA")
+    RC=$?
+
+    if [[ $RC -ne 0 ]];
+    then
+      printf "%s\n" "$RESULT" 1>&2
+      exit $RC
+    fi
+
+    printf "$RESULT"
+    EOT
+  ]
+}
+
 locals {
+  witness_groups = {
+    for name, values in var.witness_groups : name => (merge(values, {
+      # Format the cloud provider id
+      cloud_provider_id = values.cloud_account ? values.cloud_service_provider : "bah:${values.cloud_service_provider}"
+      instance_type = jsondecode(toolbox_external.witness_node_params[name].result.data).instanceType.instanceTypeId
+      storage = {
+        type = jsondecode(toolbox_external.witness_node_params[name].result.data).storage.volumeTypeId
+        properties = jsondecode(toolbox_external.witness_node_params[name].result.data).storage.volumePropertiesId
+        size = jsondecode(toolbox_external.witness_node_params[name].result.data).storage.size
+        iops = jsondecode(toolbox_external.witness_node_params[name].result.data).storage.iops
+        # Currently unused
+        #throughput = toolbox_external.witness_node_params[name].result.data.storage.throughput
+      }
+    }))
+  }
+
   cluster_name = format("%s-%s", var.name, var.name_id)
 
   // Create an object that excludes any null objects
@@ -290,7 +345,11 @@ locals {
   API_DATA = concat([
     for group_name, group_values in local.data_groups: {
       clusterName = local.cluster_name
-      clusterType = group_values.type
+      # causes error now that we have pgd
+      # │ {"error":{"status":400,"message":"Bad Request","errors":[{"message":"Cluster type \"cluster\" cannot be changed to
+      # │ \"single\"","path":".body.clusterType"}],"reference":"upmrid/TpKTaO-o4PFGK_4ZZPtCg/UrN6Js0I9On9V5MKI4XiX","source":"API"}}
+      # │ State: exit status 22
+      # clusterType = group_values.type
       password = local.password
       instanceType = { instanceTypeId = group_values.instance_type }
       allowedIpRanges = [
@@ -327,7 +386,8 @@ locals {
     clusterName = local.cluster_name
     clusterType = one(distinct([for group_name, group_values in var.data_groups: group_values.type]))
     password = local.password
-    groups = [ for group_name, group_values in local.data_groups: {
+    groups = [
+      for obj in flatten([[ for group_name, group_values in local.data_groups: {
         clusterType = "data_group"
         instanceType = { instanceTypeId = group_values.instance_type }
         allowedIpRanges = [
@@ -360,9 +420,22 @@ locals {
         cspAuth = false
         readOnlyConnections = false
         superuserAccess = group_values.superuser_access
-      }
-    ]}
+      }], [ for group_name, group_values in local.witness_groups: {
+        clusterType = "witness_group"
+        clusterArchitecture = {
+          clusterArchitectureId = "pgd"
+          nodes = 1
+        }
+        instanceType = { instanceTypeId = group_values.instance_type }
+        provider = { cloudProviderId = group_values.cloud_provider_id }
+        region = { regionId = group_values.region }
+        storage = {
+          volumePropertiesId = group_values.storage.properties
+          volumeTypeId = group_values.storage.type
+        }
+      }],
+    ]): obj if obj != null && obj != {}]
   # Ternary requires consistent types.
   # A workaround is to setup a list of objects and then use a conditional to choose the correct index.
-  ])[local.use_pgd ? 1 : 0]
+  }])[local.use_pgd ? 1 : 0]
 }
