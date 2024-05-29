@@ -29,7 +29,9 @@
 
 {% endfor %}
 
+{% if has_biganimal %}
 {% include "biganimal.tf.j2" %}
+{% endif %}
 
 {% if has_region_peering %}
 {%   include "region_peering.tf.j2" %}
@@ -61,7 +63,8 @@ locals {
   ])
 {% endfor %}
 
-  biganimal = [module.biganimal]
+  biganimal = [{% if has_biganimal %}module.biganimal{% endif %}]
+]
 
   modules = {
     machines = local.machines
