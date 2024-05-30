@@ -175,8 +175,12 @@ variable "cloud_provider" {
   default = "aws"
   nullable = false
   validation {
-    condition = contains(["aws"], var.cloud_provider)
-    error_message = "Invalid cloud provider"
+    condition = contains([
+      "aws",
+      "azure",
+      "gcp",
+    ], var.cloud_provider)
+    error_message = "Invalid cloud provider: ${var.cloud_provider}. Valid options are: aws, azure, gcp"
   }
 }
 

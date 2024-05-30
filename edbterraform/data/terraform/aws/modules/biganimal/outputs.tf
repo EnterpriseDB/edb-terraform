@@ -128,7 +128,7 @@ output "buckets" {
 }
 
 output "loadbalancer" {
-  value = local.cloud_account_non_pgd ? {
+  value = can(toolbox_external.vpc.0) ? {
     name = toolbox_external.vpc.0.result.loadbalancer_name
     dns = toolbox_external.vpc.0.result.loadbalancer_dns
   } : {}

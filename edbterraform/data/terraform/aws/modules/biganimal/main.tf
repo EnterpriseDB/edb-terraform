@@ -291,7 +291,7 @@ locals {
 }
 
 resource "toolbox_external" "vpc" {
-  count = local.cloud_account_non_pgd ? 1 : 0
+  count = var.cloud_provider == "aws" && local.cloud_account_non_pgd ? 1 : 0
   program = [
     "bash",
     "-c",
