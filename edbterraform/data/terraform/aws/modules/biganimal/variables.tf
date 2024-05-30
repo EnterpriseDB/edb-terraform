@@ -298,7 +298,7 @@ resource "toolbox_external" "witness_node_params" {
     URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
     ENDPOINT="projects/${var.project.id}/utils/calculate-witness-group-params"
     REQUEST_TYPE="PUT"
-    DATA='{"provider":{"cloudProviderId":"${each.value.cloud_service_provider}"},"region":{"regionId":"${each.value.region}"}}'
+    DATA='{"provider":{"cloudProviderId":"${ each.value.cloud_account ? each.value.cloud_service_provider : "bah:${each.value.cloud_service_provider}" }"},"region":{"regionId":"${each.value.region}"}}'
     RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA")
     RC=$?
 
