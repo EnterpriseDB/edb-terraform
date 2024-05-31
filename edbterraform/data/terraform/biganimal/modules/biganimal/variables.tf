@@ -280,7 +280,7 @@ locals {
 }
 
 resource "toolbox_external" "witness_node_params" {
-  for_each = var.witness_groups
+  for_each = local.use_wal_volume ? var.witness_groups : {}
   program = [
     "bash",
     "-c",
@@ -323,12 +323,12 @@ locals {
     for name, values in var.witness_groups : name => (merge(values, {
       # Format the cloud provider id
       cloud_provider_id = values.cloud_account ? values.cloud_service_provider : "bah:${values.cloud_service_provider}"
-      instance_type = jsondecode(toolbox_external.witness_node_params[name].result.data).instanceType.instanceTypeId
+      instance_type = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).instanceType.instanceTypeId : ""
       storage = {
-        type = jsondecode(toolbox_external.witness_node_params[name].result.data).storage.volumeTypeId
-        properties = jsondecode(toolbox_external.witness_node_params[name].result.data).storage.volumePropertiesId
-        size = jsondecode(toolbox_external.witness_node_params[name].result.data).storage.size
-        iops = jsondecode(toolbox_external.witness_node_params[name].result.data).storage.iops
+        type = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).storage.volumeTypeId : ""
+        properties = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).storage.volumePropertiesId : ""
+        size = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).storage.size : ""
+        iops = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).storage.iops : ""
         # Currently unused
         #throughput = toolbox_external.witness_node_params[name].result.data.storage.throughput
       }
