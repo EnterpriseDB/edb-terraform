@@ -3,6 +3,8 @@ module "biganimal" {
 
   for_each           = module.spec.biganimal
 
+  cloud_provider     = var.cloud_service_provider
+
   project            = each.value.project
   name               = each.key
   name_id            = module.spec.hex_id

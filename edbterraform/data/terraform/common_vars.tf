@@ -9,6 +9,16 @@ variable "spec" {
   nullable    = false
 }
 
+variable "cloud_service_provider" {
+  description = "Target cloud service provider"
+  type = string
+  nullable = false
+  validation {
+    condition = contains(["aws", "gcp", "azure"], var.cloud_service_provider)
+    error_message = "cloud_service_provider must be one of 'aws', 'gcp', or 'azure'"
+  }
+}
+
 variable "public_cidrblocks" {
   description = "Public CIDR block"
   type        = list(string)

@@ -351,10 +351,12 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
     # Starting with making a copy of infra_vars as our terraform_vars dict
     # Since our terraform modules implement a specification module,
     # it needs the the cloud service provider values from the file as a terraform `spec` variable
+    # and the cloud provider name as a terraform `cloud_service_provider` variable
     terraform_vars = dict(
         spec = infra_vars.copy(),
+        cloud_service_provider = 'gcp' if csp == 'gcloud' else csp,
     )
-    
+
     return (terraform_vars, template_vars)
 
 def generate_terraform(
