@@ -18,7 +18,7 @@ output "cluster_id" {
 }
 
 output "cloud_provider" {
-  value = try(local.cluster_output.provider.cloudProviderId, local.cluster_output.cloud_provider, concat(local.cluster_output.data_groups.*.cloud_provider.cloud_provider_id))
+  value = try(local.cluster_output.provider.cloudProviderId, local.cluster_output.cloud_provider, one(toset(concat(local.cluster_output.data_groups.*.cloud_provider.cloud_provider_id))))
 }
 
 output "cluster_name" {
@@ -39,11 +39,11 @@ output "region" {
 }
 
 output "dbname" {
-    value = try(one(local.dbname), local.dbname)
+    value = try(one(local.dbname), one(toset(local.dbname)))
 }
 
 output "username" {
-  value = try(one(local.username), local.username)
+  value = try(one(local.username), one(toset(local.username)))
 }
 
 output "password" {
@@ -52,7 +52,7 @@ output "password" {
 }
 
 output "port" {
-  value = try(one(local.port), local.port)
+  value = try(one(local.port), one(toset(local.port)))
 }
 
 output "private_ip" {
