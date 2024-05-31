@@ -151,7 +151,9 @@ def create_project_dir(
     - empty terraform state file to mark it as a terraform project
     '''
     SCRIPT_DIRECTORY = Path(__file__).parent.resolve()
-    TERRAFORM_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / cloud_service_provider
+    TERRAFORM_CLOUD_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / cloud_service_provider / 'modules'
+    TERRAFORM_BIGANIMAL_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'biganimal' / 'modules'
+    TERRAFORM_PROJECT_MODULES_DIRECTORY = project_directory / 'modules'
     TERRAFORM_PROVIDERS_FILE = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'providers.tf.json'
     TERRAFORM_COMMON_VARS_FILE = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'common_vars.tf'
     TERRAFORM_VERSIONS_FILE = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'versions.tf'
@@ -167,12 +169,13 @@ def create_project_dir(
     if project_directory.exists():
         sys.exit("ERROR: directory %s already exists" % project_directory)
 
-    if not TERRAFORM_MODULES_DIRECTORY.exists():
-        sys.exit("ERROR: directory %s does not exist" % TERRAFORM_MODULES_DIRECTORY)
+    if not TERRAFORM_CLOUD_MODULES_DIRECTORY.exists():
+        sys.exit("ERROR: directory %s does not exist" % TERRAFORM_CLOUD_MODULES_DIRECTORY)
 
     try:
-        logger.info(f'Making directory and copying terraform modules {TERRAFORM_MODULES_DIRECTORY} into {project_directory}')
-        shutil.copytree(TERRAFORM_MODULES_DIRECTORY, project_directory)
+        logger.info(f'Making directory and copying terraform modules {TERRAFORM_CLOUD_MODULES_DIRECTORY} into {project_directory}')
+        shutil.copytree(TERRAFORM_CLOUD_MODULES_DIRECTORY, TERRAFORM_PROJECT_MODULES_DIRECTORY)
+        shutil.copytree(TERRAFORM_BIGANIMAL_MODULES_DIRECTORY, TERRAFORM_PROJECT_MODULES_DIRECTORY, dirs_exist_ok=True)
         shutil.copyfile(TERRAFORM_PROVIDERS_FILE, project_directory / TERRAFORM_PROVIDERS_FILE.name)
         shutil.copyfile(TERRAFORM_VERSIONS_FILE, project_directory / TERRAFORM_VERSIONS_FILE.name)
         shutil.copyfile(TERRAFORM_COMMON_VARS_FILE, project_directory / TERRAFORM_COMMON_VARS_FILE.name)
