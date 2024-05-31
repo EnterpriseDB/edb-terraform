@@ -19,6 +19,13 @@ variable "cloud_service_provider" {
   }
 }
 
+variable "ba_project_id" {
+  description = "BigAnimal project ID to use if not defined within the biganimal configuration"
+  type = string
+  nullable = true
+  default = null
+}
+
 variable "public_cidrblocks" {
   description = "Public CIDR block"
   type        = list(string)

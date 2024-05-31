@@ -6,6 +6,7 @@ module "spec" {
 
   spec = var.spec
   force_ssh_access = var.force_service_machines
+  ba_project_id_default = var.ba_project_id
 }
 
 # All modules should use the last created module in their depends_on through jinja

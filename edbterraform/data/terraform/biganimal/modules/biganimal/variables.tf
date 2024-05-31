@@ -150,6 +150,15 @@ variable "project" {
   type = object({
     id = optional(string)
   })
+  nullable = false
+  validation {
+    condition = var.project.id != null && var.project.id != ""
+    error_message = (
+      <<-EOT
+      Project id may not be null or empty
+      EOT
+    )
+  }
 }
 
 variable "name" {}
