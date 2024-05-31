@@ -127,6 +127,7 @@ output "region_databases" {
 output "biganimal" {
   value = {
     for name, biganimal_spec in var.spec.biganimal : name => merge(biganimal_spec, {
+        project = biganimal_spec.project.id == null ? {"id":"${var.ba_project_id_default}"} : biganimal_spec.project
         # spec project tags
         tags = merge(local.tags, biganimal_spec.tags, {
           Name = format("%s-%s-%s", name, local.cluster_name, random_id.apply.id)

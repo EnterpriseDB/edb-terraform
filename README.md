@@ -239,7 +239,7 @@ Pairing can be done by setting the allow list for the provider or using vpc-peer
     - Default is a wildcard to append all machine ips: `["*"]`
   - To change the allow list after provisioning, the file `terraform.tfvars.json` can be directly modified and use `terraform apply` again.
 
-BigAnimal specific environment variables that can be used during `terraform apply`:
+BigAnimal specific environment variables that can be used during `terraform plan` or `terraform apply`:
 - `BA_API_URI` - api endpoint
   - Default: `https://portal.biganimal.com/api/v3/`
 - Setting access key
@@ -250,6 +250,8 @@ BigAnimal specific environment variables that can be used during `terraform appl
       - New token request
       - 30 days since initial token request
       - Expired token is reused
+- `TF_VAR_ba_project_id` - Biganimal project id if not defined within the yaml configuration.
+  - For persistence, a tfvars file can be created with `ba_project_id` defined.
 
 ### Environment variables
 Terraform allows for top-level variables to be defined with cli arguments or environment variables.

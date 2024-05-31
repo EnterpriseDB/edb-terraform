@@ -7,6 +7,7 @@ module "spec" {
 
   spec = var.spec
   force_ssh_access = var.force_service_machines
+  ba_project_id_default = var.ba_project_id
 }
 
 resource "null_resource" "validation" {

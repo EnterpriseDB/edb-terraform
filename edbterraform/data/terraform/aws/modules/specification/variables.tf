@@ -156,9 +156,9 @@ variable "spec" {
       tags = optional(map(string), {})
     })), {})
     biganimal = optional(map(object({
-      project        = object({
+      project        = optional(object({
         id = optional(string)
-      })
+      }), {})
       password       = optional(string)
       data_groups = optional(map(object({
         cloud_account = optional(bool)
@@ -214,6 +214,12 @@ variable "force_ssh_access" {
   default = false
   type = bool
   nullable = false
+}
+
+variable "ba_project_id_default" {
+  description = "BigAnimal project ID"
+  type = string
+  nullable = true
 }
 
 locals {
