@@ -56,11 +56,11 @@ output "port" {
 }
 
 output "private_ip" {
-  value = try(one(local.domain), local.domain)
+  value = local.domain
 }
 
 output "public_ip" {
-  value = try(one(local.domain), local.domain)
+  value = local.domain
 }
 
 output "engine" {
