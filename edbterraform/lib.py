@@ -215,6 +215,12 @@ def create_project_dir(
 
     except Exception as e:
         logger.error("ERROR: cannot create project directory %s (%s)" % (project_directory, e))
+
+        # Always create the state file to mark the project as a terraform project directory
+        if project_directory.exists() and not TERRAFORM_STATE_FILE.exists():
+            TERRAFORM_STATE_FILE.touch()
+            os.chmod(TERRAFORM_STATE_FILE, TERRAFORM_STATE_PERMISSIONS)
+
         sys.exit(1)
 
 def destroy_project_dir(dir):
