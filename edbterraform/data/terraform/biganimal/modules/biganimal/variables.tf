@@ -171,6 +171,7 @@ locals {
 }
 
 variable "cloud_provider" {
+  description = "Default cloud provider to use for the cluster"
   type = string
   default = "aws"
   nullable = false
