@@ -157,15 +157,14 @@ resource "toolbox_external" "api" {
       ENDPOINT="projects/${var.project.id}/clusters"
       REQUEST_TYPE="POST"
       DATA='${jsonencode(local.API_DATA)}'
-      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA" 2>&1)
-      RC=$?
-      if [[ $RC -ne 0 ]];
+      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA" 2>&1)
       then
+        RC="$${PIPESTATUS[0]}"
         printf "URI: %s\n" "$URI" 1>&2
         printf "ENDPOINT: %s\n" "$ENDPOINT" 1>&2
         printf "REQUEST_TYPE: %s\n" "$REQUEST_TYPE" 1>&2
-        printf "%s\n" "$RESULT" 1>&2
-        exit $RC
+        printf "ERROR: %s\n" "$RESULT" 1>&2
+        exit "$RC"
       fi
 
       CLUSTER_DATA=$RESULT
@@ -180,12 +179,11 @@ resource "toolbox_external" "api" {
       SLEEP_TIME=15
       while [[ $PHASE != *"healthy"* ]]
       do
-        RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT")
-        RC=$?
-        if [[ $RC -ne 0 ]]
+        if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" 2>&1)
         then
+          RC="$${PIPESTATUS[0]}"
           printf "%s\n" "$RESULT" 1>&2
-          exit $RC
+          exit "$RC"
         fi
 
         PHASE=$(printf "$RESULT" | jq -er ".data.phase")
@@ -208,12 +206,11 @@ resource "toolbox_external" "api" {
     delete_stage() {
       ENDPOINT="projects/${var.project.id}/clusters/$1"
       REQUEST_TYPE="DELETE"
-      RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT")
-      RC=$?
-      if [[ $RC -ne 0 ]];
+      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" 2>&1)
       then
+        RC="$${PIPESTATUS[0]}"
         printf "%s\n" "$RESULT" 1>&2
-        exit $RC
+        exit "$RC"
       fi
 
       printf '{"done":"%s"}' "$RESULT"
