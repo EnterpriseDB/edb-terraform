@@ -188,7 +188,7 @@ resource "toolbox_external" "api" {
           exit $RC
         fi
 
-        PHASE=$(printf "$RESULT" | jq -r .data.phase)
+        PHASE=$(printf "$RESULT" | jq -er ".data.phase")
 
         if [[ $COUNT -gt COUNT_LIMIT ]] && [[ $PHASE != *"healthy"* ]]
         then
