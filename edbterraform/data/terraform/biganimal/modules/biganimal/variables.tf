@@ -354,9 +354,10 @@ locals {
     properties = "volumePropertiesId"
     type = "volumeTypeId"
   }
+
   // Remove null values from the volume properties and save with the api variable naming as the key
   // Size must be saved as a string and with the Gi suffix
-  API_DATA = concat([
+  API_DATA_CLUSTER = [
     for group_name, group_values in local.data_groups: {
       clusterName = local.cluster_name
       # causes error now that we have pgd
@@ -396,9 +397,11 @@ locals {
       cspAuth = false
       readOnlyConnections = false
       superuserAccess = group_values.superuser_access
-    }], [{ # PGD configuration
+    }][0]
+
+    API_DATA_PGD = {
     clusterName = local.cluster_name
-    clusterType = one(distinct([for group_name, group_values in var.data_groups: group_values.type]))
+    clusterType = "cluster"
     password = local.password
     groups = [
       for obj in flatten([[ for group_name, group_values in local.data_groups: {
@@ -422,8 +425,8 @@ locals {
         # required 
         provider = { cloudProviderId = group_values.cloud_provider_id }
         clusterArchitecture = {
-            clusterArchitectureId = group_values.type
-            nodes = group_values.type == "single" ? 1 : group_values.node_count
+            clusterArchitectureId = "pgd"
+            nodes = group_values.node_count
         }
         region = { regionId = group_values.region }
         pgVersion = { pgVersionId = tostring(group_values.engine_version) }
@@ -433,7 +436,8 @@ locals {
         backupRetentionPeriod = "1d"
         cspAuth = false
         readOnlyConnections = false
-        superuserAccess = group_values.superuser_access
+        # unavailable for pgd
+        # superuserAccess = group_values.superuser_access
       }], [ for group_name, group_values in local.witness_groups: {
         clusterType = "witness_group"
         clusterArchitecture = {
@@ -446,10 +450,13 @@ locals {
         storage = {
           volumePropertiesId = group_values.storage.properties
           volumeTypeId = group_values.storage.type
+          size = group_values.storage.size
         }
       }],
     ]): obj if obj != null && obj != {}]
+  }
+
   # Ternary requires consistent types.
   # A workaround is to setup a list of objects and then use a conditional to choose the correct index.
-  }])[local.use_pgd ? 1 : 0]
+  API_DATA = [local.API_DATA_CLUSTER, local.API_DATA_PGD][local.use_pgd ? 1 : 0]
 }
