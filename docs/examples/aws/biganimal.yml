@@ -7,12 +7,14 @@ aws:
       cidr_block: 10.2.0.0/16
   biganimal:
     mydb2:
-      project:
-        id: prj_ziJPLQw3XxpR7nxV
-      cloud_account: true
-      password: "ndslniv&03ind**vDdjfnjv"
+      # Environment variable 'TF_VAR_ba_project_id' can be used to set a default project id for all configurations
+      #   or it can be configured per cluster configuration:
+      #project:
+      #  id: prj_1234567890
+      # password: "ndslniv&03ind**vDdjfnjv" # auto-generated if not provided
       data_groups:
         one:
+          cloud_account: false
           region: us-east-1
           type: pgd
           node_count: 3
@@ -27,7 +29,7 @@ aws:
           #wal_volume:
           #  type: gp3
           #  properties: gp3
-          #  size_gb: 4
+          #  size_gb: 32
           settings:
             - name: max_connections
               value: 300
@@ -42,6 +44,7 @@ aws:
           allowed_machines:
             - "*"
         two:
+          cloud_account: false
           region: us-east-2
           type: pgd
           node_count: 3
@@ -72,6 +75,7 @@ aws:
             - "*"
       witness_groups:
         one:
+          cloud_account: false
           region: us-west-2
           cloud_service_provider: aws
       tags:
