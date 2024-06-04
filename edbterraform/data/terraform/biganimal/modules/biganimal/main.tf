@@ -43,6 +43,7 @@ resource "biganimal_cluster" "instance" {
     private_networking = !var.publicly_accessible
     read_only_connections = false
     superuser_access = each.value.superuser_access
+    maintenance_window = each.value.maintenance_window
 }
 
 resource "biganimal_pgd" "clusters" {
@@ -84,12 +85,6 @@ resource "biganimal_pgd" "clusters" {
             throughput = values.volume.throughput
         }
 
-        maintenance_window = {
-          is_enabled = false
-          start_day  = 0
-          start_time = "00:00"
-        }
-
         # optional
         allowed_ip_ranges = [
           for k, range_values in values.allowed_ip_ranges: {
@@ -112,6 +107,7 @@ resource "biganimal_pgd" "clusters" {
         private_networking = !var.publicly_accessible
         read_only_connections = false
         superuser_access = values.superuser_access
+        maintenance_window = values.maintenance_window
       }
     ]
 
@@ -123,11 +119,7 @@ resource "biganimal_pgd" "clusters" {
         cloud_provider = {
           cloud_provider_id = v.cloud_provider_id
         }
-        maintenance_window = {
-          is_enabled = v.maintenance_window.is_enabled
-          start_day = v.maintenance_window.start_day
-          start_time = v.maintenance_window.start_time
-        }
+        maintenance_window = v.maintenance_window
       }
     ]
 

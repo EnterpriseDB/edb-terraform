@@ -31,6 +31,15 @@ variable data_groups {
       description = optional(string, "default description")
     })), [])
     allowed_machines = optional(list(string), ["*"])
+    maintenance_window = optional(object({
+      is_enabled = bool
+      start_day = number
+      start_time = string
+    }), {
+      is_enabled = false
+      start_day = 0
+      start_time = "00:00"
+    })
   }))
 
   validation {
@@ -397,6 +406,11 @@ locals {
       cspAuth = false
       readOnlyConnections = false
       superuserAccess = group_values.superuser_access
+      maintenanceWindow = {
+        isEnabled = group_values.maintenance_window.is_enabled
+        startDay = group_values.maintenance_window.start_day
+        startTime = group_values.maintenance_window.start_time
+      }
     }][0]
 
     API_DATA_PGD = {
@@ -438,6 +452,11 @@ locals {
         readOnlyConnections = false
         # unavailable for pgd
         # superuserAccess = group_values.superuser_access
+        maintenanceWindow = {
+          isEnabled = group_values.maintenance_window.is_enabled
+          startDay = group_values.maintenance_window.start_day
+          startTime = group_values.maintenance_window.start_time
+        }
       }], [ for group_name, group_values in local.witness_groups: {
         clusterType = "witness_group"
         clusterArchitecture = {
@@ -451,6 +470,11 @@ locals {
           volumePropertiesId = group_values.storage.properties
           volumeTypeId = group_values.storage.type
           size = group_values.storage.size
+        }
+        maintenanceWindow = {
+          isEnabled = group_values.maintenance_window.is_enabled
+          startDay = group_values.maintenance_window.start_day
+          startTime = group_values.maintenance_window.start_time
         }
       }],
     ]): obj if obj != null && obj != {}]
