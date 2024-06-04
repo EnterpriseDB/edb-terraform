@@ -131,7 +131,7 @@ resource "biganimal_pgd" "clusters" {
   }
 }
 
-resource "toolbox_external" "api" {
+resource "toolbox_external" "api_biganimal" {
   count = local.use_wal_volume ? 1 : 0
   create = true
   read = false
@@ -158,39 +158,6 @@ resource "toolbox_external" "api" {
         printf "ERROR: %s\n" "$RESULT" 1>&2
         exit "$RC"
       fi
-
-      CLUSTER_DATA=$RESULT
-
-      # Check cluster status
-      ENDPOINT="projects/${var.project.id}/clusters/$(printf %s "$CLUSTER_DATA" | jq -r .data.clusterId)"
-      REQUEST_TYPE="GET"
-      PHASE="creating"
-      # Wait 45 minutes for cluster to be healthy
-      COUNT=0
-      COUNT_LIMIT=180
-      SLEEP_TIME=15
-      while [[ $PHASE != *"healthy"* ]]
-      do
-        if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" 2>&1)
-        then
-          RC="$${PIPESTATUS[0]}"
-          printf "%s\n" "$RESULT" 1>&2
-          exit "$RC"
-        fi
-
-        PHASE=$(printf "$RESULT" | jq -er ".data.phase")
-
-        if [[ $COUNT -gt COUNT_LIMIT ]] && [[ $PHASE != *"healthy"* ]]
-        then
-          printf "Cluster creation timed out\n" 1>&2
-          printf "Last phase: $PHASE\n" 1>&2
-          printf "Cluster data: $CLUSTER_DATA\n" 1>&2
-          exit 1
-        fi
-
-        COUNT=$((COUNT+1))
-        sleep $SLEEP_TIME
-      done
 
       printf "$RESULT"
     }
@@ -243,6 +210,69 @@ resource "toolbox_external" "api" {
         ;;
     esac
 
+    EOT
+  ]
+}
+
+resource "toolbox_external" "api" {
+  count = local.use_wal_volume ? 1 : 0
+  create = true
+  read = false
+  update = false
+  delete = false
+  program = [
+    "bash",
+    "-c",
+    <<EOT
+    set -eou pipefail
+
+    # Get json object from stdin
+    IFS='' read -r input || [ -n "$input" ]
+
+    # BigAnimal API accepts either an access key or a bearer token
+    # The access token should be preferred if set and non-empty.
+    AUTH_HEADER=""
+    if [ ! -z "$${BA_ACCESS_KEY:+''}" ]
+    then
+      AUTH_HEADER="x-access-key: $BA_ACCESS_KEY"
+    else
+      AUTH_HEADER="authorization: Bearer $BA_BEARER_TOKEN"
+    fi
+
+    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
+
+    # Check cluster status
+    ENDPOINT="projects/${var.project.id}/clusters/${jsondecode(toolbox_external.api_biganimal.0.result.data).clusterId}"
+    REQUEST_TYPE="GET"
+    PHASE="creating"
+    # Wait 45 minutes for cluster to be healthy
+    COUNT=0
+    COUNT_LIMIT=180
+    SLEEP_TIME=15
+    while [[ $PHASE != *"healthy"* ]]
+    do
+      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" 2>&1)
+      then
+        RC="$${PIPESTATUS[0]}"
+        printf "%s\n" "$RESULT" 1>&2
+        exit "$RC"
+      fi
+
+      PHASE=$(printf "$RESULT" | jq -er ".data.phase")
+
+      if [[ $COUNT -gt COUNT_LIMIT ]] && [[ $PHASE != *"healthy"* ]]
+      then
+        printf "Cluster creation timed out\n" 1>&2
+        printf "Last phase: $PHASE\n" 1>&2
+        printf "Cluster data: $CLUSTER_DATA\n" 1>&2
+        exit 1
+      fi
+
+      COUNT=$((COUNT+1))
+      sleep $SLEEP_TIME
+    done
+  
+    printf "$RESULT"
     EOT
   ]
 }

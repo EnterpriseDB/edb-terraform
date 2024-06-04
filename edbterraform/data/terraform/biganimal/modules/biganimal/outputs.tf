@@ -148,6 +148,7 @@ output "resources" {
     }
     toolbox_external = {
       vpc = toolbox_external.vpc
+      api_biganimal = toolbox_external.api_biganimal
       api = toolbox_external.api
     }
   }
