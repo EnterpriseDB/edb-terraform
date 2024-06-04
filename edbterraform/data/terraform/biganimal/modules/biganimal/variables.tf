@@ -157,17 +157,76 @@ variable "witness_groups" {
 
 variable "project" {
   type = object({
-    id = optional(string)
+    id = optional(string, "")
   })
   nullable = false
-  validation {
-    condition = var.project.id != null && var.project.id != ""
-    error_message = (
-      <<-EOT
-      Project id may not be null or empty
-      EOT
-    )
+}
+
+# Check if the credentials and uri are valid by accessing the BigAnimal API
+data "biganimal_projects" "projects" {
+  query = ""
+}
+
+# Check for a valid project id and uri
+# This will be deferred to 'apply' when creating a new project
+data "biganimal_region" "regions" {
+  cloud_provider = var.cloud_provider
+  project_id = var.project.id
+}
+
+# This will be deferred to 'apply' when creating a new project
+data "external" "ba_api_access" {
+  query = {
+    depends0 = can(data.biganimal_projects.projects)
+    depends1 = can(data.biganimal_region.regions)
   }
+  program = [
+    "bash",
+    "-c",
+    <<EOT
+    set -eou pipefail
+
+    # Get json object from stdin
+    IFS='' read -r input || [ -n "$input" ]
+
+    # Check if the access key or bearer token is set as an environment variable
+    #   for access within scripts and to avoid credentials within provider configurations
+    if [ -z "$${BA_ACCESS_KEY:+''}" ] && [ -z "$${BA_BEARER_TOKEN:+''}" ]
+    then
+      printf "\n%s\n" "Error: BigAnimal API access keys are not defined in the environment. Please set BA_ACCESS_KEY or BA_BEARER_TOKEN." 1>&2
+      exit 1
+    fi
+
+    # Set auth header
+    AUTH_HEADER=""
+    if [ ! -z "$${BA_ACCESS_KEY:+''}" ]
+    then
+      AUTH_HEADER="x-access-key: $BA_ACCESS_KEY"
+    else
+      AUTH_HEADER="authorization: Bearer $BA_BEARER_TOKEN"
+    fi
+
+    # Check for a valid project id, uri, and access to the endpoint
+    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
+    PROJECT_ID="${var.project.id}"
+    ENDPOINT="projects/$PROJECT_ID/cloud-providers"
+    REQUEST_TYPE="GET"
+    if ! RESPONSE=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" 2>&1) || \
+       ! RESULT=$(printf "$RESPONSE" | jq -er .data | jq -er tostring 2>&1)
+    then
+      RC="$${PIPESTATUS[0]}"
+      printf "ERROR: Invalid response\n" 1>&2
+      printf "%s: %s\n" "URI" "$URI" 1>&2
+      printf "%s: %s\n" "ENDPOINT" "$ENDPOINT" 1>&2
+      printf "%s: %s\n" "PROJECT_ID" "$PROJECT_ID" 1>&2
+      printf "%s: %s\n" "REQUEST_TYPE" "$REQUEST_TYPE" 1>&2
+      printf "%s\n" "$RESPONSE" 1>&2
+      exit "$RC"
+    fi
+
+    printf '{"data":"%s"}' "$(printf "$RESULT" | base64 -w 0)"
+    EOT
+  ]
 }
 
 variable "name" {}
