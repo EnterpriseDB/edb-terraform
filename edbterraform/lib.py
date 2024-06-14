@@ -10,6 +10,8 @@ import subprocess
 from jinja2 import Environment, FileSystemLoader
 import textwrap
 from typing import List, Dict, Optional
+from datetime import datetime
+import hashlib
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -21,16 +23,20 @@ from edbterraform.utils.files import load_yaml_file, render_template
 from edbterraform.utils.logs import logger
 from edbterraform.CLI import TerraformCLI
 
-def tpl(template_name, dest, csp, vars={}):
+def tpl(template_name, dest, csp, vars={}, template_path=False):
     # Renders and saves a jinja2 template based on a given template name and
     # variables.
 
     try:
-        # Templates are located in __file__/data/templates/<cloud-service-provider>
-        current_dir = Path(__file__).parent.resolve()
-        templates_dir = PurePath.joinpath(
-            current_dir, 'data', 'templates', csp
-        )
+        if not template_path:
+            # Templates are located in __file__/data/templates/<cloud-service-provider>
+            current_dir = Path(__file__).parent.resolve()
+            templates_dir = PurePath.joinpath(
+                current_dir, 'data', 'templates', csp
+            )
+        else:
+            templates_dir = Path(template_name).resolve().parents[0]
+            template_name = Path(template_name).name
 
         # Jinja2 rendering
         file_loader = FileSystemLoader(str(templates_dir))
@@ -95,7 +101,11 @@ def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provi
                         #   but assume region restrictions due to AWS
                         if cloud_service_provider != 'azure':
                             items['region'] = region
-                        data[block][provider_name].append(items)
+
+                        # Only append missing provider regions/aliases
+                        # Each provider must also be available when destroying resources.
+                        if items not in data[block][provider_name]:
+                            data[block][provider_name].append(items)
 
 
                 # https://developer.hashicorp.com/terraform/language/v1.3.x/settings/backends/configuration
@@ -111,14 +121,14 @@ def update_terraform_blocks(file, template_vars, infra_vars, cloud_service_provi
                 if block == 'terraform':
                     if block not in data:
                         data[block] = dict()
-                    # Setup/Overwrite the backend block
-                    if 'backend' not in data[block] or data[block]['backend']:
+                    # Setup the backend block
+                    if 'backend' not in data[block]:
                         data[block]['backend'] = dict()
-                    # Handle the remote state type with the cloud providers storage service
-                    if remote_state_type == 'cloud':
-                        remote_state_type = cloud_service_provider
+                        # Handle the remote state type with the cloud providers storage service
+                        if remote_state_type == 'cloud':
+                            remote_state_type = cloud_service_provider
 
-                    data[block]['backend'][csp_terraform_backend.get(remote_state_type, remote_state_type)] = {}
+                        data[block]['backend'][csp_terraform_backend.get(remote_state_type, remote_state_type)] = {}
 
                     # Set the required terraform version
                     data[block]['required_version'] = '>= %s, <= %s' % (TerraformCLI.min_version.to_string(), TerraformCLI.max_version.to_string())
@@ -153,6 +163,7 @@ def create_project_dir(
     SCRIPT_DIRECTORY = Path(__file__).parent.resolve()
     TERRAFORM_CLOUD_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / cloud_service_provider / 'modules'
     TERRAFORM_BIGANIMAL_MODULES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'biganimal' / 'modules'
+    TERRAFORM_TEMPLATES_DIRECTORY = SCRIPT_DIRECTORY / 'data' / 'templates' / cloud_service_provider
     TERRAFORM_PROJECT_MODULES_DIRECTORY = project_directory / 'modules'
     TERRAFORM_PROVIDERS_FILE = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'providers.tf.json'
     TERRAFORM_COMMON_VARS_FILE = SCRIPT_DIRECTORY / 'data' / 'terraform' / 'common_vars.tf'
@@ -166,6 +177,7 @@ def create_project_dir(
     BACKUP_TEMPLATE_INPUTS = EDB_TERRAFORM_DIRECTORY / 'variables.yml'
     BACKUP_TEMPLATE_FINAL = EDB_TERRAFORM_DIRECTORY / 'terraform.tfvars.yml'
     BACKUP_SYSTEM = EDB_TERRAFORM_DIRECTORY / 'system.yml'
+    BACKUP_JINJA_TEMPLATES = EDB_TERRAFORM_DIRECTORY / 'templates'
     if project_directory.exists():
         sys.exit("ERROR: directory %s already exists" % project_directory)
 
@@ -176,6 +188,7 @@ def create_project_dir(
         logger.info(f'Making directory and copying terraform modules {TERRAFORM_CLOUD_MODULES_DIRECTORY} into {project_directory}')
         shutil.copytree(TERRAFORM_CLOUD_MODULES_DIRECTORY, TERRAFORM_PROJECT_MODULES_DIRECTORY)
         shutil.copytree(TERRAFORM_BIGANIMAL_MODULES_DIRECTORY, TERRAFORM_PROJECT_MODULES_DIRECTORY, dirs_exist_ok=True)
+        shutil.copytree(TERRAFORM_TEMPLATES_DIRECTORY, BACKUP_JINJA_TEMPLATES, dirs_exist_ok=True)
         shutil.copyfile(TERRAFORM_PROVIDERS_FILE, project_directory / TERRAFORM_PROVIDERS_FILE.name)
         shutil.copyfile(TERRAFORM_VERSIONS_FILE, project_directory / TERRAFORM_VERSIONS_FILE.name)
         shutil.copyfile(TERRAFORM_COMMON_VARS_FILE, project_directory / TERRAFORM_COMMON_VARS_FILE.name)
@@ -361,9 +374,79 @@ def build_vars(csp: str, infra_vars: Path, server_output_name: str):
     terraform_vars = dict(
         spec = infra_vars.copy(),
         cloud_service_provider = 'gcp' if csp == 'gcloud' else csp,
+        output_name = server_output_name,
     )
 
     return (terraform_vars, template_vars)
+
+def regen_templates(project_path: Path):
+    '''
+    Given a project path:
+    - backup original main.tf and providers.tf.json
+    - regenerate main.tf
+    - append missing regions to providers.tf.json
+    '''
+
+    logger.info(f'Regenerating terraform files in {project_path}')
+
+    templates_dir = project_path / 'edb-terraform' / 'templates'
+    terraform_vars_file = project_path / 'terraform.tfvars.json'
+
+    if not templates_dir.exists():
+        raise FileNotFoundError(f'Templates missing from {templates_dir}')
+    if not terraform_vars_file.exists():
+        raise FileNotFoundError(f'Terraform vars missing from {project_path}')
+
+    terraform_vars = load_yaml_file(terraform_vars_file)
+    cloud_service_provider = terraform_vars['cloud_service_provider']
+    infra_vars = terraform_vars['spec']
+    output_name = terraform_vars['output_name']
+
+    # Transform variables extracted from the infrastructure file into
+    # terraform and templates variables.
+    (terraform_vars, template_vars) = \
+        build_vars(cloud_service_provider, {cloud_service_provider: infra_vars}, output_name)
+
+    # Create a backup of main.tf with universal timestamp
+    curr_time = datetime.now().strftime("%Y%m%d%H%M%S")
+    main_tf_file = project_path / 'main.tf'
+    main_tf_backup = project_path / 'backup' / f'main.tf.{curr_time}'
+    providers_tf_file = project_path / 'providers.tf.json'
+    providers_tf_backup = project_path / 'backup' / f'providers.tf.json.{curr_time}'
+    shutil.copyfile(main_tf_file, main_tf_backup)
+    shutil.copyfile(providers_tf_file, providers_tf_backup)
+
+    # Generate the main.tf files.
+    tpl(
+        templates_dir / 'main.tf.j2',
+        main_tf_file,
+        cloud_service_provider,
+        template_vars,
+        template_path=True,
+    )
+
+    # Generate provider.tf.json
+    update_terraform_blocks(
+        providers_tf_file,
+        template_vars,
+        terraform_vars,
+        cloud_service_provider,
+        blocks=['provider'],
+    )
+
+    # Checksum the main.tf file, read as bytes with sha256 and erase the backup file if no changes
+    main_tf_checksum = hashlib.sha256(main_tf_file.read_bytes()).hexdigest()
+    main_tf_backup_checksum = hashlib.sha256(main_tf_backup.read_bytes()).hexdigest()
+    if main_tf_checksum == main_tf_backup_checksum: 
+        logger.info(f'No changes detected in {main_tf_file}, removing backup file {main_tf_backup}')
+        main_tf_backup.unlink()
+
+    # Checksum the providers.tf.json file, read as bytes with sha256 and erase the backup file if no changes
+    providers_tf_checksum = hashlib.sha256(providers_tf_file.read_bytes()).hexdigest()
+    providers_tf_backup_checksum = hashlib.sha256(providers_tf_backup.read_bytes()).hexdigest()
+    if providers_tf_checksum == providers_tf_backup_checksum:
+        logger.info(f'No changes detected in {providers_tf_file}, removing backup file {providers_tf_backup}')
+        providers_tf_backup.unlink()
 
 def generate_terraform(
         infra_file: Path,
