@@ -8,7 +8,7 @@ from typing import List
 from datetime import datetime
 import json
 
-from edbterraform.lib import generate_terraform
+from edbterraform.lib import generate_terraform, regen_templates
 from edbterraform.CLI import TerraformCLI, JqCLI, AwsCLI, AzureCLI, GoogleCLI, BigAnimalCLI
 from edbterraform import __project_name__, __dot_project__, __version__
 from edbterraform.utils import logs, files
@@ -195,7 +195,7 @@ ProjectName = ArgumentConfig(
     required=True,
     action=ProjectNameAction,
     help='''
-        Creates a directory with PROJECT_NAME for generated files in the WORK_PATH.
+        PROJECT_NAME for the generated files, within the WORK_PATH directory.
         Leading slashes will be removed from names.
         Default: %(default)s
         '''
@@ -409,6 +409,14 @@ class Arguments:
             TerraformVersion,
             RemoteStateType,
         ]],
+        're-gen': ['Regenerate terraform files based on a yaml infrastructure file\n',[
+            ProjectName,
+            WorkPath,
+            LogLevel,
+            LogFile,
+            LogDirectory,
+            LogStdout,
+        ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
             LogLevel,
@@ -567,6 +575,11 @@ class Arguments:
                 terraform_version=self.get_env('terraform_version'),
             )
             print(json.dumps(outputs, separators=(',', ':')))
+
+        if self.command == 're-gen':
+            regen_templates(
+                project_path=self.get_env('work_path') / self.get_env('project_name')
+            )
 
         if self.command == 'setup':
             installed = {}
