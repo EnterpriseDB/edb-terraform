@@ -264,7 +264,7 @@ resource "toolbox_external" "api_status" {
       then
         printf "Cluster creation timed out\n" 1>&2
         printf "Last phase: $PHASE\n" 1>&2
-        printf "Cluster data: $CLUSTER_DATA\n" 1>&2
+        printf "Cluster data: $RESULT\n" 1>&2
         exit 1
       fi
 
