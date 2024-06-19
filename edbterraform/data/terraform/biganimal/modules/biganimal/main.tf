@@ -202,6 +202,8 @@ resource "toolbox_external" "api_biganimal" {
       delete)
         CLUSTER_ID=$(printf "%s" "$input" | jq -r '.old_result.data.clusterId')
         delete_stage "$CLUSTER_ID"
+        # Wait for cluster to be deleted to avoid destroy-create race condition
+        sleep 60
         ;;
       *)
         printf "Input: %s\n" "$input" 1>&2
