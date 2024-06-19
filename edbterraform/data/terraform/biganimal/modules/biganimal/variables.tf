@@ -416,11 +416,13 @@ locals {
 
   // Create an object that excludes any null objects
   TERRAFORM_API_MAPPING = {
-    iops = "iops"
-    throughput = "throughput"
-    size_gb = "size"
-    properties = "volumePropertiesId"
-    type = "volumeTypeId"
+    storage = {
+      iops = "iops"
+      throughput = "throughput"
+      size_gb = "size"
+      properties = "volumePropertiesId"
+      type = "volumeTypeId"
+    }
   }
 
   // Remove null values from the volume properties and save with the api variable naming as the key
@@ -443,11 +445,11 @@ locals {
           }
       ]
       storage = {
-        for key, value in group_values.volume : local.TERRAFORM_API_MAPPING[key] =>
+        for key, value in group_values.volume : local.TERRAFORM_API_MAPPING.storage[key] =>
           key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
       }
       walStorage = {
-        for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING[key] =>
+        for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING.storage[key] =>
           key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
       }
       # required
@@ -470,9 +472,10 @@ locals {
         startDay = group_values.maintenance_window.start_day
         startTime = group_values.maintenance_window.start_time
       }
-    }][0]
+    }
+  ][0]
 
-    API_DATA_PGD = {
+  API_DATA_PGD = {
     clusterName = local.cluster_name
     clusterType = "cluster"
     password = local.password
@@ -488,11 +491,11 @@ locals {
             }
         ]
         storage = {
-          for key, value in group_values.volume : local.TERRAFORM_API_MAPPING[key] =>
+          for key, value in group_values.volume : local.TERRAFORM_API_MAPPING.storage[key] =>
             key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
         }
         walStorage = {
-          for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING[key] =>
+          for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING.storage[key] =>
             key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
         }
         # required 
@@ -525,6 +528,7 @@ locals {
         instanceType = { instanceTypeId = group_values.instance_type }
         provider = { cloudProviderId = group_values.cloud_provider_id }
         region = { regionId = group_values.region }
+        # Storage values prefetched from the api for witness groups
         storage = {
           volumePropertiesId = group_values.storage.properties
           volumeTypeId = group_values.storage.type
@@ -536,6 +540,7 @@ locals {
           startTime = group_values.maintenance_window.start_time
         }
       }],
+    # Remove null/empty groups
     ]): obj if obj != null && obj != {}]
   }
 
