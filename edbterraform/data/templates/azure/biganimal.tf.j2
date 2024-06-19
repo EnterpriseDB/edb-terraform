@@ -11,6 +11,7 @@ module "biganimal" {
 
   cluster_name       = module.spec.base.tags.cluster_name
   password           = each.value.password
+  image              = each.value.image
   data_groups        = each.value.data_groups
   witness_groups     = each.value.witness_groups
   service_cidrblocks = local.biganimal_service_cidrblocks
