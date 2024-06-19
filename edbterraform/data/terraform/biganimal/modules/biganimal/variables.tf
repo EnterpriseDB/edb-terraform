@@ -237,6 +237,15 @@ variable "password" {
   sensitive = true
 }
 
+variable "image" {
+  type = object({
+    pg    = optional(string)
+    proxy = optional(string)
+  })
+  default = {}
+  nullable = false
+}
+
 resource "random_password" "password" {
   length          = 32
   special          = true
@@ -345,6 +354,8 @@ locals {
 
       # Format the cloud provider id
       cloud_provider_id = values.cloud_account ? var.cloud_provider : "bah:${var.cloud_provider}"
+
+      image = var.image != null && anytrue([for key, value in var.image: value != null && value != ""]) ? var.image : {}
     }))
   }
 
@@ -409,6 +420,8 @@ locals {
         # Currently unused
         #throughput = toolbox_external.witness_node_params[name].result.data.storage.throughput
       }
+
+      image = var.image != null && anytrue([for key, value in var.image: value != null && value != ""]) ? var.image : {}
     }))
   }
 
@@ -423,65 +436,25 @@ locals {
       properties = "volumePropertiesId"
       type = "volumeTypeId"
     }
+
+    imageNames = {
+      pg    = "pgImage"
+      proxy = "proxyImage"
+    }
   }
 
   // Remove null values from the volume properties and save with the api variable naming as the key
   // Size must be saved as a string and with the Gi suffix
   API_DATA_CLUSTER = [
-    for group_name, group_values in local.data_groups: {
-      clusterName = local.cluster_name
-      # causes error now that we have pgd
-      # │ {"error":{"status":400,"message":"Bad Request","errors":[{"message":"Cluster type \"cluster\" cannot be changed to
-      # │ \"single\"","path":".body.clusterType"}],"reference":"upmrid/TpKTaO-o4PFGK_4ZZPtCg/UrN6Js0I9On9V5MKI4XiX","source":"API"}}
-      # │ State: exit status 22
-      # clusterType = group_values.type
-      password = local.password
-      instanceType = { instanceTypeId = group_values.instance_type }
-      allowedIpRanges = [
-        for key, value in group_values.allowed_ip_ranges :
-          {
-            cidrBlock = value.cidr_block
-            description = value.description
-          }
-      ]
-      storage = {
-        for key, value in group_values.volume : local.TERRAFORM_API_MAPPING.storage[key] =>
-          key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
-      }
-      walStorage = {
-        for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING.storage[key] =>
-          key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
-      }
-      # required
-      provider = { cloudProviderId = group_values.cloud_provider_id }
-      clusterArchitecture = {
-          clusterArchitectureId = group_values.type
-          nodes = group_values.type == "single" ? 1 : group_values.node_count
-      }
-      region = { regionId = group_values.region }
-      pgVersion = { pgVersionId = tostring(group_values.engine_version) }
-      pgType = { pgTypeId = group_values.engine }
-      pgConfig = group_values.settings
-      privateNetworking = !var.publicly_accessible
-      backupRetentionPeriod = "1d"
-      cspAuth = false
-      readOnlyConnections = false
-      superuserAccess = group_values.superuser_access
-      maintenanceWindow = {
-        isEnabled = group_values.maintenance_window.is_enabled
-        startDay = group_values.maintenance_window.start_day
-        startTime = group_values.maintenance_window.start_time
-      }
-    }
-  ][0]
-
-  API_DATA_PGD = {
-    clusterName = local.cluster_name
-    clusterType = "cluster"
-    password = local.password
-    groups = [
-      for obj in flatten([[ for group_name, group_values in local.data_groups: {
-        clusterType = "data_group"
+    for group_name, group_values in local.data_groups: merge(
+      {
+        clusterName = local.cluster_name
+        # causes error now that we have pgd
+        # │ {"error":{"status":400,"message":"Bad Request","errors":[{"message":"Cluster type \"cluster\" cannot be changed to
+        # │ \"single\"","path":".body.clusterType"}],"reference":"upmrid/TpKTaO-o4PFGK_4ZZPtCg/UrN6Js0I9On9V5MKI4XiX","source":"API"}}
+        # │ State: exit status 22
+        # clusterType = group_values.type
+        password = local.password
         instanceType = { instanceTypeId = group_values.instance_type }
         allowedIpRanges = [
           for key, value in group_values.allowed_ip_ranges :
@@ -498,11 +471,11 @@ locals {
           for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING.storage[key] =>
             key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
         }
-        # required 
+        # required
         provider = { cloudProviderId = group_values.cloud_provider_id }
         clusterArchitecture = {
-            clusterArchitectureId = "pgd"
-            nodes = group_values.node_count
+            clusterArchitectureId = group_values.type
+            nodes = group_values.type == "single" ? 1 : group_values.node_count
         }
         region = { regionId = group_values.region }
         pgVersion = { pgVersionId = tostring(group_values.engine_version) }
@@ -512,34 +485,109 @@ locals {
         backupRetentionPeriod = "1d"
         cspAuth = false
         readOnlyConnections = false
-        # unavailable for pgd
-        # superuserAccess = group_values.superuser_access
+        superuserAccess = group_values.superuser_access
         maintenanceWindow = {
           isEnabled = group_values.maintenance_window.is_enabled
           startDay = group_values.maintenance_window.start_day
           startTime = group_values.maintenance_window.start_time
         }
-      }], [ for group_name, group_values in local.witness_groups: {
-        clusterType = "witness_group"
-        clusterArchitecture = {
-          clusterArchitectureId = "pgd"
-          nodes = 1
+      },
+      # Custom image behind a feature flag, omit if not set
+      group_values.image == {} ? {} : {
+        imageNames = {
+          for key, value in group_values.image:
+            local.TERRAFORM_API_MAPPING.imageNames[key] => value
+            if value != null && value != ""
         }
-        instanceType = { instanceTypeId = group_values.instance_type }
-        provider = { cloudProviderId = group_values.cloud_provider_id }
-        region = { regionId = group_values.region }
-        # Storage values prefetched from the api for witness groups
-        storage = {
-          volumePropertiesId = group_values.storage.properties
-          volumeTypeId = group_values.storage.type
-          size = group_values.storage.size
-        }
-        maintenanceWindow = {
-          isEnabled = group_values.maintenance_window.is_enabled
-          startDay = group_values.maintenance_window.start_day
-          startTime = group_values.maintenance_window.start_time
-        }
-      }],
+      },
+    )
+  ][0]
+
+  API_DATA_PGD = {
+    clusterName = local.cluster_name
+    clusterType = "cluster"
+    password = local.password
+    groups = [
+      for obj in flatten([[ for group_name, group_values in local.data_groups: merge(
+        {
+          clusterType = "data_group"
+          instanceType = { instanceTypeId = group_values.instance_type }
+          allowedIpRanges = [
+            for key, value in group_values.allowed_ip_ranges :
+              {
+                cidrBlock = value.cidr_block
+                description = value.description
+              }
+          ]
+          storage = {
+            for key, value in group_values.volume : local.TERRAFORM_API_MAPPING.storage[key] =>
+              key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+          }
+          walStorage = {
+            for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING.storage[key] =>
+              key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+          }
+          # required 
+          provider = { cloudProviderId = group_values.cloud_provider_id }
+          clusterArchitecture = {
+              clusterArchitectureId = "pgd"
+              nodes = group_values.node_count
+          }
+          region = { regionId = group_values.region }
+          pgVersion = { pgVersionId = tostring(group_values.engine_version) }
+          pgType = { pgTypeId = group_values.engine }
+          pgConfig = group_values.settings
+          privateNetworking = !var.publicly_accessible
+          backupRetentionPeriod = "1d"
+          cspAuth = false
+          readOnlyConnections = false
+          # unavailable for pgd
+          # superuserAccess = group_values.superuser_access
+          maintenanceWindow = {
+            isEnabled = group_values.maintenance_window.is_enabled
+            startDay = group_values.maintenance_window.start_day
+            startTime = group_values.maintenance_window.start_time
+          }
+        },
+        # Custom image behind a feature flag, omit if not set
+        group_values.image == {} ? {} : {
+          imageNames = {
+            for key, value in group_values.image:
+              local.TERRAFORM_API_MAPPING.imageNames[key] => value
+              if value != null && value != ""
+          }
+        },
+      )], [ for group_name, group_values in local.witness_groups: merge(
+        {
+          clusterType = "witness_group"
+          clusterArchitecture = {
+            clusterArchitectureId = "pgd"
+            nodes = 1
+          }
+          instanceType = { instanceTypeId = group_values.instance_type }
+          provider = { cloudProviderId = group_values.cloud_provider_id }
+          region = { regionId = group_values.region }
+          # Storage values prefetched from the api for witness groups
+          storage = {
+            volumePropertiesId = group_values.storage.properties
+            volumeTypeId = group_values.storage.type
+            size = group_values.storage.size
+          }
+          maintenanceWindow = {
+            isEnabled = group_values.maintenance_window.is_enabled
+            startDay = group_values.maintenance_window.start_day
+            startTime = group_values.maintenance_window.start_time
+          }
+        },
+        # Custom image behind a feature flag, omit if not set
+        group_values.image == {} ? {} : {
+          imageNames = {
+            for key, value in group_values.image:
+              local.TERRAFORM_API_MAPPING.imageNames[key] => value
+              if value != null && value != ""
+          }
+        },
+      )],
     # Remove null/empty groups
     ]): obj if obj != null && obj != {}]
   }

@@ -160,6 +160,10 @@ variable "spec" {
         id = optional(string)
       }), {})
       password       = optional(string)
+      image = optional(object({
+        pg    = optional(string)
+        proxy = optional(string)
+      }), {})
       data_groups = optional(map(object({
         cloud_account = optional(bool)
         type           = string
