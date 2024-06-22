@@ -6,7 +6,13 @@
 module "spec" {
   source = "./modules/specification"
 
-  spec = var.spec
+  tags       = lookup(var.spec, "tags", {})
+  images     = lookup(var.spec, "images", {})
+  regions    = lookup(var.spec, "regions", {})
+  machines   = lookup(var.spec, "machines", {})
+  databases  = lookup(var.spec, "databases", {})
+  biganimal  = lookup(var.spec, "biganimal", {})
+  kubernetes = lookup(var.spec, "kubernetes", {})
 
   force_ssh_access = var.force_service_machines
 
