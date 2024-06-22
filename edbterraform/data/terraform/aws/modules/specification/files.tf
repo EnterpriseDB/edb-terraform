@@ -2,13 +2,13 @@
 # If ssh_key.public_path and ssh_key.private_path are defined,
 # overwrite the default keys.
 locals {
-  ssh_user_count = var.spec.images != null ? 1 : 0
+  ssh_user_count = local.spec.images != null ? 1 : 0
   ssh_keys_count = (
-    var.spec.ssh_key.public_path != null ||
-    var.spec.ssh_key.private_path != null ? 1 : 0
+    local.spec.ssh_key.public_path != null ||
+    local.spec.ssh_key.private_path != null ? 1 : 0
   )
-  private_ssh_path = "${abspath(path.root)}/${var.spec.ssh_key.output_name}"
-  public_ssh_path = "${abspath(path.root)}/${var.spec.ssh_key.output_name}.pub"
+  private_ssh_path = "${abspath(path.root)}/${local.spec.ssh_key.output_name}"
+  public_ssh_path = "${abspath(path.root)}/${local.spec.ssh_key.output_name}.pub"
 }
 
 resource "tls_private_key" "default" {
@@ -38,19 +38,19 @@ resource "local_sensitive_file" "private_key" {
 
   filename        = local.private_ssh_path
   file_permission = "0600"
-  source          = var.spec.ssh_key.private_path
+  source          = local.spec.ssh_key.private_path
 
   lifecycle {
     precondition {
-      condition     = var.spec.ssh_key.public_path != var.spec.ssh_key.private_path
+      condition     = local.spec.ssh_key.public_path != local.spec.ssh_key.private_path
       error_message = "private_path and private_path cannot be the same"
     }
     precondition {
-      condition     = fileexists(var.spec.ssh_key.private_path)
+      condition     = fileexists(local.spec.ssh_key.private_path)
       error_message = "Unable to find or access the private key"
     }
     precondition {
-      condition     = var.spec.ssh_key.public_path != null
+      condition     = local.spec.ssh_key.public_path != null
       error_message = "public_path must be defined when using private_path"
     }
   }
@@ -63,15 +63,15 @@ resource "local_file" "public_key" {
 
   filename        = local.public_ssh_path
   file_permission = "0644"
-  source          = var.spec.ssh_key.public_path
+  source          = local.spec.ssh_key.public_path
 
   lifecycle {
     precondition {
-      condition     = fileexists(var.spec.ssh_key.public_path)
+      condition     = fileexists(local.spec.ssh_key.public_path)
       error_message = "Unable to access the public key"
     }
     precondition {
-      condition     = var.spec.ssh_key.private_path != null
+      condition     = local.spec.ssh_key.private_path != null
       error_message = "private_path must be defined when using public_path"
     }
   }

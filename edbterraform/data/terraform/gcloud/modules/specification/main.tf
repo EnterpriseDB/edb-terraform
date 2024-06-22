@@ -5,12 +5,12 @@ data "google_compute_regions" "all" {
     postcondition {
       # Check for all regions to be valid region options
       condition = alltrue([
-        for region in keys(var.spec.regions) :
+        for region in keys(local.spec.regions) :
         contains(self.names, region)
       ])
       error_message = <<-EOT
 Invalid Regions Set:
-%{for region in keys(var.spec.regions)~}
+%{for region in keys(local.spec.regions)~}
 %{if !contains(self.names, region)~}
     ${region}
 %{endif~}
@@ -29,12 +29,12 @@ data "google_compute_regions" "unavailable" {
     postcondition {
       # Check if any region is an unavailable region
       condition = alltrue([
-        for region in keys(var.spec.regions):
+        for region in keys(local.spec.regions):
         !contains(self.names, region)
       ])
       error_message = <<-EOT
 Unavailable Regions Set:
-%{for region in keys(var.spec.regions)~}
+%{for region in keys(local.spec.regions)~}
 %{if contains(self.names, region)~}
     ${region}
 %{endif~}
@@ -47,7 +47,7 @@ EOT
 }
 
 data "google_compute_zones" "region" {
-  for_each = var.spec.regions
+  for_each = local.spec.regions
 
   region = each.key
   # status defaults to all available zones
@@ -75,7 +75,7 @@ EOT
 }
 
 data "google_compute_zones" "unavailable" {
-  for_each = var.spec.regions
+  for_each = local.spec.regions
 
   region = each.key
   status = "DOWN"

@@ -1,5 +1,5 @@
 locals {
-  tags = merge(var.spec.tags, {
+  tags = merge(local.spec.tags, {
     # add ids for tracking
     terraform_hex   = random_id.apply.hex
     terraform_id    = random_id.apply.id
@@ -10,13 +10,13 @@ locals {
 
   # each regions cidrblock, should not overlap since we perform VPC peering
   region_cidrblocks = flatten([
-    for region, values in var.spec.regions:
+    for region, values in local.spec.regions:
       values.cidr_block
   ])
 
-  machine_ssh_ports = distinct([for machine, values in var.spec.machines: values.ssh_port])
+  machine_ssh_ports = distinct([for machine, values in local.spec.machines: values.ssh_port])
   region_ssh_exists = {
-    for region, values in var.spec.regions: region => anytrue([
+    for region, values in local.spec.regions: region => anytrue([
       for port in values.ports: contains(local.machine_ssh_ports, coalesce(port.port, -2)) || contains(local.machine_ssh_ports, coalesce(port.to_port, -2)) if port.defaults == "service"
     ])
   }
@@ -45,12 +45,12 @@ locals {
 
   # save ports per region
   region_ports = {
-    for region, values in var.spec.regions: region => concat(values.ports, (local.region_ssh_exists[region] ? [] : local.machine_ssh_rules))
+    for region, values in local.spec.regions: region => concat(values.ports, (local.region_ssh_exists[region] ? [] : local.machine_ssh_rules))
   }
 }
 
 output "base" {
-  value = merge(var.spec, {
+  value = merge(local.spec, {
     "tags" = local.tags
   })
 }
@@ -60,17 +60,17 @@ output "tags" {
 }
 
 output "private_key" {
-  value = var.spec.ssh_key.private_path != null ? file(var.spec.ssh_key.private_path) : try(tls_private_key.default[0].private_key_openssh, "")
+  value = local.spec.ssh_key.private_path != null ? file(local.spec.ssh_key.private_path) : try(tls_private_key.default[0].private_key_openssh, "")
 }
 
 output "public_key" {
-  value = var.spec.ssh_key.public_path != null ? file(var.spec.ssh_key.public_path) : try(tls_private_key.default[0].public_key_openssh, "")
+  value = local.spec.ssh_key.public_path != null ? file(local.spec.ssh_key.public_path) : try(tls_private_key.default[0].public_key_openssh, "")
 }
 
 locals {
   # Extend machine's count as of list objects, with an index in the name only when count over 1
   machines_extended = flatten([
-    for name, machine_spec in var.spec.machines : [
+    for name, machine_spec in local.spec.machines : [
       for index in range(machine_spec.count) : {
         name = machine_spec.count > 1 ? "${name}-${index}" : name
         spec = merge(machine_spec, {
@@ -81,9 +81,9 @@ locals {
           })
           # assign operating system from mapped names
           # add private and public key paths so they can be passed in the machine outputs
-          operating_system = merge(var.spec.images[machine_spec.image_name], { "ssh_private_key_file": local.private_ssh_path, "ssh_public_key_file": local.public_ssh_path })
+          operating_system = merge(local.spec.images[machine_spec.image_name], { "ssh_private_key_file": local.private_ssh_path, "ssh_public_key_file": local.public_ssh_path })
           # assign zone from mapped names
-          zone = var.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
+          zone = local.spec.regions[machine_spec.region].zones[machine_spec.zone_name].zone
         })
       }
     ]
@@ -99,7 +99,7 @@ output "region_machines" {
 
 output "region_databases" {
   value = {
-    for name, database_spec in var.spec.databases : database_spec.region => {
+    for name, database_spec in local.spec.databases : database_spec.region => {
       name = name
       spec = merge(database_spec, {
         # spec project tags
@@ -114,7 +114,7 @@ output "region_databases" {
 
 output "region_alloys" {
   value = {
-    for name, spec in var.spec.alloy : spec.region => {
+    for name, spec in local.spec.alloy : spec.region => {
       name = name
       spec = merge(spec, {
         # spec project tags
@@ -129,7 +129,7 @@ output "region_alloys" {
 
 output "biganimal" {
   value = {
-    for name, biganimal_spec in var.spec.biganimal : name => merge(biganimal_spec, {
+    for name, biganimal_spec in local.spec.biganimal : name => merge(biganimal_spec, {
         project = {
           id = biganimal_spec.project.id == null || biganimal_spec.project.id == "" ? var.ba_project_id_default : biganimal_spec.project.id
         }
@@ -147,11 +147,11 @@ output "biganimal" {
 
 output "region_kubernetes" {
   value = {
-    for name, spec in var.spec.kubernetes : spec.region => {
+    for name, spec in local.spec.kubernetes : spec.region => {
       name = name
       spec = merge(spec, spec.tags, {
         # spec project tags
-        tags = merge(var.spec.tags, {
+        tags = merge(local.spec.tags, {
           # kubernetes module specific tags
           name = name
         })
@@ -170,7 +170,7 @@ output "pet_name" {
 
 output "region_zone_networks" {
   value = {
-    for region, region_spec in var.spec.regions : region => {
+    for region, region_spec in local.spec.regions : region => {
       for name, values in region_spec.zones :
         name => values
     }
