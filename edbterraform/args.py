@@ -555,9 +555,13 @@ class Arguments:
             )
 
         if self.command == 'help':
+            path = self.get_env('project_path')
             results = hcl2.load_variables(self.get_env('project_path'))
             outputs = results
-            print(hcl2.variable_help_message(results))
+            if "module" in str(path):
+                print(hcl2.module_variable_help_message(results))
+            else:
+                print(hcl2.root_variable_help_message(results))
 
         if self.command == 'generate':
             outputs = generate_terraform(
