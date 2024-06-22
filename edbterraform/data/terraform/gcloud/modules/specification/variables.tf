@@ -191,6 +191,27 @@ variable "ba_project_id_default" {
   nullable = true
 }
 
+variable "ba_pg_image_default" {
+  description = "Dev only: BigAnimal postgres image to use if not defined within the biganimal configuration"
+  type = string
+  nullable = true
+  default = null
+}
+
+variable "ba_proxy_image_default" {
+  description = "Dev only: BigAnimal proxy image to use if not defined within the biganimal configuration"
+  type = string
+  nullable = true
+  default = null
+}
+
+variable "ba_ignore_image_default" {
+  description = "Ignore biganimal custom images"
+  type = bool
+  nullable = false
+  default = false
+}
+
 locals {
   cluster_name = can(var.spec.tags.cluster_name) ? var.spec.tags.cluster_name : "GCloud-Cluster-default"
   created_by = can(var.spec.tags.created_by) ? var.spec.tags.created_by : "EDB-Terraform-GCloud"
