@@ -26,6 +26,27 @@ variable "ba_project_id" {
   default = null
 }
 
+variable "ba_pg_image" {
+  description = "Dev only: BigAnimal postgres image to use if not defined within the biganimal configuration"
+  type = string
+  nullable = true
+  default = null
+}
+
+variable "ba_proxy_image" {
+  description = "Dev only: BigAnimal proxy image to use if not defined within the biganimal configuration"
+  type = string
+  nullable = true
+  default = null
+}
+
+variable "ba_ignore_image" {
+  description = "Ignore biganimal custom images"
+  type = bool
+  nullable = false
+  default = false
+}
+
 variable "public_cidrblocks" {
   description = "Public CIDR block"
   type        = list(string)

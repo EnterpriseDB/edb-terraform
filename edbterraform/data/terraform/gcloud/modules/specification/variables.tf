@@ -123,6 +123,10 @@ variable "spec" {
         id = optional(string)
       }), {})
       password       = optional(string)
+      image = optional(object({
+        pg    = optional(string)
+        proxy = optional(string)
+      }), {})
       data_groups = optional(map(object({
         cloud_account = optional(bool)
         type           = string
@@ -185,6 +189,27 @@ variable "ba_project_id_default" {
   description = "BigAnimal project ID"
   type = string
   nullable = true
+}
+
+variable "ba_pg_image_default" {
+  description = "Dev only: BigAnimal postgres image to use if not defined within the biganimal configuration"
+  type = string
+  nullable = true
+  default = null
+}
+
+variable "ba_proxy_image_default" {
+  description = "Dev only: BigAnimal proxy image to use if not defined within the biganimal configuration"
+  type = string
+  nullable = true
+  default = null
+}
+
+variable "ba_ignore_image_default" {
+  description = "Ignore biganimal custom images"
+  type = bool
+  nullable = false
+  default = false
 }
 
 locals {

@@ -1,13 +1,19 @@
-# All modules should reference this module's outputs for input from user
-# All modules should reference this module in depends_on
-# During terraform plan, will act as basic validation of yaml input(var.spec) with variable validation and preconditions
-# During terraform apply, will check for availability of resources with data sources and postconditions
+# All modules should reference this module's outputs
+# During terraform plan, will act as basic validation of yaml input(var.spec) with:
+# - variable validation
+# - preconditions
+# - data sources as long as there is no resource dependency, which then postpones it to 'terraform apply'
 module "spec" {
   source = "./modules/specification"
 
   spec = var.spec
+
   force_ssh_access = var.force_service_machines
+
   ba_project_id_default = var.ba_project_id
+  ba_ignore_image_default = var.ba_ignore_image
+  ba_pg_image_default = var.ba_pg_image
+  ba_proxy_image_default = var.ba_proxy_image
 }
 
 resource "null_resource" "validation" {

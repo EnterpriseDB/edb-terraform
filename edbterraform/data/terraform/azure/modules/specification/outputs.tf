@@ -127,7 +127,13 @@ output "region_databases" {
 output "biganimal" {
   value = {
     for name, biganimal_spec in var.spec.biganimal : name => merge(biganimal_spec, {
-        project = biganimal_spec.project.id == null ? {"id":"${var.ba_project_id_default}"} : biganimal_spec.project
+        project = {
+          id = biganimal_spec.project.id == null || biganimal_spec.project.id == "" ? var.ba_project_id_default : biganimal_spec.project.id
+        }
+        image = var.ba_ignore_image_default ? { pg = null, proxy = null } : {
+          pg    = biganimal_spec.image.pg == null || biganimal_spec.image.pg == "" ? var.ba_pg_image_default : biganimal_spec.image.pg
+          proxy = biganimal_spec.image.proxy == null || biganimal_spec.image.proxy == "" ? var.ba_proxy_image_default : biganimal_spec.image.proxy
+        }
         # spec project tags
         tags = merge(local.tags, biganimal_spec.tags, {
           Name = format("%s-%s-%s", name, local.cluster_name, random_id.apply.id)

@@ -11,7 +11,11 @@ aws:
       #   or it can be configured per cluster configuration:
       #project:
       #  id: prj_1234567890
-      # password: "ndslniv&03ind**vDdjfnjv" # auto-generated if not provided
+      # password: "" # auto-generated if not provided
+      # Only available for dev environments and can be set as environment variables
+      #image:
+      #  pg: ""
+      #  proxy: ""
       data_groups:
         one:
           cloud_account: false
