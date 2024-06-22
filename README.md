@@ -252,6 +252,10 @@ BigAnimal specific environment variables that can be used during `terraform plan
       - Expired token is reused
 - `TF_VAR_ba_project_id` - Biganimal project id if not defined within the yaml configuration.
   - For persistence, a tfvars file can be created with `ba_project_id` defined.
+- Custom Image (Only available for dev environments)
+  - `TF_VAR_ba_pg_image` - Biganimal postgres image if not defined within the yaml configuration
+  - `TF_VAR_ba_proxy_image` - Biganimal proxy image if not defined within the yaml configuration
+  - `TF_VAR_ba_ignore_image` - Ignore image values (Default: `false`)
 
 ### Environment variables
 Terraform allows for top-level variables to be defined with cli arguments or environment variables.
