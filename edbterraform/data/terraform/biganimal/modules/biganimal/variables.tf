@@ -493,7 +493,7 @@ locals {
         }
       },
       # Custom image behind a feature flag, omit if not set
-      group_values.image == {} ? {} : {
+      group_values.image == {} || alltrue([for image in values(group_values.image): image != null && image != ""]) ? {} : {
         imageNames = {
           for key, value in group_values.image:
             local.TERRAFORM_API_MAPPING.imageNames[key] => value
@@ -580,7 +580,7 @@ locals {
           }
         },
         # Custom image behind a feature flag, omit if not set
-        group_values.image == {} ? {} : {
+        group_values.image == {} || alltrue([for image in values(group_values.image): image != null && image != ""]) ? {} : {
           imageNames = {
             for key, value in group_values.image:
               local.TERRAFORM_API_MAPPING.imageNames[key] => value
