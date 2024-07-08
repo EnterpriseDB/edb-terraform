@@ -22,7 +22,7 @@ terraform {
 
     azurerm = {
       source = "registry.terraform.io/hashicorp/azurerm"
-      version = "< 3.89.1"
+      version = "< 3.111.1"
     }
 
     google = {
