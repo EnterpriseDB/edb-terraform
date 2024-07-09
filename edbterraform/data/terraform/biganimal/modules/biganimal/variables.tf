@@ -355,7 +355,7 @@ locals {
       # Format the cloud provider id
       cloud_provider_id = values.cloud_account ? var.cloud_provider : "bah:${var.cloud_provider}"
 
-      image = var.image != null && anytrue([for key, value in var.image: value != null && value != ""]) ? var.image : {}
+      image = anytrue([for key, value in coalesce(var.image, {}): value != null && value != ""]) ? var.image : {}
     }))
   }
 
@@ -421,7 +421,8 @@ locals {
         #throughput = toolbox_external.witness_node_params[name].result.data.storage.throughput
       }
 
-      image = var.image != null && anytrue([for key, value in var.image: value != null && value != ""]) ? var.image : {}
+      # Custom image behind a feature flag, omit if not set
+      image = anytrue([for key, value in coalesce(var.image, {}): value != null && value != ""]) ? var.image : {}
     }))
   }
 
@@ -493,7 +494,7 @@ locals {
         }
       },
       # Custom image behind a feature flag, omit if not set
-      group_values.image == {} || alltrue([for image in values(group_values.image): image != null && image != ""]) ? {} : {
+      length(group_values.image) == 0 ? {} : {
         imageNames = {
           for key, value in group_values.image:
             local.TERRAFORM_API_MAPPING.imageNames[key] => value
@@ -550,7 +551,7 @@ locals {
           }
         },
         # Custom image behind a feature flag, omit if not set
-        group_values.image == {} ? {} : {
+        length(group_values.image) == 0 ? {} : {
           imageNames = {
             for key, value in group_values.image:
               local.TERRAFORM_API_MAPPING.imageNames[key] => value
@@ -580,7 +581,7 @@ locals {
           }
         },
         # Custom image behind a feature flag, omit if not set
-        group_values.image == {} || alltrue([for image in values(group_values.image): image != null && image != ""]) ? {} : {
+        length(group_values.image) == 0 ? {} : {
           imageNames = {
             for key, value in group_values.image:
               local.TERRAFORM_API_MAPPING.imageNames[key] => value
