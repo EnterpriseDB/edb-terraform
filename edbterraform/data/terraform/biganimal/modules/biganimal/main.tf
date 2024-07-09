@@ -155,6 +155,7 @@ resource "toolbox_external" "api_biganimal" {
         printf "URI: %s\n" "$URI" 1>&2
         printf "ENDPOINT: %s\n" "$ENDPOINT" 1>&2
         printf "REQUEST_TYPE: %s\n" "$REQUEST_TYPE" 1>&2
+        printf "DATA: %s\n" "$DATA" 1>&2
         printf "ERROR: %s\n" "$RESULT" 1>&2
         exit "$RC"
       fi
