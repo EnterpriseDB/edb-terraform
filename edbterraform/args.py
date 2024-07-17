@@ -417,6 +417,14 @@ class Arguments:
             LogDirectory,
             LogStdout,
         ]],
+        'spec': ['Check a projects spec\n',[
+            ProjectName,
+            WorkPath,
+            LogLevel,
+            LogFile,
+            LogDirectory,
+            LogStdout,
+        ]],
         'setup': ['Install needed software such as Terraform inside a bin directory\n',[
             BinPath,
             LogLevel,
@@ -583,6 +591,12 @@ class Arguments:
         if self.command == 're-gen':
             regen_templates(
                 project_path=self.get_env('work_path') / self.get_env('project_name')
+            )
+
+        if self.command == 'spec':
+            hcl2.load_specification(
+                project_path=self.get_env('work_path') / self.get_env('project_name'),
+                filename_base= 'modules/specification/spec',
             )
 
         if self.command == 'setup':
