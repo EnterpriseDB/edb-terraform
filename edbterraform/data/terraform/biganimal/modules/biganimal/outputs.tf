@@ -9,6 +9,10 @@ locals {
     dbname = [ for uri_split in local.uri_split : split("/", uri_split.path)[1] ]
 }
 
+output "api_uri" {
+    value = data.external.ba_api_access.result.ba_api_uri
+}
+
 output "project_id" {
     value = var.project.id
 }

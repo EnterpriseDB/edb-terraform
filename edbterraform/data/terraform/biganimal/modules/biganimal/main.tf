@@ -143,13 +143,13 @@ resource "toolbox_external" "api_biganimal" {
     <<EOT
     set -eou pipefail
 
-    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
+    URI="${data.external.ba_api_access.result.ba_api_uri}"
 
     create_stage() {
       ENDPOINT="projects/${var.project.id}/clusters"
       REQUEST_TYPE="POST"
       DATA='${jsonencode(local.API_DATA)}'
-      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA" 2>&1)
+      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" --data "$DATA" 2>&1)
       then
         RC="$${PIPESTATUS[0]}"
         printf "URI: %s\n" "$URI" 1>&2
@@ -166,7 +166,7 @@ resource "toolbox_external" "api_biganimal" {
     delete_stage() {
       ENDPOINT="projects/${var.project.id}/clusters/$1"
       REQUEST_TYPE="DELETE"
-      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" 2>&1)
+      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1)
       then
         RC="$${PIPESTATUS[0]}"
         printf "%s\n" "$RESULT" 1>&2
@@ -242,8 +242,7 @@ resource "toolbox_external" "api_status" {
       AUTH_HEADER="authorization: Bearer $BA_BEARER_TOKEN"
     fi
 
-    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
-
+    URI="${data.external.ba_api_access.result.ba_api_uri}"
     # Check cluster status
     ENDPOINT="projects/${var.project.id}/clusters/${jsondecode(toolbox_external.api_biganimal.0.result.data).clusterId}"
     REQUEST_TYPE="GET"
@@ -254,7 +253,7 @@ resource "toolbox_external" "api_status" {
     SLEEP_TIME=15
     while [[ $PHASE != *"healthy"* ]]
     do
-      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" 2>&1)
+      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1)
       then
         RC="$${PIPESTATUS[0]}"
         printf "%s\n" "$RESULT" 1>&2

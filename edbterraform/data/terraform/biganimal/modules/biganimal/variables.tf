@@ -207,11 +207,17 @@ data "external" "ba_api_access" {
     fi
 
     # Check for a valid project id, uri, and access to the endpoint
-    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
+    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3}"
+    # Strip trailing slashes, only required for direct api calls, not for the provider.
+    while [[ "$URI" == */ ]]
+    do
+      URI="$${URI%/}"
+    done
+
     PROJECT_ID="${var.project.id}"
     ENDPOINT="projects/$PROJECT_ID/cloud-providers"
     REQUEST_TYPE="GET"
-    if ! RESPONSE=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" 2>&1) || \
+    if ! RESPONSE=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1) || \
        ! RESULT=$(printf "$RESPONSE" | jq -er .data | jq -er tostring 2>&1)
     then
       RC="$${PIPESTATUS[0]}"
@@ -224,7 +230,7 @@ data "external" "ba_api_access" {
       exit "$RC"
     fi
 
-    printf '{"data":"%s"}' "$(printf "$RESULT" | base64 -w 0)"
+    printf '{"data":"%s","ba_api_uri":"%s"}' "$(printf "$RESULT" | base64 -w 0)" "$URI"
     EOT
   ]
 }
@@ -388,11 +394,11 @@ resource "toolbox_external" "witness_node_params" {
       AUTH_HEADER="authorization: Bearer $BA_BEARER_TOKEN"
     fi
 
-    URI="$${BA_API_URI:=https://portal.biganimal.com/api/v3/}"
+    URI="${ data.external.ba_api_access.result.ba_api_uri }"
     ENDPOINT="projects/${var.project.id}/utils/calculate-witness-group-params"
     REQUEST_TYPE="PUT"
     DATA='{"provider":{"cloudProviderId":"${ each.value.cloud_account ? each.value.cloud_service_provider : "bah:${each.value.cloud_service_provider}" }"},"region":{"regionId":"${each.value.region}"}}'
-    RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI$ENDPOINT" --data "$DATA")
+    RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" --data "$DATA")
     RC=$?
 
     if [[ $RC -ne 0 ]];
