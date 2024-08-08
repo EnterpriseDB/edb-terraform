@@ -140,7 +140,17 @@ output "biganimal" {
         # spec project tags
         tags = merge(local.tags, biganimal_spec.tags, {
           Name = format("%s-%s-%s", name, local.cluster_name, random_id.apply.id)
-      })
+        })
+        data_groups = {
+          for data_group_name, data_group_spec in biganimal_spec.data_groups : data_group_name => merge(data_group_spec, {
+            cloud_account = data_group_spec.cloud_account == null ? var.ba_cloud_account_default : data_group_spec.cloud_account
+          })
+        }
+        witness_groups = {
+          for witness_group_name, witness_group_spec in biganimal_spec.witness_groups : witness_group_name => merge(witness_group_spec, {
+            cloud_account = witness_group_spec.cloud_account == null ? var.ba_cloud_account_default : witness_group_spec.cloud_account
+          })
+        }
     })
   }
 }

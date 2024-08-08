@@ -20,28 +20,35 @@ variable "cloud_service_provider" {
 }
 
 variable "ba_project_id" {
-  description = "BigAnimal project ID to use if not defined within the biganimal configuration"
+  description = "BigAnimal project ID default if not defined within the biganimal configuration"
+  type = string
+  nullable = true
+  default = null
+}
+
+variable "ba_cloud_account" {
+  description = "Bring-Your-Own-Account default if 'cloud_account' is not defined within the biganimal configuration"
   type = string
   nullable = true
   default = null
 }
 
 variable "ba_pg_image" {
-  description = "Dev only: BigAnimal postgres image to use if not defined within the biganimal configuration"
+  description = "Dev only: BigAnimal postgres image default if not defined within the biganimal configuration"
   type = string
   nullable = true
   default = null
 }
 
 variable "ba_proxy_image" {
-  description = "Dev only: BigAnimal proxy image to use if not defined within the biganimal configuration"
+  description = "Dev only: BigAnimal proxy image default if not defined within the biganimal configuration"
   type = string
   nullable = true
   default = null
 }
 
 variable "ba_ignore_image" {
-  description = "Ignore biganimal custom images"
+  description = "Ignore biganimal custom images input"
   type = bool
   nullable = false
   default = false
