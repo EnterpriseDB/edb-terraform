@@ -181,6 +181,12 @@ variable "ba_project_id_default" {
   nullable = true
 }
 
+variable "ba_cloud_account_default" {
+  description = "BigAnimal cloud account default"
+  type = string
+  nullable = true
+}
+
 variable "ba_pg_image_default" {
   description = "Dev only: BigAnimal postgres image to use if not defined within the biganimal configuration"
   type = string

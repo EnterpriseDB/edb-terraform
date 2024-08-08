@@ -240,22 +240,23 @@ Pairing can be done by setting the allow list for the provider or using vpc-peer
   - To change the allow list after provisioning, the file `terraform.tfvars.json` can be directly modified and use `terraform apply` again.
 
 BigAnimal specific environment variables that can be used during `terraform plan` or `terraform apply`:
-- `BA_API_URI` - api endpoint
+- `BA_API_URI` (string) - api endpoint
   - Default: `https://portal.biganimal.com/api/v3/`
 - Setting access key
-  - `BA_ACCESS_KEY` (priority)
+  - `BA_ACCESS_KEY` (string) - Priority credential over BA_BEARER_TOKEN
     - Go to `https://portal.biganimal.com/access-keys` to create an access token that last 1-365 days.
-  - `BA_BEARER_TOKEN` (deprecated).
+  - `BA_BEARER_TOKEN` (string) - Deprecated in favor of BA_ACCESS_KEY.
     - [get-token.sh script](https://raw.githubusercontent.com/EnterpriseDB/cloud-utilities/main/api/get-token.sh) requires manual intervention every:
       - New token request
       - 30 days since initial token request
       - Expired token is reused
-- `TF_VAR_ba_project_id` - Biganimal project id if not defined within the yaml configuration.
+- `TF_VAR_ba_project_id` (string) - Biganimal project id default if not defined within the yaml configuration.
   - For persistence, a tfvars file can be created with `ba_project_id` defined.
+- `TF_VAR_ba_cloud_account` (boolean) - Biganimal bring-your-own-account default if not defined within the yaml configuration.
 - Custom Image (Only available for dev environments)
-  - `TF_VAR_ba_pg_image` - Biganimal postgres image if not defined within the yaml configuration
-  - `TF_VAR_ba_proxy_image` - Biganimal proxy image if not defined within the yaml configuration
-  - `TF_VAR_ba_ignore_image` - Ignore image values (Default: `false`)
+  - `TF_VAR_ba_pg_image` (string) - Biganimal postgres image default if not defined within the yaml configuration
+  - `TF_VAR_ba_proxy_image` (string) - Biganimal proxy image default if not defined within the yaml configuration
+  - `TF_VAR_ba_ignore_image` (string) - Ignore image values (Default: `false`)
 
 ### Environment variables
 Terraform allows for top-level variables to be defined with cli arguments or environment variables.

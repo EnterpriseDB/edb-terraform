@@ -17,19 +17,22 @@ aws:
       #  pg: ""
       #  proxy: ""
       data_groups:
+        # only pgd support multiple data nodes, single and ha should only define a single data node
         one:
-          cloud_account: false
+          # Environment variable 'TF_VAR_ba_cloud_account' can be used to set a default instead of hardcoding
+          # cloud_account: false
           region: us-east-1
-          type: pgd
-          node_count: 3
-          engine: epas
+          # type must match across data nodes
+          type: pgd # single | ha | pgd - supports 1-2 data nodes
+          node_count: 3 # single = 1 node | ha = 2-3 nodes | pgd = 2-3 nodes for 1 data group or 3 for 2 data groups
+          engine: epas # epas | pgextended | postgres
           engine_version: 14
           instance_type: c5.large
           volume:
             type: gp3
             properties: gp3
             size_gb: 32
-          # Use this to create a separate volume for the WAL
+          # Create a separate volume for the WAL
           #wal_volume:
           #  type: gp3
           #  properties: gp3
@@ -48,7 +51,7 @@ aws:
           allowed_machines:
             - "*"
         two:
-          cloud_account: false
+          # cloud_account: false
           region: us-east-2
           type: pgd
           node_count: 3
@@ -59,7 +62,6 @@ aws:
             type: gp3
             properties: gp3
             size_gb: 32
-          # Use this to create a separate volume for the WAL
           #wal_volume:
           #  type: gp3
           #  properties: gp3
@@ -77,9 +79,10 @@ aws:
               description: localhost
           allowed_machines:
             - "*"
+      # Witness group only required when 2 data groups are configured
       witness_groups:
         one:
-          cloud_account: false
+          # cloud_account: false
           region: us-west-2
           cloud_service_provider: aws
       tags:
