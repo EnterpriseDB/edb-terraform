@@ -2,7 +2,7 @@ resource "biganimal_cluster" "instance" {
     for_each = local.use_wal_volume || local.use_pgd ? {} : local.data_groups
     # required
     cloud_provider = each.value.cloud_provider_id
-    cluster_architecture {
+    cluster_architecture = {
         id = each.value.type
         nodes = each.value.node_count
     }
@@ -14,7 +14,7 @@ resource "biganimal_cluster" "instance" {
     pgvector = each.value.pgvector
     project_id = var.project.id
     region = each.value.region
-    storage {
+    storage = {
         volume_type = each.value.volume.type
         volume_properties = each.value.volume.properties
         size = each.value.volume_size
@@ -24,22 +24,11 @@ resource "biganimal_cluster" "instance" {
     }
 
     # optional
-    dynamic "allowed_ip_ranges" {
-        for_each = each.value.allowed_ip_ranges
-        content {
-            cidr_block = allowed_ip_ranges.value.cidr_block
-            description = allowed_ip_ranges.value.description
-        }
-    }
+    volume_snapshot_backup = false
+    allowed_ip_ranges = each.value.allowed_ip_ranges
     backup_retention_period = "1d"
     csp_auth = false
-    dynamic "pg_config" {
-        for_each = { for key,values in each.value.settings: key=>values }
-        content {
-            name         = pg_config.value.name
-            value        = pg_config.value.value
-        }
-    }
+    pg_config = each.value.settings
     private_networking = !var.publicly_accessible
     read_only_connections = false
     superuser_access = each.value.superuser_access
@@ -86,18 +75,8 @@ resource "biganimal_pgd" "clusters" {
         }
 
         # optional
-        allowed_ip_ranges = [
-          for k, range_values in values.allowed_ip_ranges: {
-            cidr_block = range_values.cidr_block
-            description = range_values.description
-          }
-        ]
-        pg_config = [
-          for k, config_values in values.settings: {
-            name         = config_values.name
-            value        = config_values.value
-          }
-        ]
+        allowed_ip_ranges = values.allowed_ip_ranges
+        pg_config = values.settings
 
         pe_allowed_principled_ids = []
         service_account_ids = contains(["gcp"], var.cloud_provider) ? [] : null
