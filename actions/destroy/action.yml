@@ -26,4 +26,4 @@ runs:
     - name: Terraform destroy
       working-directory: ${{ inputs.project-path }}
       shell: bash
-      run: terraform destroy -input=false -auto-approve
+      run: exec ${{ github.workspace }}/EnterpriseDB/edb-terraform/actions/terraform.sh destroy -input=false -auto-approve
