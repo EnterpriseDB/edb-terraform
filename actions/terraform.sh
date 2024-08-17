@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 #
 # This wrapper is used to handle signals from the GitHub Actions runner to allow terraform to gracefully shutdown:
 # 1. Start the terraform process and pass any arguments to it
@@ -14,7 +14,7 @@
 # Outputs will can be used to check if the process is up and if we need to cancel it.
 # Outputs to GITHUB_STATE (post-action environment variables) and GITHUB_OUTPUT (action step outputs):
 # - state values are prepended with 'STATE_' by the runner and only available in the paired post action.
-# - TERRAFORM_CANCEL: A boolean indicating if the terraform process was cancelled
+# - TERRAFORM_STATUS: START | PROVISIONING | PROVISIONED | STOPPING | STOPPED | DESTROYING | DESTROYED | ERROR
 # - TERRAFORM_PID: The PID of the terraform process.
 #  - 'wait' will not work across action steps since a new shell is spawned for each step.
 #    - tmux | screen | tmate - virtual terminals that can be used to keep the process running and recover it later.
@@ -38,7 +38,7 @@ _handle_signal() {
   if ((COUNTER < 1))
   then
     echo "Passing SIGTERM signal to terraform process."
-    echo "TERRAFORM_CANCEL=true" | tee -a $GITHUB_STATE $GITHUB_OUTPUT
+    echo "TERRAFORM_STATUS=STOPPING" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
     kill -SIGTERM "$child" 2>&1
     echo "Signal sent and additional signals will be ignored."
     echo "A post step should be used to check if the process is still running and decide if a force kill/second signal is needed."
@@ -50,9 +50,38 @@ _handle_signal() {
   ((COUNTER++))
 }
 
+ACTION=$1
+case "$ACTION" in
+  apply)
+    echo "TERRAFORM_STATUS=PROVISIONING" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
+    ;;
+  destroy)
+    echo "TERRAFORM_STATUS=DESTROYING" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
+    ;;
+  *)
+    echo "Invalid terraform command: $1"
+    exit 1
+    ;;
+esac
+
 terraform "$@" &
 child=$!
 echo "TERRAFORM_PID=$child" | tee -a $GITHUB_STATE $GITHUB_OUTPUT
-echo "TERRAFORM_CANCEL=false" | tee -a $GITHUB_STATE $GITHUB_OUTPUT
-
 wait "$child"
+RC=$?
+if [ "$RC" -ne 0 || "$TERRAFORM_STATUS" == "STOPPING"]
+then
+  [ "$TERRAFORM_STATUS" != "STOPPING" ] && echo "TERRAFORM_STATUS=ERROR" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
+  echo "Terraform process encounted an issue: $TERRAFORM_STATUS"
+  exit $RC
+fi
+
+case "$ACTION" in
+  apply)
+    echo "TERRAFORM_STATUS=PROVISIONED" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
+    ;;
+  destroy)
+    echo "TERRAFORM_STATUS=DESTROYED" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
+    ;;
+esac
+echo "Terraform process has completed."
