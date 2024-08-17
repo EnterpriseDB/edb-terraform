@@ -5,18 +5,31 @@
 # 2. Catch any signals sent by the GitHub Actions runner
 # 3. Pass a SIGTERM signal to the terraform process
 # 4. Wait for the terraform process to finish while ignoring additional signals sent by the GitHub Actions runner.
+# 5. Use a post action to check if the process is still running and decide if a force kill/second signal is needed.
+#   - Github actions will force kill the action after 10 seconds.
+#   - After the initial signal is sent, the default timeout is 5 minutes and can be extended with the cancel-timeout-minutes key.
 # Example call:
 # - run: exec terraform.sh apply -auto-approve
 #
+# Outputs will can be used to check if the process is up and if we need to cancel it.
+# Outputs to GITHUB_STATE (post-action environment variables) and GITHUB_OUTPUT (action step outputs):
+# - state values are prepended with 'STATE_' by the runner and only available in the paired post action.
+# - TERRAFORM_CANCEL: A boolean indicating if the terraform process was cancelled
+# - TERRAFORM_PID: The PID of the terraform process.
+#  - 'wait' will not work across action steps since a new shell is spawned for each step.
+#    - tmux | screen | tmate - virtual terminals that can be used to keep the process running and recover it later.
+#    - reptyr | screenify | ptrace | gdb - tools that can be used to reattach to a running process but requires a tty.
+#
 # - Script based on this discussion - Graceful job termination #26311: https://github.com/orgs/community/discussions/26311
-#   - Use exec to force a single parent process to be spawned
+#   - Use 'exec' to force a shell to run the script as the main process.
 #   - When using the terraform action to install terraform, terraform_wrapper must be disabled.
+#   - https://github.com/actions/toolkit/issues/1534
 # - Github actions gives the current process 10 seconds to shutdown before force killing it.
+#   - Use `cancel-timeout-minutes` at the workflow level to set the timeout limit for all workflow actions and composite actions that run after the inital process is cancelled.
 #   - Cancelling a workflow: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/canceling-a-workflow
 #   - SIGTERM kills the job instead of waiting for job completion: https://github.com/actions/runner/issues/3308
 
 trap '_handle_signal $?' SIGTERM SIGINT SIGHUP SIGUSR1 SIGUSR2 SIGABRT SIGQUIT SIGPIPE SIGALRM SIGTSTP SIGTTIN SIGTTOU
-
 COUNTER=0
 _handle_signal() { 
   local signal=$1
@@ -25,7 +38,11 @@ _handle_signal() {
   if ((COUNTER < 1))
   then
     echo "Passing SIGTERM signal to terraform process."
+    echo "TERRAFORM_CANCEL=true" | tee -a $GITHUB_STATE $GITHUB_OUTPUT
     kill -SIGTERM "$child" 2>&1
+    echo "Signal sent and additional signals will be ignored."
+    echo "A post step should be used to check if the process is still running and decide if a force kill/second signal is needed."
+    echo "Github actions will force kill the action after 10 seconds. After the initial step is stopped, all steps will be skipped once the cancel-timeout-minutes (5 minute default) limit is reached."
   else
     echo "Terraform is already shutting down. Allow the process to complete so state changes can be saved."
   fi
@@ -35,4 +52,7 @@ _handle_signal() {
 
 terraform "$@" &
 child=$!
+echo "TERRAFORM_PID=$child" | tee -a $GITHUB_STATE $GITHUB_OUTPUT
+echo "TERRAFORM_CANCEL=false" | tee -a $GITHUB_STATE $GITHUB_OUTPUT
+
 wait "$child"
