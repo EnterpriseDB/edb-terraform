@@ -29,16 +29,18 @@
 #   - Cancelling a workflow: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/canceling-a-workflow
 #   - SIGTERM kills the job instead of waiting for job completion: https://github.com/actions/runner/issues/3308
 
-trap '_handle_signal $?' SIGTERM SIGINT SIGHUP SIGUSR1 SIGUSR2 SIGABRT SIGQUIT SIGPIPE SIGALRM SIGTSTP SIGTTIN SIGTTOU
 COUNTER=0
-_handle_signal() { 
+TERRAFORM_STATUS=${TERRAFORM_STATUS:-"START"}
+TERRAFORM_PID=""
+_handle_signal() {
   local signal=$1
   echo "Caught signal: $signal"
 
   if ((COUNTER < 1))
   then
     echo "Passing SIGTERM signal to terraform process."
-    echo "TERRAFORM_STATUS=STOPPING" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
+    TERRAFORM_STATUS="STOPPING"
+    echo "TERRAFORM_STATUS=$TERRAFORM_STATUS" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
     kill -SIGTERM "$child" 2>&1
     echo "Signal sent and additional signals will be ignored."
     echo "A post step should be used to check if the process is still running and decide if a force kill/second signal is needed."
@@ -49,27 +51,29 @@ _handle_signal() {
 
   ((COUNTER++))
 }
+trap '_handle_signal $?' SIGTERM SIGINT SIGHUP SIGUSR1 SIGUSR2 SIGABRT SIGQUIT SIGPIPE SIGALRM SIGTSTP SIGTTIN SIGTTOU
 
 ACTION=$1
 case "$ACTION" in
   apply)
-    echo "TERRAFORM_STATUS=PROVISIONING" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
+    TERRAFORM_STATUS="PROVISIONING"
     ;;
   destroy)
-    echo "TERRAFORM_STATUS=DESTROYING" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
+    TERRAFORM_STATUS="DESTROYING"
     ;;
   *)
     echo "Invalid terraform command: $1"
     exit 1
     ;;
 esac
+echo "TERRAFORM_STATUS=$TERRAFORM_STATUS" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
 
 terraform "$@" &
 child=$!
-echo "TERRAFORM_PID=$child" | tee -a $GITHUB_STATE $GITHUB_OUTPUT
+echo "TERRAFORM_PID=$child" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
 wait "$child"
 RC=$?
-if [ "$RC" -ne 0 || "$TERRAFORM_STATUS" == "STOPPING"]
+if [ "$TERRAFORM_STATUS" == "STOPPING" ] || (( "$RC" != 0 ))
 then
   [ "$TERRAFORM_STATUS" != "STOPPING" ] && echo "TERRAFORM_STATUS=ERROR" | tee -a $GITHUB_STATE $GITHUB_OUTPUT $GITHUB_ENV
   echo "Terraform process encounted an issue: $TERRAFORM_STATUS"
