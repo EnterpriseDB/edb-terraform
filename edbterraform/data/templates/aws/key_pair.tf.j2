@@ -3,6 +3,7 @@ module "key_pair_{{ region_ }}" {
 
   key_name = module.spec.base.tags.cluster_name
   ssh_pub_key = module.spec.public_key
+  tags        = module.spec.base.tags
 
   name_id = module.spec.hex_id
 
