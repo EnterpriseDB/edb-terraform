@@ -313,6 +313,22 @@ variable "tags" {
 }
 
 locals {
+  # https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/managing_cloud_account/csp_tagging/#considerations
+  AWS_RESERVED_TAGS = [
+    "Resource_type",
+    "Project",
+    "Environment",
+    "Topology",
+    "BAID",
+    "ManagedBy",
+    "biganimal-cluster",
+    "biganimal-project",
+    "CSIVolumeName",
+    "Name",
+  ]
+}
+
+locals {
   tags = [
     for key, value in var.tags : {
       tagName = format("%s:%s", key, value)
