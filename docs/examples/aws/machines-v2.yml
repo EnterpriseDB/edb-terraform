@@ -4,7 +4,7 @@ aws:
     created_by: edb-terraform
   images:
     rocky:
-      name: Rocky-8-ec2-8.6-20220515.0.x86_64
+      name: Rocky-9-EC2-Base-9.3-*.x86_64
       owner: 679593333241
       ssh_user: rocky
     debian:

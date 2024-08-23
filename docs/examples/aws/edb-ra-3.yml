@@ -5,9 +5,9 @@ aws:
     cluster_name: edb-ra-3
     reference_architecture: edb-ra-3
   images:
-    rocky8:
-      name: Rocky-8-ec2-8.5-20211114.2.x86_64
-      owner: "792107900819"
+    rocky:
+      name: Rocky-9-EC2-Base-9.3-*.x86_64
+      owner: 679593333241
       ssh_user: rocky
   regions:
     us-west-2:
@@ -80,7 +80,7 @@ aws:
         size: 100
         iops: 250
         size_gb: 100
-      image_name: rocky8
+      image_name: rocky
       region: us-west-2
       zone_name: default
       tags:
@@ -107,7 +107,7 @@ aws:
           mount_point: /pgwal
           size_gb: 50
       instance_type: c5.2xlarge
-      image_name: rocky8
+      image_name: rocky
       region: us-west-2
       zone_name: default
       tags:
@@ -138,7 +138,7 @@ aws:
           mount_point: /pgwal
           size_gb: 50
       instance_type: c5.2xlarge
-      image_name: rocky8
+      image_name: rocky
       region: us-west-2
       zone_name: default
       tags:
@@ -169,7 +169,7 @@ aws:
           mount_point: /pgwal
           size_gb: 50
       instance_type: c5.2xlarge
-      image_name: rocky8
+      image_name: rocky
       region: us-west-2
       zone_name: default
       tags:
@@ -195,7 +195,7 @@ aws:
           encrypted: false
           mount_point: /var/lib/barman
           size_gb: 300
-      image_name: rocky8
+      image_name: rocky
       region: us-west-2
       zone_name: default
       tags:
@@ -209,7 +209,7 @@ aws:
         size: 30
         iops: 250
         size_gb: 30
-      image_name: rocky8
+      image_name: rocky
       region: us-west-2
       zone_name: default
       tags:
@@ -226,7 +226,7 @@ aws:
         size: 30
         iops: 250
         size_gb: 30
-      image_name: rocky8
+      image_name: rocky
       region: us-west-2
       zone_name: default
       tags:
@@ -242,7 +242,7 @@ aws:
         size: 30
         iops: 250
         size_gb: 30
-      image_name: rocky8
+      image_name: rocky
       region: us-west-2
       zone_name: default
       tags:
