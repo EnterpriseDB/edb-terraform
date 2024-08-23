@@ -313,6 +313,12 @@ variable "tags" {
 }
 
 locals {
+  tags = [
+    for key, value in var.tags : {
+      tagName = format("%s:%s", key, value)
+    }
+  ]
+
   service_cidrblocks = [
     for cidr in var.service_cidrblocks : {
       cidr_block = cidr
@@ -498,6 +504,7 @@ locals {
           startDay = group_values.maintenance_window.start_day
           startTime = group_values.maintenance_window.start_time
         }
+        tags = local.tags
       },
       # Custom image behind a feature flag, omit if not set
       length(group_values.image) == 0 ? {} : {
@@ -514,6 +521,7 @@ locals {
     clusterName = local.cluster_name
     clusterType = "cluster"
     password = local.password
+    tags = local.tags
     groups = [
       for obj in flatten([[ for group_name, group_values in local.data_groups: merge(
         {
