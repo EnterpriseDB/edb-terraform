@@ -121,6 +121,8 @@ resource "toolbox_external" "api_biganimal" {
     "-c",
     <<EOT
     set -eou pipefail
+    # https://github.com/EnterpriseDB/terraform-provider-toolbox/issues/47
+    trap 'echo "Allow process to finish. Use a 2nd interrupt and terraform will force kill the process" 1>&2' SIGTERM SIGINT SIGHUP SIGUSR1 SIGUSR2 SIGABRT SIGQUIT SIGPIPE SIGALRM SIGTSTP SIGTTIN SIGTTOU
 
     URI="${data.external.ba_api_access.result.ba_api_uri}"
 
