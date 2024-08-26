@@ -1,14 +1,3 @@
-locals {
-    // https://github.com/hashicorp/terraform/issues/23893#issuecomment-577963377
-    // https://datatracker.ietf.org/doc/html/rfc3986#appendix-B
-    pattern = "(?:(?P<scheme>[^:/?#]+):)?(?://(?P<authority>[^/?#]*))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?"
-    uri_split = [ for uri in try([local.cluster_output.connection.pgUri], [local.cluster_output.connection_uri], local.cluster_output.data_groups.*.connection_uri) : regex(local.pattern, uri) ]
-    username = [ for uri_split in local.uri_split : split("@", uri_split.authority)[0] ]
-    port = [ for uri_split in local.uri_split : split(":", uri_split.authority)[1] ]
-    domain = [ for index, uri_split in local.uri_split : trimsuffix(trimprefix(uri_split.authority, "${local.username[index]}@"), ":${local.port[index]}") ]
-    dbname = [ for uri_split in local.uri_split : split("/", uri_split.path)[1] ]
-}
-
 output "api_uri" {
     value = data.external.ba_api_access.result.ba_api_uri
 }
@@ -22,20 +11,19 @@ output "cluster_id" {
 }
 
 output "cloud_provider" {
-  value = try(local.cluster_output.provider.cloudProviderId, local.cluster_output.cloud_provider, one(toset(concat(local.cluster_output.data_groups.*.cloud_provider.cloud_provider_id))))
+  value = local.cloud_provider
 }
 
 output "cluster_name" {
-  value = try(local.cluster_output.clusterName, local.cluster_output.cluster_name)
+  value = local.cluster_name_final
 }
 
 output "cluster_type" {
-  value = try(local.cluster_output.clusterType, local.cluster_output.cluster_type, distinct(local.cluster_output.data_groups.*.cluster_architecture.cluster_architecture_id))
+  value = local.cluster_type
 }
 
-
 output "cluster_architecture" {
-    value = try(local.cluster_output.clusterArchitecture, local.cluster_output.cluster_architecture, "pgd")
+    value = local.cluster_architecture
 }
 
 output "region" {
@@ -43,11 +31,11 @@ output "region" {
 }
 
 output "dbname" {
-    value = try(one(local.dbname), one(toset(local.dbname)))
+    value = one(toset(local.dbname))
 }
 
 output "username" {
-  value = try(one(local.username), one(toset(local.username)))
+  value = one(toset(local.username))
 }
 
 output "password" {
@@ -56,7 +44,7 @@ output "password" {
 }
 
 output "port" {
-  value = try(one(local.port), one(toset(local.port)))
+  value = one(toset(local.port))
 }
 
 output "private_ip" {
@@ -67,20 +55,32 @@ output "public_ip" {
   value = local.domain
 }
 
+output "data_groups" {
+  value = local.data_group_output
+
+  precondition {
+    condition = (
+      length(values(local.data_groups)) == length(values(local.data_group_output))
+      && length(values(local.data_groups)) == length(local.data_group_filtered)
+    )
+    error_message = "Output length must match the number of data groups set"
+  }
+}
+
 output "engine" {
-  value = try(local.cluster_output.pgType.pgTypeId, local.cluster_output.pg_type, local.cluster_output.data_groups.*.pg_type.pg_type_id)
+  value = local.engines
 }
 
 output "version" {
-  value = try(local.cluster_output.pgVersion.pgVersionId ,local.cluster_output.pg_version, local.cluster_output.data_groups.*.pg_version.pg_version_id)
+  value = local.versions
 }
 
 output "instance_type" {
-  value = try(local.cluster_output.instanceType.instanceTypeId, local.cluster_output.instance_type, local.cluster_output.data_groups.*.instance_type.instance_type_id)
+  value = local.instance_types
 }
 
 output "connection_uri" {
-  value = try(local.cluster_output.connection.pgUri, local.cluster_output.connection_uri, local.cluster_output.data_groups.*.connection_uri)
+  value = local.connection_uris
 }
 
 output "read_only_uri" {
@@ -96,7 +96,7 @@ output "mertics_url" {
 }
 
 output "witness_groups" {
-  value = try(local.cluster_output.witnessGroups, local.cluster_output.witness_groups, "")
+  value = local.witness_group_filtered
 }
 
 output "tags" {

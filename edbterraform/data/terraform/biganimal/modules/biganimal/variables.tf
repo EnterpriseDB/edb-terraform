@@ -344,6 +344,8 @@ locals {
 
   use_pgd = anytrue([for group in var.data_groups: group.type == "pgd"]) ? true : false
   use_wal_volume = anytrue([for group in var.data_groups: group.wal_volume != null && group.wal_volume != []]) ? true : false
+  use_images = anytrue([for key, value in coalesce(var.image, {}): value != null && value != ""])
+  use_api = local.use_wal_volume || local.use_images
 
   data_groups = {
     for name, values in var.data_groups : name => (merge(values, {

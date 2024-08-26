@@ -1,5 +1,5 @@
 resource "biganimal_cluster" "instance" {
-    for_each = local.use_wal_volume || local.use_pgd ? {} : local.data_groups
+    for_each = local.use_api || local.use_pgd ? {} : local.data_groups
     # required
     cloud_provider = each.value.cloud_provider_id
     cluster_architecture = {
@@ -36,7 +36,7 @@ resource "biganimal_cluster" "instance" {
 }
 
 resource "biganimal_pgd" "clusters" {
-    count = local.use_wal_volume || !local.use_pgd ? 0 : 1
+    count = local.use_api || !local.use_pgd ? 0 : 1
 
     # required
     cluster_name = local.cluster_name
@@ -111,7 +111,7 @@ resource "biganimal_pgd" "clusters" {
 }
 
 resource "toolbox_external" "api_biganimal" {
-  count = local.use_wal_volume ? 1 : 0
+  count = local.use_api ? 1 : 0
   create = true
   read = false
   update = false
@@ -199,7 +199,7 @@ resource "toolbox_external" "api_biganimal" {
 }
 
 resource "toolbox_external" "api_status" {
-  count = local.use_wal_volume ? 1 : 0
+  count = local.use_api ? 1 : 0
   create = true
   read = false
   update = false
@@ -261,9 +261,48 @@ resource "toolbox_external" "api_status" {
 }
 
 locals {
-  cluster_output = try(jsondecode(toolbox_external.api_status.0.result.data), biganimal_pgd.clusters.0, one(values(biganimal_cluster.instance)))
-  cluster_region = try(local.cluster_output.region.regionId, local.cluster_output.region, local.cluster_output.data_groups.*.region.region_id)
-  cluster_id = try(local.cluster_output.clusterId, local.cluster_output.cluster_id)
+  group_var = local.use_api ? "groups" : "data_groups"
+  region_var = local.use_api ? "regionId" : "region_id"
+  cluster_type_var = local.use_api ? "clusterType" : "cluster_type"
+  cluster_id_var = local.use_api ? "clusterId" : "cluster_id"
+  cluster_output = local.use_api ? jsondecode(toolbox_external.api_status.0.result.data) : try(biganimal_pgd.clusters.0, one(values(biganimal_cluster.instance)))
+  data_group_filtered = [for group in lookup(local.cluster_output, local.group_var, [local.cluster_output]): group if group[local.cluster_type_var] != "witness_group"]
+  witness_group_filtered = [for group in lookup(local.cluster_output, local.group_var, [local.cluster_output]): group if group[local.cluster_type_var] == "witness_group"]
+  connection_uris = try(local.data_group_filtered.*.connection.pgUri, local.data_group_filtered.*.connection_uri)
+  cluster_region = try(local.data_group_filtered[*].region[local.region_var], local.data_group_filtered[*].region)
+  cloud_provider = try(local.data_group_filtered.*.cloud_provider.cloud_provider_id, local.data_group_filtered.*.provider.cloudProviderId, local.data_group_filtered.*.cloud_provider)
+  cluster_type = local.data_group_filtered[*][local.cluster_type_var]
+  cluster_architecture = try(local.data_group_filtered.*.clusterArchitecture, local.data_group_filtered.*.cluster_architecture.cluster_architecture_id, local.data_group_filtered.*.cluster_architecture.id)
+  cluster_name_final = try(local.cluster_output.clusterName, local.cluster_output.cluster_name)
+  cluster_id = local.cluster_output[local.cluster_id_var]
+  engines = try(local.data_group_filtered.*.pg_type.pg_type_id, local.data_group_filtered.*.pgType.pgTypeId, local.data_group_filtered.*.pg_type)
+  versions = try(local.data_group_filtered.*.pg_version.pg_version_id, local.data_group_filtered.*.pgVersion.pgVersionId ,local.data_group_filtered.*.pg_version)
+  instance_types = try(local.data_group_filtered.*.instance_type.instance_type_id, local.data_group_filtered.*.instanceType.instanceTypeId, local.data_group_filtered.*.instance_type)
+  // Extract username, port, domain, dbname from connection uri
+  // https://github.com/hashicorp/terraform/issues/23893#issuecomment-577963377
+  // https://datatracker.ietf.org/doc/html/rfc3986#appendix-B
+  pattern = "(?:(?P<scheme>[^:/?#]+):)?(?://(?P<authority>[^/?#]*))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?(?:#(?P<fragment>.*))?"
+  uri_split = [ for uri in local.connection_uris : regex(local.pattern, uri) ]
+  username = [ for uri_split in local.uri_split : split("@", uri_split.authority)[0] ]
+  port = [ for uri_split in local.uri_split : split(":", uri_split.authority)[1] ]
+  domain = [ for index, uri_split in local.uri_split : trimsuffix(trimprefix(uri_split.authority, "${local.username[index]}@"), ":${local.port[index]}") ]
+  dbname = [ for uri_split in local.uri_split : split("/", uri_split.path)[1] ]
+  # region and pattern values will match index of uri_split
+  data_group_output = {
+    for index, region in local.cluster_region: region => {
+      region = region
+      host = local.domain[index]
+      database = local.dbname[index]
+      username = local.username[index]
+      port = local.port[index]
+      connection_uri = local.connection_uris[index]
+      engine = local.engines[index]
+      version = local.versions[index]
+      instance_type = local.instance_types[index]
+      cloud_provider = local.cloud_provider[index]
+    }
+  }
+
   /*
   BigAnimal does not output the VPC id as it shares a VPC for all clusters within a project
   - Currently it has the following VPC name format: vpc-<project_id>-<region>
