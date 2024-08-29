@@ -10,6 +10,15 @@ module "machine_ports" {
   internal_cidrblocks = var.internal_cidrblocks
 }
 
+# TODO: Allow machine configurations to accept a list of instance types and create a single instance from that list
+# - AWS allows this through launch templates and setting a scaling group to size 1 but requires manual checking for instance creation
+#   - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group
+# - GCP allows this through machine templates, setting a scaling group to size 1 and waiting for initial instances to be created
+#   - https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_instance_group_manager
+#   - https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_autoscaler
+# - Azure doesn't seem to allow multiple skus to be set for scaling group
+#   - easiest path would be breaking out of terraform and manually attempting to create instances until first success
+#     - we can ignore updates and blindly re-create since it is assumed instances are created once and any updates should be outside of terraform or re-create the entire resource
 resource "aws_instance" "machine" {
   ami                    = var.image_info[var.machine.spec.image_name].id
   instance_type          = var.machine.spec.instance_type
