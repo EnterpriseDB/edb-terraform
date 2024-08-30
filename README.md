@@ -36,7 +36,10 @@ edb-terraform generate \
 cd example
 terraform init
 edb-terraform help --project-path .
-terraform apply -var "force_dynamic_ip=true" -var "force_service_machines=true"
+# The inital apply will setup ssh access to the provisioning host
+terraform apply
+# run apply with the following flags to remove connection access to the host
+# terraform apply -var "force_dynamic_ip=false" -var "force_service_machines=false" -var "force_service_biganimal=false"
 terraform destroy
 ```
 
