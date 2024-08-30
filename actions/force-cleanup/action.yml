@@ -1,0 +1,125 @@
+name: 'Force cleanup'
+description: 'Destroy Terraform resources'
+inputs:
+  terraform-version:
+    description: "Terraform version"
+    required: false
+    default: "1.5.5"
+  tag-key:
+    description: "Tag key to identify resources"
+    required: true
+  tag-value:
+    description: "Tag value to identify resources"
+    required: true
+  project-directory:
+    description: "Directory containing Terraform projects"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Destroy cloud infrastructure
+      shell: bash
+      env:
+        TAG_KEY: ${{ inputs.tag-key }}
+        TAG_VALUE: ${{ inputs.tag-value }}
+        PROJECT_DIR: ${{ inputs.project-directory }}
+      run: |
+        WORK_DIRECTORY="$(pwd)"
+        PROVIDER=""
+        TAG_KEY="$TAG_KEY"
+        TAG_VALUE="$TAG_VALUE"
+        REGIONS=""
+
+        echo "::group::TERRAFORM_CLEANUP"
+        # Attempt to destroy all projects with their existing state
+        for PROJECT_DIR in ${WORK_DIRECTORY}/${PROJECT_DIR}*
+        do
+          echo -e "Destroying $PROJECT_DIR"
+          TERRAFORM_VARS_FILE="${PROJECT_DIR}/terraform.tfvars.json"
+          {
+            cd -P "$PROJECT_DIR"
+            terraform init -input=false -backend-config="backend-config.tfbackend"
+            timeout --kill-after=1m --preserve-status 10m terraform destroy -auto-approve
+          } || echo -e "Failed to destroy $PROJECT_DIR"
+
+          if PROJECT_REGIONS="$(jq -r '.spec.regions | keys | .[]' "$TERRAFORM_VARS_FILE")"
+          then
+            REGIONS+="${PROJECT_REGIONS}"$'\n'
+          else
+            echo "Failed to get regions from $PROJECT_DIR"
+          fi
+        done
+        echo "::endgroup::"
+
+        echo "::group::CLOUD_CUSTODIAN"
+        # Run the cloud custodian policy for final cleanup
+        cd -P "$WORK_DIRECTORY"
+        # Keep a set of regions only, jq should have removed duplicates but run through 'sort -u' just in case and create a space separated list
+        REGIONS="$(echo -e "$REGIONS" | sort -u | tr '\n' ' ')"
+        ./EnterpriseDB/edb-terraform/actions/force-cleanup/custodian-cleanup.sh "$PROVIDER" "$TAG_KEY" "$TAG_VALUE" "$REGIONS"
+        echo "::endgroup::"
+
+        echo "::group::BIGANIMAL_CLEANUP"
+        # Run Biganimal cleanup if configured in the terraform project
+        (
+          BA_API_URI=""
+          PROJECT_ID=""
+          # Check if biganimal is configured
+          if [ "" == "" ]
+          then
+            # Set auth header
+            AUTH_HEADER=""
+            if [ -n "${BA_ACCESS_KEY:+''}" ]
+            then
+              AUTH_HEADER="x-access-key: $BA_ACCESS_KEY"
+            elif [ -n "${BA_BEARER_TOKEN:+''}" ]
+            then
+              AUTH_HEADER="authorization: Bearer $BA_BEARER_TOKEN"
+            else
+              echo "No Biganimal credentials found"
+              exit 1
+            fi
+
+            REQUEST_TYPE="GET"
+            ENDPOINT="projects/$PROJECT_ID/clusters"
+            CONTENT_HEADER="application/json"
+            # Strip trailing slashes
+            while [[ "$BA_API_URI" == */ ]]
+            do
+              BA_API_URI="${BA_API_URI%/}"
+            done
+
+            if ! RESULT="$(curl --silent --show-error --fail-with-body --location --request "$REQUEST_TYPE" \
+                      --header "$CONTENT_HEADER" \
+                      --header "$AUTH_HEADER" \
+                      --url "$BA_API_URI/$ENDPOINT" 2>&1)"
+            then
+              RC="${PIPESTATUS[0]}"
+              echo "Failed to get Biganimal clusters"
+              echo "Exit code: $RC"
+              echo "Result: $RESULT"
+              exit $RC
+            fi
+
+            CLUSTER_IDS="$(echo -e "$RESULT" | \
+                          jq -r --arg value "$TAG_KEY:$TAG_VALUE" '.data[] | select(.tags[].tagName==$value) | .clusterId')"
+
+            for CLUSTER_ID in $CLUSTER_IDS
+            do
+              ENDPOINT="projects/$PROJECT_ID/clusters/$CLUSTER_ID"
+              REQUEST_TYPE="DELETE"
+              echo "Deleting Biganimal cluster: $CLUSTER_ID"
+              if ! RESULT="$(curl --silent --show-error --fail-with-body --location --request "$REQUEST_TYPE" \
+                          --header "$CONTENT_HEADER" \
+                          --header "$AUTH_HEADER" \
+                          --url "$BA_API_URI/$ENDPOINT" 2>&1)"
+              then
+                RC="${PIPESTATUS[0]}"
+                echo "Failed to delete Biganimal cluster"
+                echo "Exit code: $RC"
+                echo "Result: $RESULT"
+              fi
+            done
+          fi
+        ) || echo -e "Failed to run Biganimal cleanup"
+        echo "::endgroup::"

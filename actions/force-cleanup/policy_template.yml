@@ -1,0 +1,223 @@
+policies:
+  - name: remove-ebs
+    resource: aws.ebs
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+        force: true
+  - name: remove-key-pairs
+    resource: aws.key-pair
+    filters:
+      - unused
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - delete
+  - name: remove-app-elb
+    resource: aws.app-elb
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-app-elb-target-group
+    resource: aws.app-elb-target-group
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-ebs-snapshot
+    resource: aws.ebs-snapshot
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-ec2
+    resource: aws.ec2
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: terminate
+  - name: remove-eks
+    resource: aws.eks
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-eks-nodegroup
+    resource: aws.eks-nodegroup
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-eni
+    resource: aws.eni
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-internet-gateway
+    resource: aws.internet-gateway
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-nat-gateway
+    resource: aws.nat-gateway
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds
+    resource: aws.rds
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds-cluster
+    resource: aws.rds-cluster
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds-cluster-param-group
+    resource: aws.rds-cluster-param-group
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds-cluster-snapshot
+    resource: aws.rds-cluster-snapshot
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds-param-group
+    resource: aws.rds-param-group
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds-proxy
+    resource: aws.rds-proxy
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds-snapshot
+    resource: aws.rds-snapshot
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds-subnet-group
+    resource: aws.rds-subnet-group
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-rds-subscription
+    resource: aws.rds-subscription
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-security-group
+    resource: aws.security-group
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete
+  - name: remove-vpc
+    resource: aws.vpc
+    filters:
+      - type: value
+        key: "tag:<TAG_KEY>"
+        value: "<TAG_VALUE>"
+        value_type: normalize
+        op: equal
+    actions:
+      - type: delete-empty
