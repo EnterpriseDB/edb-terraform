@@ -32,11 +32,12 @@ aws:
             type: gp3
             properties: gp3
             size_gb: 32
-          # Create a separate volume for the WAL
-          #wal_volume:
-          #  type: gp3
-          #  properties: gp3
-          #  size_gb: 32
+          # Create a separate volume for the WAL logs
+          # or comment out to use the same volume as the data volume
+          wal_volume:
+            type: gp3
+            properties: gp3
+            size_gb: 32
           settings:
             - name: max_connections
               value: 300
@@ -62,10 +63,10 @@ aws:
             type: gp3
             properties: gp3
             size_gb: 32
-          #wal_volume:
-          #  type: gp3
-          #  properties: gp3
-          #  size_gb: 4
+          wal_volume:
+            type: gp3
+            properties: gp3
+            size_gb: 32
           settings:
             - name: max_connections
               value: 300
