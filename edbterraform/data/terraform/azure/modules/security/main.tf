@@ -3,7 +3,9 @@ resource "azurerm_network_security_rule" "rules" {
     # preserve ordering
     # 100-4096 priorities allowed by Azure
     for idx, values in var.ports:
-      format("0%.4d",idx+100) => values
+      format("0%.4d",idx+100+var.rule_offset) => values
+      # Skip any rules without cidrs since the azure api will return an error
+      if values.cidrs != null && length(values.cidrs) > 0 || length(lookup(local.defaults, values.defaults, [])) > 0
   }
 
   resource_group_name         = var.resource_name

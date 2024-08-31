@@ -4,6 +4,10 @@ variable "region" {}
 variable "ports" {
     type = list
 }
+variable "rule_offset" {
+  type = number
+  default = 0
+}
 variable "public_cidrblocks" {
   type = list(string)
   default = ["0.0.0.0/0"]
@@ -32,4 +36,10 @@ variable "target_cidrblocks" {
 
 locals {
   target_cidrblocks = length(var.target_cidrblocks) > 0 ? var.target_cidrblocks : var.internal_cidrblocks
+
+  defaults = {
+    service = var.service_cidrblocks
+    public  = var.public_cidrblocks
+    internal = var.internal_cidrblocks
+  }
 }

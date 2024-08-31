@@ -45,10 +45,10 @@ variable "ports" {
 }
 locals {
   # Allow machine default outbound access if no egress is defined
-  ssh_defined = anytrue([for port in ports: port.port == var.machine.ssh_port])
-  machine_ports = concat(ports, (!var.force_ssh_access || local.ssh_defined ? [] : [
-        {"type":"ingress", "defaults":"service", "cidrs": [], "protocol": "tcp", "port": var.machine.ssh_port, "to_port": var.machine.ssh_port, "description": "Force SSH Access"},
-        {"type":"egress", "defaults":"service", "cidrs": [], "protocol": "tcp", "port": var.machine.ssh_port, "to_port": var.machine.ssh_port, "description": "Force SSH Access"},
+  ssh_defined = anytrue([for port in var.ports: port.port == var.machine.ssh_port])
+  machine_ports = concat(var.ports, (!var.force_ssh_access || local.ssh_defined ? [] : [
+        {"access":"allow", "type":"ingress", "defaults":"service", "cidrs": [], "protocol": "tcp", "port": var.machine.ssh_port, "to_port": var.machine.ssh_port, "description": "Force SSH Access"},
+        {"access":"allow", "type":"egress", "defaults":"service", "cidrs": [], "protocol": "tcp", "port": var.machine.ssh_port, "to_port": var.machine.ssh_port, "description": "Force SSH Access"},
       ])
     )
 }

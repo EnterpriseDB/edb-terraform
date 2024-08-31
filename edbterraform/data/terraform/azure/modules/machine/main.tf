@@ -104,6 +104,7 @@ module "machine_ports" {
     azurerm_linux_virtual_machine.main.private_ip_address,
   ])
   tags             = var.tags
+  rule_offset      = 1000
 }
 
 resource "null_resource" "ensure_ssh_open" {
