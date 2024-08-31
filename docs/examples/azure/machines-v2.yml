@@ -26,9 +26,12 @@ azure:
         main:
           zone: 0
           cidr: 10.2.30.0/24
-      service_ports:
+      ports:
         - port: 22
           protocol: tcp
+          # Azure does not accept overlapping CIDRs for the same rule
+          # Meaning 0.0.0.0 cannot be used in this case with any defaults since it overlaps all CIDRs
+          # defaults: 'service'
           description: "SSH"
           type: ingress
           access: allow
