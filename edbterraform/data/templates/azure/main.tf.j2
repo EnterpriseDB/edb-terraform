@@ -64,7 +64,6 @@ locals {
 {% endfor %}
 
   biganimal = [{% if has_biganimal %}module.biganimal{% endif %}]
-]
 
   modules = {
     machines = local.machines
