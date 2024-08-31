@@ -4,7 +4,8 @@ resource "google_compute_firewall" "rules" {
     for index, values in var.ports:
       format("0%.4d",index) => values
   }
-  name    = "${each.value.protocol}-${var.region}-${var.name_id}-${each.key}"
+  # name restricted to 63 characters, lowercase, digits, and dashes
+  name    = replace(lower(substr("${each.value.protocol}-${var.region}-${var.name_id}-${each.key}", 0, 63)), "_", "-")
   network = var.network_name
   priority = each.key
   dynamic "allow" {

@@ -23,6 +23,7 @@ locals {
   machine_ssh_rules = flatten([
     for port in local.machine_ssh_ports: [
       {
+        "access":"allow", 
         "type": "ingress",
         "defaults": "service",
         "cidrs": [],
@@ -32,6 +33,7 @@ locals {
         "description": "Force SSH Access"
       },
       {
+        "access":"allow", 
         "type": "egress",
         "defaults": "service",
         "cidrs": [],
