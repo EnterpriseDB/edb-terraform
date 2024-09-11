@@ -149,9 +149,16 @@ resource "toolbox_external" "api_biganimal" {
       REQUEST_TYPE="DELETE"
       if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1)
       then
-        RC="$${PIPESTATUS[0]}"
-        printf "%s\n" "$RESULT" 1>&2
-        exit "$RC"
+        # Skip error if cluster does not exist
+        if $(echo $RESULT | grep -q "no such cluster")
+        then
+          RESULT="cluster does not exist"
+        else
+          RC="$${PIPESTATUS[0]}"
+          printf "new error" 1>&2
+          printf "%s\n" "$RESULT" 1>&2
+          exit "$RC"
+        fi
       fi
 
       printf '{"done":"%s"}' "$RESULT"
