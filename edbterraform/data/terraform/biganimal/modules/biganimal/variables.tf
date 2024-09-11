@@ -54,11 +54,11 @@ variable data_groups {
   }
 
   validation {
-    condition = !anytrue([for name, grouping in var.data_groups: !contains(["epas", "pgextended", "postgres"], grouping.engine)])
+    condition = !anytrue([for name, grouping in var.data_groups: !contains(["epas", "pgextended", "pge", "postgres", "pg"], lower(grouping.engine))])
     error_message = (
       <<-EOT
       Data groups must define a valid engine.
-      Please choose from the following: epas, pgextended, postgres
+      Please choose from the following: epas, pgextended | pge, postgres | pg
       Data groups: ${jsonencode(var.data_groups)}
       EOT
     )
@@ -329,6 +329,14 @@ locals {
 }
 
 locals {
+  engine_mapping = {
+    "epas"       = "epas"
+    "pgextended" = "pgextended"
+    "pge"        = "pgextended"
+    "postgres"   = "postgres"
+    "pg"         = "postgres"
+  }
+
   tags = [
     for key, value in var.tags : {
       tagName = format("%s:%s", key, value)
@@ -349,6 +357,9 @@ locals {
 
   data_groups = {
     for name, values in var.data_groups : name => (merge(values, {
+      # Handle postgres engine string
+      engine = local.engine_mapping[lower(values.engine)]
+
       # Private networking blocks setting of allowed_ip_ranges and forces private endpoints or vpc peering to be used.
       # The provider overrides with 0.0.0.0/0 but fails to create if allowed_ip_ranges is not an empty list.
       allowed_ip_ranges = !var.publicly_accessible ? [] : (

@@ -25,7 +25,7 @@ aws:
           # type must match across data nodes
           type: pgd # single | ha | pgd - supports 1-2 data nodes
           node_count: 3 # single = 1 node | ha = 2-3 nodes | pgd = 2-3 nodes for 1 data group or 3 for 2 data groups
-          engine: epas # epas | pgextended | postgres
+          engine: epas # epas | pgextended or pge | postgres or pg
           engine_version: 14
           instance_type: c5.large
           volume:

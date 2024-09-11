@@ -13,7 +13,7 @@ azure:
       region: eastus
       type: single
       node_count: 1
-      engine: epas
+      engine: # epas | pgextended or pge | postgres or pg
       engine_version: 14
       instance_type: Standard_D2s_v3
       password: "ndslniv&03ind**vDdjfnjv"
