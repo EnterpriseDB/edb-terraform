@@ -13,7 +13,7 @@ gcloud:
       region: us-east4
       type: single # Options: single | ha
       node_count: 1 # must be 1 when using type: single
-      engine: epas
+      engine: # epas | pgextended or pge | postgres or pg
       engine_version: 14
       instance_type: e2-highcpu-4
       password: "ndslniv&03ind**vDdjfnjv"
