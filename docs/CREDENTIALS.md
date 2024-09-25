@@ -218,6 +218,15 @@ echo "role-to-assume: ${ROLE_ARN}"
 
 - [github-actions](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-azure)
 
+#### Azure CLI
+[Install CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt)
+
+Initialize azure cli and export the subcription id
+```console
+$ az login --use-device-code
+$ export ARM_SUBSCRIPTION_ID=<ACCOUNT_SUBSCRIPTION_ID>
+```
+
 ## BigAnimal
 ### API Token
 [Getting an API token](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/terraform_provider/#getting-an-api-token)
@@ -238,7 +247,7 @@ bash get-token.sh
 # ex. Please login to https://auth.biganimal.com/activate?user_code=JWPL-RCXL with your BigAnimal account
 #     Have you finished the login successfully. (y/n)
 # Save the refresh token, if needed
-export BA_BEARER_TOKEN=<access_token>
+export BA_BEARER_TOKEN=<BEARER_TOKEN>
 ```
 
 Refresh the token
@@ -265,5 +274,5 @@ The token directly from the API is preferred to avoid needing to revisit the lin
 Initialize GCloud and export project id
 ```console
 $ gcloud init
-$ export GOOGLE_PROJECT=<project_id>
+$ export GOOGLE_PROJECT=<ACCOUNT_PROJECT_ID>
 ```
