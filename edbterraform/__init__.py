@@ -1,4 +1,4 @@
-__version__ = "1.8.0-rc.4"
+__version__ = "1.8.0"
 __project_name__ = 'edb-terraform'
 from pathlib import Path
 __dot_project__ = f'{Path.home()}/.{__project_name__}'
