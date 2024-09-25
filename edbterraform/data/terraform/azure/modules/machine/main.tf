@@ -69,6 +69,11 @@ resource "azurerm_linux_virtual_machine" "main" {
     version   = var.operating_system.version
   }
 
+  # https://learn.microsoft.com/en-us/azure/virtual-machines/user-data
+  # https://learn.microsoft.com/en-us/azure/virtual-machines/custom-data
+  # expects string to be base64 encoded
+  user_data = var.machine.user_data == null ? var.machine.user_data : base64encode(var.machine.user_data)
+
   tags = var.tags
 
   depends_on = [azurerm_network_interface.internal, ]

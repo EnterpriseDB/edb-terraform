@@ -83,6 +83,7 @@ variable "spec" {
         filesystem    = optional(string)
         mount_options = optional(string)
       })), [])
+      user_data = optional(string)
       tags = optional(map(string), {})
     })), {})
     databases = optional(map(object({

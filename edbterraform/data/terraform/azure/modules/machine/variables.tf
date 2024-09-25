@@ -27,6 +27,7 @@ variable "machine" {
       size_gb = number
       type    = string
     })
+    user_data = optional(string)
   })
 }
 variable "public_cidrblocks" {}

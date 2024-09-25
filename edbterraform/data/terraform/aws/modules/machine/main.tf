@@ -47,6 +47,11 @@ resource "aws_instance" "machine" {
     iops                  = var.machine.spec.volume.type == "io2" ? var.machine.spec.volume.iops : var.machine.spec.volume.type == "io1" ? var.machine.spec.volume.iops : null
   }
 
+  # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
+  user_data_base64 = var.machine.spec.user_data == null ? var.machine.spec.user_data : base64encode(var.machine.spec.user_data)
+  # user_data_replace_on_change = false # default
+  # user_data = null # default
+
   tags = var.tags
 
   lifecycle {

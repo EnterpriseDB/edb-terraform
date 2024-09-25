@@ -51,7 +51,14 @@ resource "google_compute_instance" "machine" {
     ]
   }
 
-  metadata = { ssh-keys = "${var.operating_system.ssh_user}:${var.ssh_pub_key}" }
+  metadata = {
+    ssh-keys = "${var.operating_system.ssh_user}:${var.ssh_pub_key}"
+  }
+  # https://cloud.google.com/compute/docs/instances/startup-scripts
+  # https://cloud.google.com/compute/docs/metadata/overview
+  # https://cloud.google.com/compute/docs/metadata/setting-custom-metadata
+  metadata_startup_script = var.machine.spec.user_data
+
   labels   = local.labels
 }
 
