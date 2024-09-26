@@ -130,18 +130,39 @@ resource "toolbox_external" "api_biganimal" {
       ENDPOINT="projects/${var.project.id}/clusters"
       REQUEST_TYPE="POST"
       DATA='${jsonencode(local.API_DATA)}'
-      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" --data "$DATA" 2>&1)
-      then
-        RC="$${PIPESTATUS[0]}"
-        printf "URI: %s\n" "$URI" 1>&2
-        printf "ENDPOINT: %s\n" "$ENDPOINT" 1>&2
-        printf "REQUEST_TYPE: %s\n" "$REQUEST_TYPE" 1>&2
-        printf "DATA: %s\n" "$DATA" 1>&2
-        printf "ERROR: %s\n" "$RESULT" 1>&2
-        exit "$RC"
-      fi
 
-      printf "$RESULT"
+      COUNT=0
+      LIMIT=3
+      while (( COUNT < LIMIT ))
+      do
+        if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" --data "$DATA" 2>&1) \
+          && ! $(echo $RESULT | grep -q "failed to ValidateQuota")
+        then
+          RC="$${PIPESTATUS[0]}"
+          printf "URI: %s\n" "$URI" 1>&2
+          printf "ENDPOINT: %s\n" "$ENDPOINT" 1>&2
+          printf "REQUEST_TYPE: %s\n" "$REQUEST_TYPE" 1>&2
+          printf "DATA: %s\n" "$DATA" 1>&2
+          printf "ERROR: %s\n" "$RESULT" 1>&2
+          exit "$RC"
+        fi
+
+        # Exit with result if no retry is needed
+        if ! $(echo $RESULT | grep -q "failed to ValidateQuota")
+        then
+          printf "$RESULT"
+          exit 0
+        fi
+
+        COUNT=$((COUNT+1))
+        # Spread out retries to avoid hitting rate limits when calling the cluster creation endpoint across different projects at the same time
+        sleep "$(( RANDOM % 30 + 1 ))"
+      done
+
+      printf "Failed to create cluster after %s attempts\n" "$LIMIT" 1>&2
+      printf "DATA: %s\n" "$DATA" 1>&2
+      printf "ERROR: %s\n" "$RESULT" 1>&2
+      exit 1
     }
 
     delete_stage() {
