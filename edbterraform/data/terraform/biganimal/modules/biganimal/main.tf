@@ -241,14 +241,14 @@ resource "toolbox_external" "api_status" {
     SLEEP_TIME=15
     while [[ $PHASE != *"healthy"* ]]
     do
-      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1)
+      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1) \
+        || ! PHASE=$(printf "$RESULT" | jq -er ".data.phase" 2>&1)
       then
         RC="$${PIPESTATUS[0]}"
-        printf "%s\n" "$RESULT" 1>&2
+        printf "Result: %s\n" "$RESULT" 1>&2
+        printf "Phase: %s\n" "$${PHASE:-curl command failed, unused}" 1>&2
         exit "$RC"
       fi
-
-      PHASE=$(printf "$RESULT" | jq -er ".data.phase")
 
       if [[ $COUNT -gt COUNT_LIMIT ]] && [[ $PHASE != *"healthy"* ]]
       then
