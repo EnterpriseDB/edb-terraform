@@ -17,7 +17,7 @@ terraform {
 
     aws = {
       source = "registry.terraform.io/hashicorp/aws"
-      version = "< 5.34.1"
+      version = "< 5.71.1"
     }
 
     azurerm = {
