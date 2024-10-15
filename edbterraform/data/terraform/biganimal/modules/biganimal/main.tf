@@ -271,7 +271,8 @@ resource "toolbox_external" "api_status" {
     while [[ $PHASE != *"healthy"* ]]
     do
       if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1) \
-        || ! PHASE=$(printf "$RESULT" | jq -er ".data.phase" 2>&1)
+        || ! PHASE=$(printf "$RESULT" | jq -er ".data.phase" 2>&1) \
+        || ! $([[ $PHASE == *"Failed"* ]] && exit 1 || exit 0)
       then
         RC="$${PIPESTATUS[0]}"
         printf "Result: %s\n" "$RESULT" 1>&2
