@@ -33,6 +33,10 @@ resource "biganimal_cluster" "instance" {
     read_only_connections = false
     superuser_access = each.value.superuser_access
     maintenance_window = each.value.maintenance_window
+
+    timeouts {
+      create = "75m"
+    }
 }
 
 resource "biganimal_pgd" "clusters" {
@@ -107,6 +111,10 @@ resource "biganimal_pgd" "clusters" {
       error_message = "Witness group must be set when using 2 data groups with pgd"
       condition = length(local.data_groups) <= 1 || length(var.witness_groups) > 0
     }
+  }
+
+  timeouts {
+    create = "75m"
   }
 }
 
@@ -256,9 +264,9 @@ resource "toolbox_external" "api_status" {
     ENDPOINT="projects/${var.project.id}/clusters/${jsondecode(toolbox_external.api_biganimal.0.result.data).clusterId}"
     REQUEST_TYPE="GET"
     PHASE="creating"
-    # Wait 45 minutes for cluster to be healthy
+    # Wait 75 minutes for cluster to be healthy
     COUNT=0
-    COUNT_LIMIT=180
+    COUNT_LIMIT=300
     SLEEP_TIME=15
     while [[ $PHASE != *"healthy"* ]]
     do
