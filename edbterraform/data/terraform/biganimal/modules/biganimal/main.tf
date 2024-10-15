@@ -345,8 +345,8 @@ locals {
   - the resource will contain the project id: prj_<project_id>
   */
   base_project_id = trimprefix(var.project.id, "prj_")
-  vpc_name = try(format("vpc-%s-%s", local.base_project_id, local.cluster_region), "unknown")
-  vpc_cmd = try("aws ec2 describe-vpcs --filter Name=tag:Name,Values=${local.vpc_name} --query Vpcs[] --output json --region ${local.cluster_region}", "")
+  vpc_name = try(format("vpc-%s-%s", local.base_project_id, local.cluster_region[0]), "unknown")
+  vpc_cmd = try("aws ec2 describe-vpcs --filter Name=tag:Name,Values=${local.vpc_name} --query Vpcs[] --output json --region ${local.cluster_region[0]}", "")
   extract_vpc_id = "jq -r .[].VpcId"
   extract_biganimal_id = "jq -r '.[].Tags[] | select(.Key == \"BAID\") | .Value'"
 
@@ -356,15 +356,15 @@ locals {
   */
   // postgres bucket - pg-bucket-<project_id>-<region>/<cluster_id>/
   // Will contain base and wals directory
-  postgres_bucket = try(format("pg-bucket-%s-%s", local.base_project_id, local.cluster_region), "unknown")
+  postgres_bucket = try(format("pg-bucket-%s-%s", local.base_project_id, local.cluster_region[0]), "unknown")
   postgres_bucket_prefix = local.cluster_id
   // container logs bucket will need to be queried as each node will have a different directory suffix
   // Bucket may not not be available for some time after provisioning completes
-  container_bucket = try(format("logs-bucket-%s-%s", local.base_project_id, local.cluster_region), "unknown")
+  container_bucket = try(format("logs-bucket-%s-%s", local.base_project_id, local.cluster_region[0]), "unknown")
   partial_container_prefix = try(format("kubernetes-logs/customer_postgresql_cluster.var.log.containers.%s", local.cluster_id), "unknown")
   // metrics logs bucket
   // directory prefix unknown
-  metrics_bucket = try(format("metrics-bucket-%s-%s", local.base_project_id, local.cluster_region), "unknown")
+  metrics_bucket = try(format("metrics-bucket-%s-%s", local.base_project_id, local.cluster_region[0]), "unknown")
 }
 
 resource "toolbox_external" "vpc" {
@@ -387,7 +387,7 @@ resource "toolbox_external" "vpc" {
     BIGANIMAL_ID=$(printf "%s" "$RESULT" | ${local.extract_biganimal_id})
 
     # BigAnimal main route table
-    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --query RouteTables[?Associations[0].Main].RouteTableId --output text --region ${format("%v", local.cluster_region)}"
+    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --query RouteTables[?Associations[0].Main].RouteTableId --output text --region ${try(local.cluster_region[0], "")}"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
@@ -399,7 +399,7 @@ resource "toolbox_external" "vpc" {
     MAIN_ROUTE_TABLE=$RESULT
 
     # BigAnimal uses private 3 route tables with the tags ManagedBy=BigAnimal and Name=*private*
-    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --filter "Name=tag:ManagedBy,Values=BigAnimal" --filter "Name=tag:Name,Values=*private*"  --query RouteTables[].RouteTableId --output json --region ${try(local.cluster_region, "")}"
+    CMD="aws ec2 describe-route-tables --filter "Name=vpc-id,Values=$VPC_ID" --filter "Name=tag:ManagedBy,Values=BigAnimal" --filter "Name=tag:Name,Values=*private*"  --query RouteTables[].RouteTableId --output json --region ${try(local.cluster_region[0], "")}"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
@@ -413,7 +413,7 @@ resource "toolbox_external" "vpc" {
     ROUTE_TABLE_2=$(printf "%s" $RESULT | jq -r .[2])
 
     # BigAnimal has a loadbalancer attached to the projects vpc
-    CMD="aws elbv2 describe-load-balancers --query "LoadBalancers[?VpcId==\'$VPC_ID\']" --region ${format("%v", local.cluster_region)} --output json"
+    CMD="aws elbv2 describe-load-balancers --query "LoadBalancers[?VpcId==\'$VPC_ID\']" --region ${format("%v", local.cluster_region[0])} --output json"
     RESULT=$($CMD)
     RC=$?
     if [[ $RC -ne 0 ]];
