@@ -337,12 +337,6 @@ locals {
     "pg"         = "postgres"
   }
 
-  tags = [
-    for key, value in var.tags : {
-      tagName = format("%s:%s", key, value)
-    }
-  ]
-
   service_cidrblocks = [
     for cidr in var.service_cidrblocks : {
       cidr_block = cidr
@@ -354,6 +348,14 @@ locals {
   use_wal_volume = anytrue([for group in var.data_groups: group.wal_volume != null && group.wal_volume != []]) ? true : false
   use_images = anytrue([for key, value in coalesce(var.image, {}): value != null && value != ""])
   use_api = local.use_wal_volume || local.use_images
+
+  tags = [
+    for key, value in var.tags : local.use_api ? {
+      tagName = format("%s:%s", key, value)
+    } : {
+      tag_name = format("%s:%s", key, value)
+    }
+  ]
 
   data_groups = {
     for name, values in var.data_groups : name => (merge(values, {
