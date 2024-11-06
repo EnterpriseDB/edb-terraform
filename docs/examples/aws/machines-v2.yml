@@ -11,6 +11,14 @@ aws:
       name: debian-12-amd64
       owner: 136693071363
       ssh_user: admin
+    ubuntu-amd64:
+      name: ubuntu/*/ubuntu-jammy-22.04-amd64-server-
+      owner: 099720109477
+      ssh_user: ubuntu
+    ubuntu-arm64:
+      name: ubuntu/*/ubuntu-jammy-22.04-arm64-server-
+      owner: 099720109477
+      ssh_user: ubuntu
   regions:
     us-west-2:
       cidr_block: 10.2.0.0/16
