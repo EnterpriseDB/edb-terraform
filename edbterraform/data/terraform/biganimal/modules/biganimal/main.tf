@@ -34,6 +34,8 @@ resource "biganimal_cluster" "instance" {
     superuser_access = each.value.superuser_access
     maintenance_window = each.value.maintenance_window
 
+    tags = local.tags
+
     timeouts {
       create = "75m"
     }
@@ -105,6 +107,8 @@ resource "biganimal_pgd" "clusters" {
         maintenance_window = v.maintenance_window
       }
     ]
+
+    tags = local.tags
 
   lifecycle {
     precondition {
