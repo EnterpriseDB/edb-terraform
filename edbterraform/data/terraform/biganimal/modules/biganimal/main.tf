@@ -17,7 +17,7 @@ resource "biganimal_cluster" "instance" {
     storage = {
         volume_type = each.value.volume.type
         volume_properties = each.value.volume.properties
-        size = each.value.volume_size
+        size = each.value.volume.size
         # optional
         iops = each.value.volume.iops
         throughput = each.value.volume.throughput
@@ -74,7 +74,7 @@ resource "biganimal_pgd" "clusters" {
         storage = {
             volume_type = values.volume.type
             volume_properties = values.volume.properties
-            size = values.volume_size
+            size = values.volume.size
             # optional
             iops = values.volume.iops
             throughput = values.volume.throughput
