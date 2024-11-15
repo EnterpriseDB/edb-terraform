@@ -390,7 +390,11 @@ locals {
       node_count = values.type == "single" ? 1 : values.node_count
       # resource expects a cloud provider prefix infront of its instance type
       instance_type = !startswith("${var.cloud_provider}:", values.instance_type) ? format("${var.cloud_provider}:%s", values.instance_type) : values.instance_type
-      volume_size = "${values.volume.size_gb} Gi"
+      # Format the volume type
+      volume = merge(values.volume, {
+        size_gb = "${values.volume.size_gb} Gi"
+        type = contains([var.cloud_provider], "azure") && !startswith("azure", values.volume.type) && endswith("premiumstorage", values.volume.type) ? format("azure%s", values.volume.type) : values.volume.type
+      })
 
       # superuser not allowed for biganimal-hosted clusters
       superuser_access = values.cloud_account ? true : false
@@ -453,12 +457,13 @@ locals {
   witness_groups = {
     for name, values in var.witness_groups : name => (merge(values, {
       # Format the cloud provider id
+      # Witness group may be in a different cloud provider but cannot be in the same region as the data groups when using the same provider
       cloud_provider_id = values.cloud_account ? values.cloud_service_provider : "bah:${values.cloud_service_provider}"
       instance_type = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).instanceType.instanceTypeId : ""
       storage = {
         type = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).storage.volumeTypeId : ""
         properties = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).storage.volumePropertiesId : ""
-        size = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).storage.size : ""
+        size = can(toolbox_external.witness_node_params[name]) ? "${jsondecode(toolbox_external.witness_node_params[name].result.data).storage.size} Gi" : ""
         iops = can(toolbox_external.witness_node_params[name]) ? jsondecode(toolbox_external.witness_node_params[name].result.data).storage.iops : ""
         # Currently unused
         #throughput = toolbox_external.witness_node_params[name].result.data.storage.throughput
@@ -509,11 +514,11 @@ locals {
         ]
         storage = {
           for key, value in group_values.volume : local.TERRAFORM_API_MAPPING.storage[key] =>
-            key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+            tostring(value) if value != null
         }
         walStorage = {
           for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING.storage[key] =>
-            key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+            tostring(value) if value != null
         }
         # required
         provider = { cloudProviderId = group_values.cloud_provider_id }
@@ -567,11 +572,11 @@ locals {
           ]
           storage = {
             for key, value in group_values.volume : local.TERRAFORM_API_MAPPING.storage[key] =>
-              key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+              tostring(value) if value != null
           }
           walStorage = {
             for key, value in group_values.wal_volume == null ? {} : group_values.wal_volume : local.TERRAFORM_API_MAPPING.storage[key] =>
-              key == "size_gb" ? "${value} Gi" : tostring(value) if value != null
+              tostring(value) if value != null
           }
           # required 
           provider = { cloudProviderId = group_values.cloud_provider_id }
