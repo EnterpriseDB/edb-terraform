@@ -134,6 +134,7 @@ resource "toolbox_external" "api_biganimal" {
     <<EOT
     set -eou pipefail
     # https://github.com/EnterpriseDB/terraform-provider-toolbox/issues/47
+    # Handle deletion within trap once issue is resolved.
     trap 'echo "Allow process to finish. Use a 2nd interrupt and terraform will force kill the process" 1>&2' SIGTERM SIGINT SIGHUP SIGUSR1 SIGUSR2 SIGABRT SIGQUIT SIGPIPE SIGALRM SIGTSTP SIGTTIN SIGTTOU
 
     URI="${data.external.ba_api_access.result.ba_api_uri}"
@@ -195,6 +196,14 @@ resource "toolbox_external" "api_biganimal" {
           printf "REQUEST_TYPE: %s\n" "$REQUEST_TYPE" 1>&2
           printf "DATA: %s\n" "$DATA" 1>&2
           printf "ERROR: %s\n" "$RESULT" 1>&2
+
+          # Delete cluster if it was left in a failed state
+          if CLUSTER_ID=$(cluster_exists_check "$CLUSTER_NAME") && [[ "$CLUSTER_ID" != "false" ]]
+          then
+            printf "Cluster %s with id %s left in a failed state.\nDeleting cluster\n" "$CLUSTER_NAME" "$CLUSTER_ID" 1>&2
+            delete_stage "$CLUSTER_ID" 1>&2
+          fi
+
           exit "$RC"
         fi
 
