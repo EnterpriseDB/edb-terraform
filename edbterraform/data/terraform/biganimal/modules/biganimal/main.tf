@@ -137,8 +137,47 @@ resource "toolbox_external" "api_biganimal" {
     trap 'echo "Allow process to finish. Use a 2nd interrupt and terraform will force kill the process" 1>&2' SIGTERM SIGINT SIGHUP SIGUSR1 SIGUSR2 SIGABRT SIGQUIT SIGPIPE SIGALRM SIGTSTP SIGTTIN SIGTTOU
 
     URI="${data.external.ba_api_access.result.ba_api_uri}"
+    CLUSTER_NAME="${jsonencode(local.API_DATA.clusterName)}"
+
+    cluster_exists_check() {
+      # Check if the cluster already exists
+      # Returns a string with the cluster id if it exists, 'false' if it does not
+      local CLUSTER_NAME="$1"
+      ENDPOINT="projects/${var.project.id}/clusters?name=$CLUSTER_NAME"
+      REQUEST_TYPE="GET"
+      if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1)
+      then
+        RC="$${PIPESTATUS[0]}"
+        printf "URI: %s\n" "$URI" 1>&2
+        printf "ENDPOINT: %s\n" "$ENDPOINT" 1>&2
+        printf "REQUEST_TYPE: %s\n" "$REQUEST_TYPE" 1>&2
+        printf "ERROR: %s\n" "$RESULT" 1>&2
+        exit "$RC"
+      fi
+
+      CLUSTER_FOUND=$(echo $RESULT | jq -e '.data | length == 0' 2>&1)
+      case "$CLUSTER_FOUND" in
+        true)
+          printf "false"
+          ;;
+        false)
+          printf "$(echo $RESULT | jq -r '.data[0].clusterId')"
+          ;;
+        *)
+          printf "ERROR: %s\n" "$CLUSTER_FOUND" 1>&2
+          printf "API RESULT: %s\n" "$RESULT" 1>&2
+          exit 1
+          ;;
+      esac
+    }
 
     create_stage() {
+      if CLUSTER_ID="$(cluster_exists_check "$CLUSTER_NAME")" && [[ "$CLUSTER_ID" != "false" ]]
+      then
+        printf "Cluster %s already exists with id %s\n" "$CLUSTER_NAME" "$CLUSTER_ID" 1>&2
+        exit 1
+      fi
+
       ENDPOINT="projects/${var.project.id}/clusters"
       REQUEST_TYPE="POST"
       DATA='${jsonencode(local.API_DATA)}'
