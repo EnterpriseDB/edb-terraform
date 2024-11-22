@@ -210,7 +210,7 @@ resource "toolbox_external" "api_biganimal" {
         # Exit with result if no retry is needed
         if ! $(echo $RESULT | grep -q "failed to ValidateQuota")
         then
-          printf "$RESULT"
+          printf "%s" "$RESULT"
           exit 0
         fi
 
@@ -323,7 +323,7 @@ resource "toolbox_external" "api_status" {
     while [[ $PHASE != *"healthy"* ]]
     do
       if ! RESULT=$(curl --silent --show-error --fail-with-body --location --request $REQUEST_TYPE --header "content-type: application/json" --header "$AUTH_HEADER" --url "$URI/$ENDPOINT" 2>&1) \
-        || ! PHASE=$(printf "$RESULT" | jq -er ".data.phase" 2>&1) \
+        || ! PHASE=$(printf "%s" "$RESULT" | jq -er ".data.phase" 2>&1) \
         || ! $([[ $PHASE == *"Failed"* ]] && exit 1 || exit 0)
       then
         RC="$${PIPESTATUS[0]}"
@@ -335,8 +335,8 @@ resource "toolbox_external" "api_status" {
       if [[ $COUNT -gt COUNT_LIMIT ]] && [[ $PHASE != *"healthy"* ]]
       then
         printf "Cluster creation timed out\n" 1>&2
-        printf "Last phase: $PHASE\n" 1>&2
-        printf "Cluster data: $RESULT\n" 1>&2
+        printf "Last phase: %s\n" "$PHASE" 1>&2
+        printf "Cluster data: %s\n" "$RESULT" 1>&2
         exit 1
       fi
 
@@ -344,7 +344,7 @@ resource "toolbox_external" "api_status" {
       sleep $SLEEP_TIME
     done
   
-    printf "$RESULT"
+    printf "%s" "$RESULT"
     EOT
   ]
 }
