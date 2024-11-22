@@ -10,7 +10,7 @@ data "aws_eks_cluster_auth" "cluster" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "3.18.1"
+  version = "5.9.0"
 
   name                 = var.vpcAndClusterPrefix
   cidr                 = var.vpcCidr
@@ -34,7 +34,7 @@ module "vpc" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "18.30.3"
+  version = "20.2.2"
 
   cluster_name    = var.vpcAndClusterPrefix
   cluster_version = var.clusterVersion
