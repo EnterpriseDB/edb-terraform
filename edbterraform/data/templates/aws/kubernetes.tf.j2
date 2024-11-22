@@ -10,7 +10,6 @@ module "kubernetes_{{ region_ }}" {
 
   providers = {
     aws = aws.{{ region_ }}
-    kubernetes = kubernetes.{{ region_ }}
   }
 
 # This statement works for: Azure Kubernetes Services and Google Kubernetes Engine
