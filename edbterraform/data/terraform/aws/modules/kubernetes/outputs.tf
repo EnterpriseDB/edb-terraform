@@ -1,5 +1,5 @@
 output "cluster_id" {
-  description = "EKS cluster ID"
+  description = "EKS cluster ID - only available for local Amazon EKS cluster on the AWS Outpost. Not available for an AWS EKS cluster on AWS cloud"
   value       = module.eks.cluster_id
 }
 
@@ -25,6 +25,6 @@ output "region" {
 
 output "cluster_name" {
   description = "Kubernetes Cluster Name"
-  value       = var.vpcAndClusterPrefix
+  value       = module.eks.cluser_name
 }
 
