@@ -8,6 +8,8 @@ module "kubernetes_{{ region_ }}" {
   vpcAndClusterPrefix     = "${module.spec.base.tags.cluster_name}-${module.spec.pet_name}"  
   instanceType            = each.value.spec.instance_type
 
+  tags                    = each.value.spec.tags
+
   providers = {
     aws = aws.{{ region_ }}
   }
