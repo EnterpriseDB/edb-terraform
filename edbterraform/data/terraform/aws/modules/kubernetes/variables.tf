@@ -2,10 +2,20 @@ variable "region" {
   default = "us-east-1"
 }
 
-# NAME SHOULD MAKE USE OF THE SAME ID AS OTHER RESOURCES and the key name, NOT THE PET NAME ID and pre-set prefix
-# EX of current naming: EDB-K8s-CNP-lasting-pug
-variable "vpcAndClusterPrefix" {
-  default = "EDB-K8s-CNP"
+variable "name" {
+  default = "K8s-Default-Name"
+  nullable = false
+}
+
+variable "name_id" {
+  type     = string
+  default  = null
+  nullable = true
+}
+
+locals {
+  name = var.name_id != null && var.name_id != "" ? "${var.name}-${var.name_id}" : var.name
+  vpc_name = format("eks-%s", local.name)
 }
 
 variable "clusterVersion" {
