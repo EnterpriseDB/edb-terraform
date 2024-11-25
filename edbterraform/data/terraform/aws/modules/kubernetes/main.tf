@@ -30,6 +30,8 @@ module "vpc" {
     "kubernetes.io/cluster/${var.vpcAndClusterPrefix}" = "shared"
     "kubernetes.io/role/internal-elb"                  = "1"
   }
+
+  tags = var.tags
 }
 
 module "eks" {
@@ -51,4 +53,6 @@ module "eks" {
       instance_type = var.instanceType
     }
   }
+
+  tags = var.tags
 }
