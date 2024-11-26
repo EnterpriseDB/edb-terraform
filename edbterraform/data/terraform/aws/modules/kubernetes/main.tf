@@ -1,13 +1,5 @@
 data "aws_availability_zones" "available" {}
 
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_name
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
-}
-
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.9.0"
@@ -55,4 +47,13 @@ module "eks" {
   }
 
   tags = var.tags
+}
+
+# Defer data read until the cluster is created
+data "aws_eks_cluster" "cluster" {
+  name = can(module.eks) ? module.eks.cluster_name : module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = can(module.eks) ? module.eks.cluster_name : module.eks.cluster_name
 }
