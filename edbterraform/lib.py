@@ -7,6 +7,9 @@ import os
 import sys
 import shutil
 import subprocess
+import secrets
+import base64
+import datetime
 from jinja2 import Environment, FileSystemLoader
 import textwrap
 from typing import List, Dict, Optional
@@ -652,5 +655,17 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
             if 'data_groups' not in spec_variables['biganimal'][cluster]:
                 items = spec_variables['biganimal'][cluster].copy()
                 spec_variables['biganimal'][cluster]['data_groups'] = {'deprecated': items}
+
+    # Handle precomputed tags at generation time instead of during 'terraform apply'
+    # No longer handled within the terraform spec module and should be passed in as a project wide tag
+    # - terraform_hex   = random_id.apply.hex | ex: "a24f8f4e"
+    # - terraform_id    = random_id.apply.id | ex: "ok-PTg"
+    # - terraform_time  = time_static.first_created.id | ex: "2024-11-26T01:36:28Z"
+    if 'tags' not in spec_variables:
+        spec_variables['tags'] = {}
+    token = secrets.token_bytes(4)
+    spec_variables['tags']['terraform_hex'] = token.hex()
+    spec_variables['tags']['terraform_id'] = base64.b64encode(token).decode('utf-8').rstrip("=")
+    spec_variables['tags']['terraform_time'] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     return spec_variables

@@ -1,18 +1,10 @@
 data "aws_availability_zones" "available" {}
 
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_id
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_id
-}
-
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "3.18.1"
+  version = "5.9.0"
 
-  name                 = var.vpcAndClusterPrefix
+  name                 = local.vpc_name
   cidr                 = var.vpcCidr
   azs                  = data.aws_availability_zones.available.names
   private_subnets      = [var.privateSubnet1, var.privateSubnet2, var.privateSubnet3]
@@ -22,21 +14,23 @@ module "vpc" {
   enable_dns_hostnames = true
 
   public_subnet_tags = {
-    "kubernetes.io/cluster/${var.vpcAndClusterPrefix}" = "shared"
+    "kubernetes.io/cluster/${local.name}" = "shared"
     "kubernetes.io/role/elb"                           = "1"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/cluster/${var.vpcAndClusterPrefix}" = "shared"
+    "kubernetes.io/cluster/${local.name}" = "shared"
     "kubernetes.io/role/internal-elb"                  = "1"
   }
+
+  tags = var.tags
 }
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "18.30.3"
+  version = "20.2.2"
 
-  cluster_name    = var.vpcAndClusterPrefix
+  cluster_name    = local.name
   cluster_version = var.clusterVersion
   subnet_ids      = module.vpc.private_subnets
 
@@ -51,4 +45,15 @@ module "eks" {
       instance_type = var.instanceType
     }
   }
+
+  tags = var.tags
+}
+
+# Defer data read until the cluster is created
+data "aws_eks_cluster" "cluster" {
+  name = can(module.eks) ? module.eks.cluster_name : module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = can(module.eks) ? module.eks.cluster_name : module.eks.cluster_name
 }

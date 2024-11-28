@@ -1,9 +1,9 @@
 locals {
+  # Expects included tags for tracking:
+  # - terraform_hex
+  # - terraform_id
+  # - terraform_time
   tags = merge(var.spec.tags, {
-    # add ids for tracking
-    terraform_hex   = random_id.apply.hex
-    terraform_id    = random_id.apply.id
-    terraform_time  = time_static.first_created.id
     created_by      = local.created_by
     cluster_name    = local.cluster_name
   })
@@ -139,7 +139,7 @@ output "biganimal" {
         # spec project tags
         tags = merge(local.tags, biganimal_spec.tags, {
           # Biganimal reserves the Name tag
-          # Name = format("%s-%s-%s", name, local.cluster_name, random_id.apply.id)
+          # Name = format("%s-%s-%s", name, local.cluster_name, local.tags.terraform_id)
         })
         data_groups = {
           for data_group_name, data_group_spec in biganimal_spec.data_groups : data_group_name => merge(data_group_spec, {
@@ -171,7 +171,7 @@ output "region_kubernetes" {
 }
 
 output "hex_id" {
-  value = random_id.apply.hex
+  value = local.tags.terraform_hex
 }
 
 output "pet_name" {
