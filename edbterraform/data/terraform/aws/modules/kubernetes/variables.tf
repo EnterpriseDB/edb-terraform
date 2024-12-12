@@ -2,8 +2,20 @@ variable "region" {
   default = "us-east-1"
 }
 
-variable "vpcAndClusterPrefix" {
-  default = "EDB-K8s-CNP"
+variable "name" {
+  default = "K8s-Default-Name"
+  nullable = false
+}
+
+variable "name_id" {
+  type     = string
+  default  = null
+  nullable = true
+}
+
+locals {
+  name = var.name_id != null && var.name_id != "" ? "${var.name}-${var.name_id}" : var.name
+  vpc_name = format("eks-%s", local.name)
 }
 
 variable "clusterVersion" {
@@ -52,4 +64,8 @@ variable "publicSubnet2" {
 
 variable "publicSubnet3" {
   default = "172.16.6.0/24"
+}
+
+variable "tags" {
+  default = {}
 }

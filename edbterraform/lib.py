@@ -7,6 +7,9 @@ import os
 import sys
 import shutil
 import subprocess
+import secrets
+import base64
+import datetime
 from jinja2 import Environment, FileSystemLoader
 import textwrap
 from typing import List, Dict, Optional
@@ -568,6 +571,19 @@ def spec_compatability(infrastructure_variables, cloud_service_provider):
     if 'cluster_name' not in spec_variables['tags'] and \
         'cluster_name' in infrastructure_variables:
         spec_variables['tags']['cluster_name'] = infrastructure_variables['cluster_name']
+
+    # Handle precomputed tags at generation time instead of during 'terraform apply'
+    # No longer handled within the terraform spec module and should be passed in as a project wide tag
+    # - terraform_hex   = random_id.apply.hex | ex: "a24f8f4e"
+    # - terraform_id    = random_id.apply.id | ex: "ok-PTg"
+    # - terraform_time  = time_static.first_created.id | ex: "2024-11-26T01:36:28Z"
+    while True:
+        token = secrets.token_bytes(4)
+        spec_variables['tags']['terraform_hex'] = token.hex()
+        spec_variables['tags']['terraform_id'] = base64.b64encode(token).decode('utf-8').rstrip("=").replace('+','-').replace('/','-')
+        spec_variables['tags']['terraform_time'] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        if spec_variables['tags']['terraform_id'][0].isalnum() and spec_variables['tags']['terraform_id'][-1].isalnum():
+            break
 
     # if not provided,
     # assign default output name for private/public ssh key filename
