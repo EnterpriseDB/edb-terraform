@@ -209,6 +209,7 @@ variable "spec" {
       node_count    = number
       instance_type = string
       tags          = optional(map(string), {})
+      service_cidrblocks = optional(list(string), [])
     })), {})
   })
 }
