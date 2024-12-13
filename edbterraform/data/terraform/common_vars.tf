@@ -84,6 +84,18 @@ variable "force_service_biganimal" {
   default = true
 }
 
+variable "force_service_kubernetes" {
+  description = "Force the use of service_cidrblocks for public access of the kubernetes api instead of private networking and a bastion host"
+  type = bool
+  default = true
+}
+
+variable "disable_eks_public_access" {
+  description = "Temporarily disable eks public access to allow refreshing of the public_access_cidrs"
+  type = bool
+  default = false
+}
+
 variable "dynamic_service_ip_mask" {
   type = number
   default = 32
@@ -121,4 +133,5 @@ locals {
   ] : []
   service_cidrblocks = concat(var.service_cidrblocks, local.dynamic_ip)
   biganimal_service_cidrblocks = var.force_service_biganimal ? local.service_cidrblocks : []
+  kubernetes_service_cidrblocks = var.force_service_kubernetes ? local.service_cidrblocks : []
 }

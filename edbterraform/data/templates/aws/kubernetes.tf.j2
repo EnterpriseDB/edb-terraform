@@ -11,6 +11,10 @@ module "kubernetes_{{ region_ }}" {
   name_id                 = module.spec.hex_id
   tags                    = each.value.spec.tags
 
+  runtime_service_cidrblocks = local.kubernetes_service_cidrblocks
+  config_service_cidrblocks  = each.value.spec.service_cidrblocks
+  disable_public_access      = var.disable_eks_public_access
+
   providers = {
     aws = aws.{{ region_ }}
   }
