@@ -61,3 +61,9 @@ variable "sshPublicKey" {
 variable "region" {
   default = "westus"
 }
+
+variable "cluster_version" {
+  type = string
+  default = "1.28"
+  nullable = false
+}

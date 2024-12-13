@@ -153,6 +153,7 @@ variable "spec" {
       tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({
+      cluster_version         = optional(string)
       region                  = string
       ssh_user                = optional(string)
       resource_group_location = optional(string)
