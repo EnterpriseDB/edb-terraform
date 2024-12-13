@@ -20,3 +20,9 @@ locals {
   # key-values as tags even though they are labels under gcloud
   labels = { for key,value in var.tags: key => lower(replace(value, ":", "_"))}
 }
+
+variable "cluster_version" {
+  type = string
+  default = "1.28"
+  nullable = false
+}
