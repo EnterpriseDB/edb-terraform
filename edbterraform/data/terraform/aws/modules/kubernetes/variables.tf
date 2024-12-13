@@ -54,8 +54,10 @@ locals {
   public_access_cidrs = local.public_access ? local.service_cidrblocks : null
 }
 
-variable "clusterVersion" {
-  default = "1.24"
+variable "cluster_version" {
+  type = string
+  default = "1.28"
+  nullable = false
 }
 
 variable "desiredCapacity" {

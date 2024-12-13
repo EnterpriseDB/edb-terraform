@@ -205,6 +205,7 @@ variable "spec" {
       tags = optional(map(string), {})
     })), {})
     kubernetes = optional(map(object({
+      cluster_version = optional(string)
       region        = string
       node_count    = number
       instance_type = string
