@@ -8,6 +8,8 @@ resource "google_container_cluster" "primary" {
   subnetwork = var.subnetwork
 
   resource_labels = local.labels
+
+  node_version = var.cluster_version
 }
 
 resource "google_container_node_pool" "primary_nodes" {
