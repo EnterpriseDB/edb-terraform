@@ -6,6 +6,8 @@ module "kubernetes_{{ region_ }}" {
       rm.name => rm 
     })
 
+  cluster_version                 = each.value.spec.cluster_version
+
   nodeCount                       = each.value.spec.node_count
   cluster_name                    = module.spec.base.tags.cluster_name
   logAnalyticsWorkspaceLocation   = each.value.spec.log_analytics_location
