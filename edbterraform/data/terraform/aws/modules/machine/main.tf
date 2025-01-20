@@ -180,7 +180,7 @@ locals {
       for mount_point, attributes in coalesce(try(var.machine.spec.preattached_volumes.mount_points, null), {}): mount_point => {
         "size": coalesce(attributes.size, "100%FREE")
         "filesystem": coalesce(attributes.filesystem, local.filesystem)
-        "mount_options": try(join(",", attributes.mount_options), join(",", local.mount_options))
+        "mount_options": join(",", coalesce(attributes.mount_options, local.mount_options))
         "type": "striped"
         "stripesize": "64 KB"
     }}
@@ -191,7 +191,7 @@ locals {
         "device_names": element(local.linux_device_names, tonumber(key))
         "number_of_volumes": length(lookup(var.machine.spec, "additional_volumes", [])) + 1
         "mount_point": values.mount_point
-        "mount_options": coalesce(try(join(",", values.mount_options), null), try(join(",", local.mount_options), null))
+        "mount_options": join(",", coalesce(values.mount_options, local.mount_options))
         "filesystem": coalesce(values.filesystem, local.filesystem)
         "volume_group": values.volume_group
     }
@@ -201,7 +201,7 @@ locals {
         for mount_point, attibutes in values: mount_point => {
           "size": coalesce(attibutes.size, "100%FREE")
           "filesystem": coalesce(attibutes.filesystem, local.filesystem)
-          "mount_options": coalesce(try(join(",", attibutes.mount_options), null), try(join(",", local.mount_options), null))
+          "mount_options": join(",", coalesce(attibutes.mount_options, local.mount_options))
           "type": "striped"
           "stripesize": "64 KB"
       }

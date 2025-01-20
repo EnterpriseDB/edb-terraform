@@ -80,7 +80,7 @@ variable "spec" {
         mount_points = optional(map(object({
           size = optional(string)
           filesystem = optional(string)
-          mount_options = optional(string)
+          mount_options = optional(list(string))
         })))
       }), {})
       # Creates a set of volumes around a machine instance to be attached post-terraform
@@ -107,13 +107,13 @@ variable "spec" {
         type          = string
         encrypted     = optional(bool)
         filesystem    = optional(string)
-        mount_options = optional(string)
+        mount_options = optional(list(string))
         volume_group  = optional(string)
       })), [])
       volume_groups = optional(map(map(object({
         size = optional(string)
         filesystem = optional(string)
-        mount_options = optional(string)
+        mount_options = optional(list(string))
       }))), {})
       tags = optional(map(string), {})
     })), {})
