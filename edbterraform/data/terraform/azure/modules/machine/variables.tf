@@ -84,7 +84,7 @@ variable "additional_volumes" {
     caching     = optional(string, "None")
     iops        = optional(number)
     filesystem    = optional(string)
-    mount_options = optional(string)
+    mount_options = optional(list(string))
   }))
 
   validation {
