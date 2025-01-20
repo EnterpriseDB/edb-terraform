@@ -207,7 +207,7 @@ locals {
         "device_names": element(local.linux_device_names, tonumber(key))
         "number_of_volumes": length(var.additional_volumes) + 1
         "mount_point": values.mount_point
-        "mount_options": coalesce(try(join(",", values.mount_options), null), try(join(",", local.mount_options), null))
+        "mount_options": join(",", coalesce(values.mount_options, local.mount_options))
         "filesystem": coalesce(values.filesystem, local.filesystem)
     }
   ]

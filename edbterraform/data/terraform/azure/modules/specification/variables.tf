@@ -80,7 +80,7 @@ variable "spec" {
         iops        = optional(number)
         type        = string
         filesystem    = optional(string)
-        mount_options = optional(string)
+        mount_options = optional(list(string))
       })), [])
       tags = optional(map(string), {})
     })), {})
