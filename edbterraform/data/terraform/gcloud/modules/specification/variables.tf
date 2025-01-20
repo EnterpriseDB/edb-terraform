@@ -81,7 +81,7 @@ variable "spec" {
         type        = string
         encrypted   = optional(bool)
         filesystem    = optional(string)
-        mount_options = optional(string)
+        mount_options = optional(list(string))
       })), [])
       tags = optional(map(string), {})
     })), {})
