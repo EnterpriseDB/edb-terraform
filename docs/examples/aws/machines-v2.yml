@@ -109,19 +109,29 @@ aws:
           iops: 5000
           encrypted: false
           volume_group: other
-        - mount_point: /opt/test
+        - mount_point: /opt/test0
           size_gb: 20
           type: gp2
           iops: 5000
           encrypted: false
           filesystem: xfs
+        - mount_point: /opt/test1
+          size_gb: 20
+          type: gp2
+          iops: 5000
+          encrypted: false
+          filesystem: xfs
+          mount_options:
+            - defaults
       volume_groups:
         data:
           /opt/data0:
-            size: "50%FREE"
+            size: "50%VG"
             filesystem: xfs
+            mount_options:
+              - noatime
           /opt/data1:
-            size: "50%FREE"
+            size: "50%VG"
             filesystem: xfs
         other:
           /opt/data2: {}
