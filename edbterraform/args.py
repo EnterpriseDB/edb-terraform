@@ -126,8 +126,8 @@ UserTemplatesPath = ArgumentConfig(
     type=Path,
     nargs='+',
     required=False,
-    default=[f'{__dot_project__}/templates',],
-    help="Users can pass in a list of template files or template directories, which will be rendered with the servers output. Default: %(default)s",
+    default=[],
+    help="Users can pass in a list of template files or template directories separated by space, which will be rendered with the servers output. No default template path is provided.",
 )
 
 InfrastructureFilePath = ArgumentConfig(
